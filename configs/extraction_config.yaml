@@ -1,0 +1,10 @@
+pain_extraction:
+  default_mode: rule_based
+  min_confidence: 0.65
+  require_evidence_quote: true
+  max_text_chars: 8000
+
+state_gate:
+  require_schema_valid: true
+  require_evidence_quote_found: true
+  quarantine_invalid_outputs: true

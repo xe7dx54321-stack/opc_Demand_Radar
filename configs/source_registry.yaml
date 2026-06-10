@@ -1,0 +1,7 @@
+sources:
+  - name: manual_import
+    type: manual
+    enabled: true
+    priority: p0
+    trust_weight: 1.0
+    description: "Manually imported demand signals from CSV or JSONL."

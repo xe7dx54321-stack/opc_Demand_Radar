@@ -1,0 +1,2 @@
+"""Pain extraction adapters."""
+

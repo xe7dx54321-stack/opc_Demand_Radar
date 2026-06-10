@@ -1,0 +1,39 @@
+project_name: demand_radar
+
+domains:
+  - ai_investment_research
+  - ai_hardtech
+  - content_production
+  - enterprise_knowledge_workflow
+  - ai_agent_workflow
+  - ai_output_quality_review
+
+personas:
+  - investor
+  - researcher
+  - founder
+  - content_team
+  - fa
+  - strategy_bd
+  - developer
+  - operator
+
+exclude:
+  - consumer_entertainment
+  - heavy_regulated_decision_loop
+  - offline_heavy_service
+  - giant_platform_competition
+  - low_willingness_to_pay
+  - data_unavailable_workflow
+  - deep_customization_per_customer
+
+signal_types:
+  - complaint
+  - workaround
+  - hiring_signal
+  - product_review
+  - github_issue
+  - competitor_gap
+  - paid_service_signal
+  - workflow_repetition
+

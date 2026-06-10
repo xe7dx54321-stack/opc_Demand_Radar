@@ -1,0 +1,39 @@
+[build-system]
+requires = ["setuptools>=69"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "demand-radar"
+version = "0.1.0"
+description = "Internal demand discovery tool for manual signal intake and pain extraction."
+readme = "README.md"
+requires-python = ">=3.11"
+authors = [
+  { name = "Demand Radar Team" }
+]
+dependencies = [
+  "pydantic>=2.7",
+  "PyYAML>=6.0",
+  "typer>=0.12"
+]
+
+[project.optional-dependencies]
+dev = [
+  "pytest>=8",
+  "ruff>=0.5"
+]
+full = []
+
+[project.scripts]
+demand-radar = "demand_radar.cli:main"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+pythonpath = ["src"]
+
+[tool.ruff]
+line-length = 100
+target-version = "py311"
