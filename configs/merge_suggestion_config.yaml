@@ -1,0 +1,23 @@
+merge_suggestion:
+  enabled: true
+
+  candidate_threshold: 62
+  strong_candidate_threshold: 75
+  max_candidates_per_cluster: 5
+
+  fields:
+    title_weight: 0.20
+    summary_weight: 0.25
+    pain_description_weight: 0.25
+    workaround_weight: 0.10
+    persona_weight: 0.10
+    domain_weight: 0.10
+
+  diagnostics:
+    include_field_scores: true
+    include_shared_keywords: true
+    include_representative_quotes: true
+
+  output:
+    language: zh
+    max_reason_chars: 300

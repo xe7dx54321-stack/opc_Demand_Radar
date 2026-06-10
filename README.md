@@ -14,6 +14,8 @@ Stage 1.6 adds a local Streamlit Review UI for low-friction calibration review. 
 
 Stage 2 adds a lightweight Demand Clustering Loop and cluster review workflow. Demand clusters are candidate state only; truth scoring and fit scoring are still out of scope.
 
+Stage 2.5 adds cluster merge suggestions and reviewed cluster groups. Merge suggestions are candidate state only; confirmed reviews generate reviewed groups without mutating `demand_clusters.jsonl`.
+
 ## Stage 1 Scope
 
 The current pipeline is intentionally narrow:
@@ -82,6 +84,30 @@ It adds:
 - `demand-radar run-stage2`
 
 The Review UI now includes a `需求主题审核` tab. It shows Chinese demand titles, summaries, representative pain descriptions, evidence summaries, current alternatives, and cluster review buttons. Cluster reviews are feedback memory only: they do not mutate `demand_clusters.jsonl`.
+
+## Stage 2.5 Scope
+
+Stage 2.5: Cluster Merge Suggestions & Review Calibration.
+
+This layer diagnoses which singleton or near-singleton demand clusters may belong to the same higher-level demand theme. It generates Chinese merge reasons, field-level similarity diagnostics, and representative evidence summaries for human review. The system never automatically rewrites or deletes generated clusters.
+
+It adds:
+
+- `configs/merge_suggestion_config.yaml`
+- `data/processed/cluster_merge_candidates.jsonl`
+- `data/processed/cluster_group_reviews.jsonl`
+- `data/processed/reviewed_cluster_groups.jsonl`
+- `data/quarantine/invalid_merge_candidates.jsonl`
+- `data/quarantine/invalid_reviewed_groups.jsonl`
+- `outputs/cluster_merge_suggestions.md`
+- `outputs/reviewed_cluster_groups_report.md`
+- `demand-radar suggest-merges`
+- `demand-radar build-merge-report`
+- `demand-radar build-reviewed-groups`
+- `demand-radar build-reviewed-groups-report`
+- `demand-radar run-stage25`
+
+Only human `confirm_merge` reviews create reviewed cluster groups. `reject_merge` and `not_same_demand` are stored as feedback memory but do not create groups. Future truth scoring should prefer `reviewed_cluster_groups.jsonl` when it exists, then fall back to original demand clusters.
 
 ## Install
 
@@ -160,13 +186,34 @@ demand-radar run-cluster
 demand-radar build-cluster-report
 ```
 
+Run Stage 2.5 merge suggestions from existing demand clusters:
+
+```bash
+demand-radar run-stage25
+```
+
+Rebuild Stage 2 and then generate merge suggestions from the real-signal sample file:
+
+```bash
+demand-radar run-stage25 --input examples/real_signal_samples.csv
+```
+
+You can also run the Stage 2.5 steps separately:
+
+```bash
+demand-radar suggest-merges
+demand-radar build-merge-report
+demand-radar build-reviewed-groups
+demand-radar build-reviewed-groups-report
+```
+
 Run the local Review UI:
 
 ```bash
 demand-radar review-ui --port 8502
 ```
 
-Open `http://127.0.0.1:8502` after the command starts. The UI reads the current local pipeline files, shows Chinese review tabs for pain extraction and demand clusters, lets you click review label buttons, and can rebuild `outputs/calibration_report.md` and `outputs/demand_clusters_report.md`.
+Open `http://127.0.0.1:8502` after the command starts. The UI reads the current local pipeline files, shows Chinese review tabs for pain extraction, demand clusters, and merge suggestions, lets you click review label buttons, and can rebuild `outputs/calibration_report.md`, `outputs/demand_clusters_report.md`, `outputs/cluster_merge_suggestions.md`, and `outputs/reviewed_cluster_groups_report.md`.
 
 Fallback Streamlit command:
 
@@ -189,6 +236,11 @@ demand-radar build-calibration-report
 demand-radar run-cluster
 demand-radar build-cluster-report
 demand-radar run-stage2 --input examples/real_signal_samples.csv
+demand-radar suggest-merges
+demand-radar build-merge-report
+demand-radar build-reviewed-groups
+demand-radar build-reviewed-groups-report
+demand-radar run-stage25 --input examples/real_signal_samples.csv
 demand-radar review-ui --port 8502
 ```
 
@@ -232,11 +284,18 @@ data/processed/pain_points.jsonl
 data/processed/calibration_reviews.jsonl
 data/processed/demand_clusters.jsonl
 data/processed/cluster_reviews.jsonl
+data/processed/cluster_merge_candidates.jsonl
+data/processed/cluster_group_reviews.jsonl
+data/processed/reviewed_cluster_groups.jsonl
 data/quarantine/invalid_outputs.jsonl
 data/quarantine/invalid_clusters.jsonl
+data/quarantine/invalid_merge_candidates.jsonl
+data/quarantine/invalid_reviewed_groups.jsonl
 outputs/pain_points_report.md
 outputs/calibration_report.md
 outputs/demand_clusters_report.md
+outputs/cluster_merge_suggestions.md
+outputs/reviewed_cluster_groups_report.md
 outputs/run_summary.json
 ```
 
@@ -250,6 +309,12 @@ The Review UI displays pain points, quarantine items, Chinese demand summaries, 
 
 `cluster_reviews.jsonl` stores labels such as `good_cluster`, `too_broad`, `too_narrow`, `wrong_grouping`, `duplicate_cluster`, `bad_title`, `should_merge`, `should_split`, and `not_a_real_demand`. These reviews never rewrite generated clusters.
 
+`cluster_merge_suggestions.md` summarizes candidate pairs that may be mergeable. Each suggestion includes a Chinese reason, similarity score, field-level diagnostics, shared keywords, and representative evidence summaries. Suggestions are candidate state only.
+
+`cluster_group_reviews.jsonl` stores merge review labels such as `confirm_merge`, `reject_merge`, `maybe_merge`, `wrong_reason`, `bad_title`, `needs_split`, `duplicate_candidate`, and `not_same_demand`.
+
+`reviewed_cluster_groups.jsonl` stores only human-confirmed demand groups. It is built from confirmed pairwise reviews using connected components, so `A+B` and `B+C` become one reviewed group `[A, B, C]`. It never overwrites `demand_clusters.jsonl`.
+
 ## Directory Structure
 
 ```text
@@ -259,6 +324,7 @@ configs/
   extraction_config.yaml
   calibration_config.yaml
   clustering_config.yaml
+  merge_suggestion_config.yaml
 examples/
   sample_signals.csv
   sample_signals.jsonl
@@ -271,6 +337,8 @@ outputs/
   pain_points_report.md
   calibration_report.md
   demand_clusters_report.md
+  cluster_merge_suggestions.md
+  reviewed_cluster_groups_report.md
   run_summary.json
 prompts/
   pain_extraction.md
@@ -303,6 +371,8 @@ python -m pytest
 - No real LLM extraction yet.
 - LLMExtractorStub is interface-only and never calls external APIs.
 - Clustering is lightweight rule-based text similarity only; no embeddings or vector database.
+- Merge suggestions are lightweight rule-based diagnostics only; confirmed groups still require human review.
+- Confirmed merge reviews do not mutate `demand_clusters.jsonl`.
 - No truth score.
 - No fit score.
 - No Top Demand Candidates report.
@@ -310,11 +380,11 @@ python -m pytest
 
 ## Next Stage
 
-After Stage 2 is stable on reviewed clusters, the next stage can add:
+After Stage 2.5 is stable on reviewed groups, the next stage can add:
 
 - LLM structured extraction behind the existing extractor interface.
 - Stronger clustering with embeddings or LLM-assisted labeling if the lightweight method is too noisy.
-- Truth Scoring Loop.
+- Truth Scoring Loop that prefers reviewed cluster groups.
 - Fit Scoring Loop.
 - Top Demand Candidates report.
 

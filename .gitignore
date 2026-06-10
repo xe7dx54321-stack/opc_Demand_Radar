@@ -22,3 +22,5 @@ outputs/*.json
 !outputs/pain_points_report.md
 !outputs/calibration_report.md
 !outputs/demand_clusters_report.md
+!outputs/cluster_merge_suggestions.md
+!outputs/reviewed_cluster_groups_report.md

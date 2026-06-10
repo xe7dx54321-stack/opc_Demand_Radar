@@ -8,6 +8,8 @@ import streamlit as st
 
 from demand_radar.calibration.calibration_schema import VALID_REVIEW_LABELS
 from demand_radar.clustering.cluster_report import build_cluster_report
+from demand_radar.clustering.merge_report import build_merge_report, build_reviewed_groups_report
+from demand_radar.clustering.merge_store import build_reviewed_cluster_groups
 from demand_radar.reporting.calibration_report import build_calibration_report
 from demand_radar.ui.cluster_review_service import (
     ClusterReviewItem,
@@ -16,6 +18,12 @@ from demand_radar.ui.cluster_review_service import (
     load_cluster_review_items,
 )
 from demand_radar.ui.chinese_presenter import build_chinese_review_view, looks_like_english
+from demand_radar.ui.merge_review_service import (
+    MergeReviewItem,
+    add_merge_review,
+    get_merge_review_summary,
+    load_merge_review_items,
+)
 from demand_radar.ui.review_service import (
     ReviewItem,
     add_review,
@@ -47,6 +55,17 @@ CLUSTER_REVIEW_ACTIONS = [
     ("应合并", "should_merge"),
     ("应拆分", "should_split"),
     ("不是真需求", "not_a_real_demand"),
+]
+
+MERGE_REVIEW_ACTIONS = [
+    ("确认合并", "confirm_merge"),
+    ("不合并", "reject_merge"),
+    ("暂时不确定", "maybe_merge"),
+    ("理由不对", "wrong_reason"),
+    ("标题不好", "bad_title"),
+    ("需要拆分", "needs_split"),
+    ("重复建议", "duplicate_candidate"),
+    ("不是同一需求", "not_same_demand"),
 ]
 
 REVIEW_RANGES = [
@@ -102,6 +121,18 @@ CLUSTER_REVIEW_LABELS = {
     "should_merge": "应合并",
     "should_split": "应拆分",
     "not_a_real_demand": "不是真需求",
+}
+
+MERGE_REVIEW_LABELS = {
+    "All": "全部",
+    "confirm_merge": "确认合并",
+    "reject_merge": "不合并",
+    "maybe_merge": "暂时不确定",
+    "wrong_reason": "理由不对",
+    "bad_title": "标题不好",
+    "needs_split": "需要拆分",
+    "duplicate_candidate": "重复建议",
+    "not_same_demand": "不是同一需求",
 }
 
 PERSONA_LABELS = {
@@ -171,11 +202,13 @@ def main() -> None:
         "标准化信号、已抽取痛点或需求主题候选。"
     )
 
-    pain_tab, cluster_tab = st.tabs(["痛点校准", "需求主题审核"])
+    pain_tab, cluster_tab, merge_tab = st.tabs(["痛点校准", "需求主题审核", "合并建议审核"])
     with pain_tab:
         _render_pain_review_page()
     with cluster_tab:
         _render_cluster_review_page()
+    with merge_tab:
+        _render_merge_review_page()
 
 
 def _render_pain_review_page() -> None:
@@ -219,6 +252,35 @@ def _render_cluster_review_page() -> None:
         _render_cluster_item(item)
 
 
+def _render_merge_review_page() -> None:
+    items = load_merge_review_items()
+    summary = get_merge_review_summary(items)
+    _render_merge_summary(summary)
+
+    col_a, col_b = st.columns(2)
+    if col_a.button("重建合并建议报告", type="primary", key="rebuild_merge_report"):
+        rebuilt = build_merge_report()
+        st.success(
+            "合并建议报告已重建："
+            f"候选 {rebuilt.merge_candidates} 个，已审核 {rebuilt.reviewed_candidates} 个。"
+        )
+    if col_b.button("重建已确认需求组", type="primary", key="rebuild_reviewed_groups"):
+        groups = build_reviewed_cluster_groups()
+        rebuilt = build_reviewed_groups_report()
+        st.success(
+            "已确认需求组已重建："
+            f"生成 {len(groups)} 个需求组，覆盖 {rebuilt.included_clusters} 个主题。"
+        )
+
+    if not items:
+        st.info("还没有合并建议。请先运行 `demand-radar run-stage25` 或 `demand-radar suggest-merges`。")
+        return
+
+    st.caption(f"当前显示 {len(items)} 条合并建议。")
+    for item in items:
+        _render_merge_item(item)
+
+
 def _render_summary(summary: object) -> None:
     labels = summary.labels
     metric_values = [
@@ -260,6 +322,23 @@ def _render_cluster_summary(summary: object) -> None:
         ("不是真需求", labels.get("not_a_real_demand", 0)),
     ]
     columns = st.columns(7)
+    for index, (label, value) in enumerate(metric_values):
+        columns[index % len(columns)].metric(label, value)
+
+
+def _render_merge_summary(summary: object) -> None:
+    metric_values = [
+        ("需求主题", summary.demand_clusters),
+        ("合并建议", summary.merge_candidates),
+        ("强建议", summary.strong_candidates),
+        ("中建议", summary.medium_candidates),
+        ("已审核建议", summary.reviewed_candidates),
+        ("确认合并", summary.confirmed_merges),
+        ("拒绝合并", summary.rejected_merges),
+        ("暂不确定", summary.maybe_merges),
+        ("已确认需求组", summary.reviewed_groups),
+    ]
+    columns = st.columns(6)
     for index, (label, value) in enumerate(metric_values):
         columns[index % len(columns)].metric(label, value)
 
@@ -353,6 +432,62 @@ def _render_cluster_item(item: ClusterReviewItem) -> None:
         _render_cluster_review_controls(item)
 
 
+def _render_merge_item(item: MergeReviewItem) -> None:
+    title = (
+        f"{_strength_label(item.strength)}建议 · 相似度 {item.similarity_score:.1f} · "
+        f"{item.title_a} ↔ {item.title_b}"
+    )
+    with st.expander(title, expanded=not item.reviewed):
+        left, right = st.columns([3, 2])
+        with left:
+            st.subheader("合并建议")
+            st.markdown(f"**Cluster A：** {item.title_a}")
+            st.markdown(f"**Cluster B：** {item.title_b}")
+            st.markdown(f"**建议理由：** {item.merge_reason_zh}")
+            if item.risk_note_zh:
+                st.warning(item.risk_note_zh)
+            st.caption("合并建议只是候选状态。只有人工确认后，才会生成已确认需求组。")
+        with right:
+            st.subheader("审核状态")
+            _render_merge_review_status(item)
+            st.markdown(f"**相似度：** {item.similarity_score:.1f}")
+            st.markdown(f"**建议强度：** {_strength_label(item.strength)}")
+            st.markdown(f"**共享用户：** {_persona_list_label(item.shared_personas)}")
+            st.markdown(f"**共享领域：** {_domain_tags_label(item.shared_domain_tags)}")
+
+        _render_merge_diagnostics(item)
+        _render_merge_review_controls(item)
+
+
+def _render_merge_diagnostics(item: MergeReviewItem) -> None:
+    st.markdown("**共享关键词**")
+    if item.shared_keywords:
+        st.write("、".join(item.shared_keywords))
+    else:
+        st.caption("暂无")
+
+    st.markdown("**字段相似度诊断**")
+    score_columns = st.columns(3)
+    scores = [
+        ("标题", item.field_scores.get("title_similarity", 0)),
+        ("摘要", item.field_scores.get("summary_similarity", 0)),
+        ("痛点", item.field_scores.get("pain_description_similarity", 0)),
+        ("替代方案", item.field_scores.get("workaround_similarity", 0)),
+        ("用户角色", item.field_scores.get("persona_similarity", 0)),
+        ("领域", item.field_scores.get("domain_similarity", 0)),
+    ]
+    for index, (label, score) in enumerate(scores):
+        score_columns[index % len(score_columns)].metric(label, f"{score:.1f}")
+
+    left, right = st.columns(2)
+    with left:
+        st.markdown("**Cluster A 代表性证据说明**")
+        _render_list_or_empty(item.representative_quotes_a)
+    with right:
+        st.markdown("**Cluster B 代表性证据说明**")
+        _render_list_or_empty(item.representative_quotes_b)
+
+
 def _render_cluster_lists(item: ClusterReviewItem) -> None:
     st.markdown("**代表性痛点**")
     _render_list_or_empty(item.representative_pain_descriptions)
@@ -376,6 +511,15 @@ def _render_list_or_empty(values: list[str]) -> None:
 def _render_cluster_review_status(item: ClusterReviewItem) -> None:
     if item.reviewed:
         st.success(f"已审核：{_cluster_review_label(item.latest_review_label or '')}")
+        if item.latest_review_note:
+            st.caption(_review_note_label(item.latest_review_note))
+    else:
+        st.warning("未审核")
+
+
+def _render_merge_review_status(item: MergeReviewItem) -> None:
+    if item.reviewed:
+        st.success(f"已审核：{_merge_review_label(item.latest_review_label or '')}")
         if item.latest_review_note:
             st.caption(_review_note_label(item.latest_review_note))
     else:
@@ -406,6 +550,31 @@ def _render_cluster_review_controls(item: ClusterReviewItem) -> None:
                 should_split=True if submitted_label == "should_split" or should_split else None,
             )
             st.success(f"已保存需求主题审核：{_cluster_review_label(submitted_label)}")
+            st.rerun()
+
+
+def _render_merge_review_controls(item: MergeReviewItem) -> None:
+    key_base = item.merge_candidate_id
+    with st.form(f"merge_review_form_{key_base}", clear_on_submit=False):
+        note = st.text_area("审核备注", key=f"merge_note_{key_base}")
+        col_a, col_b = st.columns(2)
+        expected_title = col_a.text_input("期望合并后标题", key=f"merge_title_{key_base}")
+        expected_summary = col_b.text_input("期望合并后摘要", key=f"merge_summary_{key_base}")
+        st.markdown("**审核动作**")
+        button_columns = st.columns(4)
+        submitted_label = None
+        for index, (text, label) in enumerate(MERGE_REVIEW_ACTIONS):
+            if button_columns[index % len(button_columns)].form_submit_button(text):
+                submitted_label = label
+        if submitted_label:
+            add_merge_review(
+                item,
+                label=submitted_label,
+                reviewer_note=note.strip() or f"标记为{_merge_review_label(submitted_label)}",
+                expected_group_title_zh=expected_title.strip() or None,
+                expected_group_summary_zh=expected_summary.strip() or None,
+            )
+            st.success(f"已保存合并建议审核：{_merge_review_label(submitted_label)}")
             st.rerun()
 
 
@@ -516,6 +685,19 @@ def _review_label(value: str) -> str:
 
 def _cluster_review_label(value: str) -> str:
     return CLUSTER_REVIEW_LABELS.get(value, value)
+
+
+def _merge_review_label(value: str) -> str:
+    return MERGE_REVIEW_LABELS.get(value, value)
+
+
+def _strength_label(value: str) -> str:
+    labels = {
+        "strong": "强",
+        "medium": "中",
+        "weak": "弱",
+    }
+    return labels.get(value, value or "未知")
 
 
 def _persona_label(value: str) -> str:

@@ -13,6 +13,9 @@ from demand_radar.calibration.calibration_review import append_calibration_revie
 from demand_radar.cleaning.text_cleaner import normalize_signals
 from demand_radar.clustering.cluster_report import build_cluster_report
 from demand_radar.clustering.demand_clusterer import run_demand_clustering
+from demand_radar.clustering.merge_report import build_merge_report, build_reviewed_groups_report
+from demand_radar.clustering.merge_store import build_reviewed_cluster_groups
+from demand_radar.clustering.merge_suggester import suggest_cluster_merges
 from demand_radar.config.load_config import load_configs
 from demand_radar.intake.manual_import import import_file
 from demand_radar.loops.pain_extraction_loop import run_pain_extraction
@@ -32,11 +35,18 @@ RUNTIME_FILES = [
     Path("data/processed/calibration_reviews.jsonl"),
     Path("data/processed/demand_clusters.jsonl"),
     Path("data/processed/cluster_reviews.jsonl"),
+    Path("data/processed/cluster_merge_candidates.jsonl"),
+    Path("data/processed/cluster_group_reviews.jsonl"),
+    Path("data/processed/reviewed_cluster_groups.jsonl"),
     Path("data/quarantine/invalid_outputs.jsonl"),
     Path("data/quarantine/invalid_clusters.jsonl"),
+    Path("data/quarantine/invalid_merge_candidates.jsonl"),
+    Path("data/quarantine/invalid_reviewed_groups.jsonl"),
     Path("outputs/pain_points_report.md"),
     Path("outputs/calibration_report.md"),
     Path("outputs/demand_clusters_report.md"),
+    Path("outputs/cluster_merge_suggestions.md"),
+    Path("outputs/reviewed_cluster_groups_report.md"),
     Path("outputs/run_summary.json"),
 ]
 
@@ -139,6 +149,50 @@ def build_cluster_report_command() -> None:
     )
 
 
+@app.command("suggest-merges")
+def suggest_merges() -> None:
+    """Generate Stage 2.5 cluster merge candidates from current demand clusters."""
+
+    candidates = suggest_cluster_merges()
+    typer.echo(
+        "Generated merge candidates -> data/processed/cluster_merge_candidates.jsonl "
+        f"(candidates={len(candidates)})"
+    )
+
+
+@app.command("build-merge-report")
+def build_merge_report_command() -> None:
+    """Build the Stage 2.5 merge suggestions report."""
+
+    summary = build_merge_report()
+    typer.echo(
+        "Built merge suggestions report -> outputs/cluster_merge_suggestions.md "
+        f"(candidates={summary.merge_candidates}, reviewed={summary.reviewed_candidates})"
+    )
+
+
+@app.command("build-reviewed-groups")
+def build_reviewed_groups() -> None:
+    """Build reviewed cluster groups from confirmed merge reviews."""
+
+    groups = build_reviewed_cluster_groups()
+    typer.echo(
+        "Built reviewed cluster groups -> data/processed/reviewed_cluster_groups.jsonl "
+        f"(groups={len(groups)})"
+    )
+
+
+@app.command("build-reviewed-groups-report")
+def build_reviewed_groups_report_command() -> None:
+    """Build the reviewed cluster groups report."""
+
+    summary = build_reviewed_groups_report()
+    typer.echo(
+        "Built reviewed groups report -> outputs/reviewed_cluster_groups_report.md "
+        f"(groups={summary.reviewed_groups}, clusters={summary.included_clusters})"
+    )
+
+
 @app.command("run-stage1")
 def run_stage1(
     input: Annotated[Path, typer.Option("--input", exists=True, readable=True, help="CSV or JSONL input file.")],
@@ -227,6 +281,42 @@ def run_stage2(
     )
 
 
+@app.command("run-stage25")
+def run_stage25(
+    input: Annotated[
+        Path | None,
+        typer.Option("--input", exists=True, readable=True, help="Optional CSV or JSONL input file."),
+    ] = None,
+) -> None:
+    """Run Stage 2.5 merge suggestions and reviewed group report generation."""
+
+    init(reset=False)
+    if input is not None:
+        _run_stage2_core(input)
+
+    candidates = suggest_cluster_merges()
+    typer.echo(
+        "Generated merge candidates -> data/processed/cluster_merge_candidates.jsonl "
+        f"(candidates={len(candidates)})"
+    )
+    merge_summary = build_merge_report()
+    typer.echo(
+        "Built merge suggestions report -> outputs/cluster_merge_suggestions.md "
+        f"(candidates={merge_summary.merge_candidates}, reviewed={merge_summary.reviewed_candidates}, "
+        f"confirmed={merge_summary.confirmed_merges})"
+    )
+    groups = build_reviewed_cluster_groups()
+    typer.echo(
+        "Built reviewed cluster groups -> data/processed/reviewed_cluster_groups.jsonl "
+        f"(groups={len(groups)})"
+    )
+    groups_summary = build_reviewed_groups_report()
+    typer.echo(
+        "Built reviewed groups report -> outputs/reviewed_cluster_groups_report.md "
+        f"(groups={groups_summary.reviewed_groups}, clusters={groups_summary.included_clusters})"
+    )
+
+
 @app.command("review-ui")
 def review_ui(
     port: Annotated[int, typer.Option("--port", help="Local Streamlit port.")] = 8501,
@@ -285,6 +375,36 @@ def _clear_regenerated_stage2_files() -> None:
     for path in STAGE2_REGENERATED_FILES:
         path.parent.mkdir(parents=True, exist_ok=True)
         path.write_text("", encoding="utf-8")
+
+
+def _run_stage2_core(input: Path) -> None:
+    _clear_regenerated_stage2_files()
+    imported = import_file(input)
+    typer.echo(f"Imported {len(imported)} raw signals -> data/raw/raw_signals.jsonl")
+    normalized = normalize_signals()
+    typer.echo(f"Normalized {len(normalized)} signals -> data/processed/normalized_signals.jsonl")
+    pain_points = run_pain_extraction()
+    typer.echo(f"Extracted {len(pain_points)} valid pain points -> data/processed/pain_points.jsonl")
+    pain_summary = build_pain_points_report()
+    typer.echo(
+        "Built pain report -> outputs/pain_points_report.md "
+        f"(raw={pain_summary.raw_signals}, normalized={pain_summary.normalized_signals}, "
+        f"pain_points={pain_summary.pain_points}, quarantine={pain_summary.quarantined_items})"
+    )
+    calibration_summary = build_calibration_report()
+    typer.echo(
+        "Built calibration report -> outputs/calibration_report.md "
+        f"(reviews={calibration_summary.calibration_reviews})"
+    )
+    clusters = run_demand_clustering()
+    typer.echo(f"Generated {len(clusters)} demand clusters -> data/processed/demand_clusters.jsonl")
+    cluster_summary = build_cluster_report()
+    typer.echo(
+        "Built cluster report -> outputs/demand_clusters_report.md "
+        f"(pain_points={cluster_summary.pain_points}, clusters={cluster_summary.demand_clusters}, "
+        f"singleton={cluster_summary.singleton_clusters}, invalid={cluster_summary.invalid_clusters}, "
+        f"cluster_reviews={cluster_summary.cluster_reviews})"
+    )
 
 
 def main() -> None:
