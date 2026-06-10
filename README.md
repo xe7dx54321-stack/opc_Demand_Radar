@@ -51,7 +51,7 @@ It still excludes automated crawling, clustering, truth scoring, fit scoring, To
 
 Stage 1.6: Review UI for Calibration.
 
-This layer adds a local Chinese Streamlit interface for reviewing extracted pain points and quarantined items. It lets a reviewer inspect raw text, normalized text, extraction fields, evidence quote, quarantine reason, and the latest review status in one place.
+This layer adds a local Chinese Streamlit interface for reviewing extracted pain points and quarantined items. It shows clean Chinese demand summaries, extraction fields, quarantine reasons, and the latest review status in one place. English source text is not shown in the main review view; use the source link when original-language verification is needed.
 
 It adds:
 
@@ -197,7 +197,7 @@ Only pain points that pass State Gate enter `pain_points.jsonl`. Invalid schema,
 
 `calibration_report.md` summarizes human review labels such as `good_extraction`, `weak_extraction`, `false_positive`, `false_negative`, `bad_quote`, `bad_persona`, and `should_quarantine`. These reviews are separate from `pain_points.jsonl`; review labels do not automatically mutate accepted pain points.
 
-The Review UI displays pain points, quarantine items, raw and normalized text, evidence quote highlighting, latest review state, and optional correction fields for expected persona, expected quote, and expected pain description. Visible labels, filters, buttons, warnings, and status messages are Chinese; stored review labels remain the stable schema values such as `good_extraction` and `bad_quote`.
+The Review UI displays pain points, quarantine items, Chinese demand summaries, Chinese evidence summaries, latest review state, and optional correction fields for expected persona, expected evidence summary, and expected pain description. Visible labels, filters, buttons, warnings, and status messages are Chinese; stored review labels remain the stable schema values such as `good_extraction` and `bad_quote`.
 
 ## Directory Structure
 

@@ -2,17 +2,16 @@
 
 from __future__ import annotations
 
-import html
 from typing import Iterable
 
 import streamlit as st
 
 from demand_radar.calibration.calibration_schema import VALID_REVIEW_LABELS
 from demand_radar.reporting.calibration_report import build_calibration_report
+from demand_radar.ui.chinese_presenter import build_chinese_review_view, looks_like_english
 from demand_radar.ui.review_service import (
     ReviewItem,
     add_review,
-    evidence_quote_found,
     get_review_summary,
     load_review_items,
 )
@@ -81,7 +80,7 @@ PERSONA_LABELS = {
     "content_team": "内容团队",
     "developer": "开发者",
     "operator": "运营",
-    "strategy_bd": "战略/BD",
+    "strategy_bd": "战略与商务拓展",
     "unknown": "未知",
 }
 
@@ -112,11 +111,11 @@ LANGUAGE_LABELS = {
 }
 
 DOMAIN_TAG_LABELS = {
-    "ai_investment_research": "AI 投资研究",
-    "ai_hardtech": "AI 硬科技",
+    "ai_investment_research": "人工智能投资研究",
+    "ai_hardtech": "人工智能硬科技",
     "content_production": "内容生产",
     "enterprise_knowledge_workflow": "企业知识工作流",
-    "ai_agent_workflow": "AI Agent 工作流",
+    "ai_agent_workflow": "人工智能智能体工作流",
 }
 
 QUARANTINE_REASON_LABELS = {
@@ -226,19 +225,19 @@ def _filter_items(items: list[ReviewItem], filters: dict[str, object]) -> list[R
 
 
 def _render_item(item: ReviewItem) -> None:
-    title = f"{item.title} - {_item_type_label(item.item_type)}"
+    view = build_chinese_review_view(item)
+    title = f"{view.title} - {_item_type_label(item.item_type)}"
     with st.expander(title, expanded=not item.reviewed):
         _render_metadata(item)
         left, right = st.columns([3, 2])
         with left:
-            st.subheader("信号文本")
-            st.markdown("**原始文本**")
-            st.text_area("原始文本", item.raw_text or "", height=140, label_visibility="collapsed", disabled=True)
-            st.markdown("**标准化文本**")
-            _render_normalized_text(item)
+            st.subheader("需求说明")
+            st.markdown(f"**一句话总结：** {view.summary}")
+            st.markdown(f"**证据说明：** {view.evidence_summary or '暂无明确证据说明'}")
+            st.caption("页面只展示中文需求说明；如需核对英文原文，请打开来源链接。")
         with right:
             st.subheader("抽取结果")
-            _render_extraction_fields(item)
+            _render_extraction_fields(item, view)
             _render_review_status(item)
             _render_quarantine(item)
         _render_review_controls(item)
@@ -246,52 +245,36 @@ def _render_item(item: ReviewItem) -> None:
 
 def _render_metadata(item: ReviewItem) -> None:
     metadata = [
-        f"原始信号 ID：`{item.raw_signal_id}`",
-        f"标准化信号 ID：`{item.normalized_signal_id or ''}`",
-        f"痛点 ID：`{item.pain_point_id or ''}`",
         f"来源：`{_source_name_label(item.source_name or '')}` / `{_source_type_label(item.source_type or '')}`",
         f"语言：`{_language_label(item.language or '')}`",
         f"领域标签：`{_domain_tags_label(item.domain_tags)}`",
     ]
     st.markdown("  \n".join(metadata))
     if item.url:
-        st.markdown(f"来源链接：[{item.url}]({item.url})")
+        st.markdown(f"原文追溯：[打开来源链接]({item.url})")
+    st.caption("内部编号已隐藏；需要审计时可查看本地数据文件。")
 
 
-def _render_normalized_text(item: ReviewItem) -> None:
-    text = item.normalized_text or ""
-    quote = (item.evidence_quote or "").strip()
-    if quote and evidence_quote_found(item):
-        st.markdown(_highlight_quote(text, quote), unsafe_allow_html=True)
-    elif quote:
-        st.warning("证据原文未在标准化文本中找到")
-        st.text_area("标准化文本", text, height=180, label_visibility="collapsed", disabled=True)
-    else:
-        st.text_area("标准化文本", text, height=180, label_visibility="collapsed", disabled=True)
-
-
-def _render_extraction_fields(item: ReviewItem) -> None:
+def _render_extraction_fields(item: ReviewItem, view: object) -> None:
     rows = [
         ("用户角色", _persona_label(item.persona or "")),
-        ("场景", item.scenario),
-        ("待完成任务", item.job_to_be_done),
-        ("痛点", item.pain_description),
-        ("当前替代方案", item.current_workaround),
-        ("频率信号", item.frequency_signal),
-        ("付费信号", item.payment_signal),
+        ("场景", view.scenario),
+        ("待完成任务", view.job_to_be_done),
+        ("痛点", view.pain_description),
+        ("当前替代方案", view.current_workaround),
+        ("频率信号", view.frequency_signal),
+        ("付费信号", view.payment_signal),
         ("置信度", f"{item.confidence:.2f}" if item.confidence is not None else None),
     ]
     for label, value in rows:
         st.markdown(f"**{label}:** {value or ''}")
-    if item.evidence_quote:
-        st.markdown("**证据原文：**")
-        st.info(item.evidence_quote)
 
 
 def _render_review_status(item: ReviewItem) -> None:
     if item.reviewed:
         st.success(f"已审核：{_review_label(item.latest_review_label or '')}")
-        st.caption(item.latest_review_note or "")
+        if item.latest_review_note:
+            st.caption(_review_note_label(item.latest_review_note))
     else:
         st.warning("未审核")
 
@@ -300,8 +283,7 @@ def _render_quarantine(item: ReviewItem) -> None:
     if item.item_type != "quarantine":
         return
     st.error(f"隔离原因：{_quarantine_reason_label(item.quarantine_reason or '')}")
-    with st.expander("隔离原始载荷（保留原始字段）"):
-        st.json(item.quarantine_payload or {})
+    st.caption("隔离原始载荷已在页面隐藏，避免英文原文干扰判断；需要审计时可查看本地数据文件。")
 
 
 def _render_review_controls(item: ReviewItem) -> None:
@@ -310,7 +292,7 @@ def _render_review_controls(item: ReviewItem) -> None:
         note = st.text_area("审核备注", key=f"note_{key_base}")
         col_a, col_b, col_c = st.columns(3)
         expected_persona = col_a.text_input("期望用户角色", key=f"persona_{key_base}")
-        expected_quote = col_b.text_input("期望证据原文", key=f"quote_{key_base}")
+        expected_quote = col_b.text_input("期望证据说明", key=f"quote_{key_base}")
         expected_pain = col_c.text_input("期望痛点描述", key=f"pain_{key_base}")
         st.markdown("**审核动作**")
         button_columns = st.columns(5)
@@ -348,16 +330,6 @@ def _save_review_from_form(
     )
     st.success(f"已保存审核：{_review_label(label)}")
     st.rerun()
-
-
-def _highlight_quote(text: str, quote: str) -> str:
-    escaped_text = html.escape(text)
-    escaped_quote = html.escape(quote)
-    return escaped_text.replace(
-        escaped_quote,
-        f"<mark style='background:#fde68a;padding:0.08rem 0.2rem;border-radius:0.2rem'>{escaped_quote}</mark>",
-        1,
-    )
 
 
 def _item_key(item: ReviewItem) -> str:
@@ -404,6 +376,21 @@ def _domain_tags_label(values: list[str]) -> str:
 
 def _quarantine_reason_label(value: str) -> str:
     return QUARANTINE_REASON_LABELS.get(value, value or "未知")
+
+
+def _review_note_label(value: str) -> str:
+    known_notes = {
+        "UI validation: quote is too narrow": "界面验证：证据引用范围过窄。",
+        "UI validation: should be quarantined": "界面验证：这条应进入隔离区。",
+        "Looks right.": "人工判断：抽取结果基本正确。",
+        "Quote is useful but thin.": "人工判断：证据可用，但信息偏薄。",
+        "Latest review should win.": "人工判断：以最新审核为准。",
+    }
+    if value in known_notes:
+        return known_notes[value]
+    if looks_like_english(value):
+        return "已有英文审核备注已隐藏；需要审计时可查看本地校准审核记录文件。"
+    return value
 
 
 if __name__ == "__main__":
