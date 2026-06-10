@@ -161,12 +161,14 @@ def review_ui(
         str(app_path),
         "--server.port",
         str(port),
+        "--server.address",
+        "127.0.0.1",
         "--server.headless",
         "true",
         "--browser.gatherUsageStats",
         "false",
     ]
-    typer.echo(f"Starting Review UI at http://localhost:{port}")
+    typer.echo(f"正在启动审核界面：http://127.0.0.1:{port}")
     raise typer.Exit(subprocess.call(command))
 
 
