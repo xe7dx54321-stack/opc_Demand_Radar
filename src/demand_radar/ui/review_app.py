@@ -98,6 +98,10 @@ SOURCE_TYPE_LABELS = {
     "api": "接口",
 }
 
+SOURCE_NAME_LABELS = {
+    "manual_import": "手动导入",
+}
+
 LANGUAGE_LABELS = {
     "All": "全部",
     "en": "英文",
@@ -105,6 +109,24 @@ LANGUAGE_LABELS = {
     "zh-CN": "中文",
     "zh_cn": "中文",
     "unknown": "未知",
+}
+
+DOMAIN_TAG_LABELS = {
+    "ai_investment_research": "AI 投资研究",
+    "ai_hardtech": "AI 硬科技",
+    "content_production": "内容生产",
+    "enterprise_knowledge_workflow": "企业知识工作流",
+    "ai_agent_workflow": "AI Agent 工作流",
+}
+
+QUARANTINE_REASON_LABELS = {
+    "schema_invalid": "结构校验失败",
+    "missing_evidence_quote": "缺少证据原文",
+    "evidence_quote_not_found": "证据原文未在文本中找到",
+    "low_confidence": "置信度过低",
+    "empty_text": "文本为空",
+    "duplicate_signal": "重复信号",
+    "extractor_error": "抽取器异常",
 }
 
 
@@ -227,9 +249,9 @@ def _render_metadata(item: ReviewItem) -> None:
         f"原始信号 ID：`{item.raw_signal_id}`",
         f"标准化信号 ID：`{item.normalized_signal_id or ''}`",
         f"痛点 ID：`{item.pain_point_id or ''}`",
-        f"来源：`{item.source_name or ''}` / `{_source_type_label(item.source_type or '')}`",
+        f"来源：`{_source_name_label(item.source_name or '')}` / `{_source_type_label(item.source_type or '')}`",
         f"语言：`{_language_label(item.language or '')}`",
-        f"领域标签：`{', '.join(item.domain_tags)}`",
+        f"领域标签：`{_domain_tags_label(item.domain_tags)}`",
     ]
     st.markdown("  \n".join(metadata))
     if item.url:
@@ -277,8 +299,8 @@ def _render_review_status(item: ReviewItem) -> None:
 def _render_quarantine(item: ReviewItem) -> None:
     if item.item_type != "quarantine":
         return
-    st.error(f"隔离原因：{item.quarantine_reason}")
-    with st.expander("隔离原始载荷"):
+    st.error(f"隔离原因：{_quarantine_reason_label(item.quarantine_reason or '')}")
+    with st.expander("隔离原始载荷（保留原始字段）"):
         st.json(item.quarantine_payload or {})
 
 
@@ -366,8 +388,22 @@ def _source_type_label(value: str) -> str:
     return SOURCE_TYPE_LABELS.get(value, value or "未知")
 
 
+def _source_name_label(value: str) -> str:
+    return SOURCE_NAME_LABELS.get(value, value or "未知")
+
+
 def _language_label(value: str) -> str:
     return LANGUAGE_LABELS.get(value, value or "未知")
+
+
+def _domain_tags_label(values: list[str]) -> str:
+    if not values:
+        return "无"
+    return "，".join(DOMAIN_TAG_LABELS.get(value, value) for value in values)
+
+
+def _quarantine_reason_label(value: str) -> str:
+    return QUARANTINE_REASON_LABELS.get(value, value or "未知")
 
 
 if __name__ == "__main__":
