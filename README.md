@@ -8,6 +8,8 @@ Stage 1 focuses on manual signal intake and pain extraction only.
 
 No automated web crawling, clustering, scoring, or MVP generation is included in this stage.
 
+Stage 1.5 adds real-signal calibration and LLM extractor readiness. It still does not call a real LLM or external API.
+
 ## Stage 1 Scope
 
 The current pipeline is intentionally narrow:
@@ -25,6 +27,23 @@ Pain Points report
 ```
 
 This stage does not include automated source collection, Reddit/HN/GitHub APIs, clustering, truth scoring, fit scoring, Top 10 demand candidates, web UI, vector databases, multi-agent orchestration, interview planning, or MVP generation.
+
+## Stage 1.5 Scope
+
+Stage 1.5: Real Signal Calibration & LLM Extractor Readiness.
+
+This layer helps the team run 20-50 real or near-real manual samples through the Stage 1 pain extraction loop, record human review labels, and generate an extraction calibration report. The goal is to see what the current rule-based extractor gets right or wrong before adding a real structured-output LLM extractor.
+
+It adds:
+
+- `examples/real_signal_samples.csv`
+- `configs/calibration_config.yaml`
+- `data/processed/calibration_reviews.jsonl`
+- `outputs/calibration_report.md`
+- `prompts/llm_pain_extraction.md`
+- `LLMExtractorStub`, which does not call external APIs
+
+It still excludes automated crawling, clustering, truth scoring, fit scoring, Top Demand Candidates, and MVP generation.
 
 ## Install
 
@@ -60,6 +79,30 @@ JSONL input is also supported:
 demand-radar run-stage1 --input examples/sample_signals.jsonl
 ```
 
+Run Stage 1.5 calibration:
+
+```bash
+demand-radar run-calibration --input examples/real_signal_samples.csv
+```
+
+Add a human calibration review:
+
+```bash
+demand-radar calibration-review add --raw-signal-id sig_000001 --pain-point-id pain_000001 --label bad_quote --note "quote matched a complaint word but missed the real pain"
+```
+
+False negatives can be recorded without a pain point ID:
+
+```bash
+demand-radar calibration-review add --raw-signal-id sig_000009 --label false_negative --note "The source contains a clear pain but rule_based extraction missed it"
+```
+
+Rebuild the calibration report:
+
+```bash
+demand-radar build-calibration-report
+```
+
 ## CLI Commands
 
 ```text
@@ -69,6 +112,9 @@ demand-radar normalize
 demand-radar extract-pain
 demand-radar build-pain-report
 demand-radar run-stage1 --input examples/sample_signals.csv
+demand-radar run-calibration --input examples/real_signal_samples.csv
+demand-radar calibration-review add --raw-signal-id sig_000001 --label good_extraction --note "quote is useful"
+demand-radar build-calibration-report
 ```
 
 ## Input Format
@@ -110,10 +156,13 @@ data/processed/normalized_signals.jsonl
 data/processed/pain_points.jsonl
 data/quarantine/invalid_outputs.jsonl
 outputs/pain_points_report.md
+outputs/calibration_report.md
 outputs/run_summary.json
 ```
 
 Only pain points that pass State Gate enter `pain_points.jsonl`. Invalid schema, missing evidence, quote mismatch, low confidence, empty text, duplicate signals, and extractor errors go to quarantine.
+
+`calibration_report.md` summarizes human review labels such as `good_extraction`, `weak_extraction`, `false_positive`, `false_negative`, `bad_quote`, `bad_persona`, and `should_quarantine`. These reviews are separate from `pain_points.jsonl`; review labels do not automatically mutate accepted pain points.
 
 ## Directory Structure
 
@@ -122,20 +171,25 @@ configs/
   domain_config.yaml
   source_registry.yaml
   extraction_config.yaml
+  calibration_config.yaml
 examples/
   sample_signals.csv
   sample_signals.jsonl
+  real_signal_samples.csv
 data/
   raw/
   processed/
   quarantine/
 outputs/
   pain_points_report.md
+  calibration_report.md
   run_summary.json
 prompts/
   pain_extraction.md
+  llm_pain_extraction.md
 src/demand_radar/
   cli.py
+  calibration/
   config/
   intake/
   cleaning/
@@ -157,6 +211,7 @@ python -m pytest
 - No automated web crawling.
 - No Reddit, Hacker News, or GitHub Issues API import.
 - No real LLM extraction yet.
+- LLMExtractorStub is interface-only and never calls external APIs.
 - No clustering.
 - No truth score.
 - No fit score.

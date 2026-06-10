@@ -124,4 +124,5 @@ class RunSummary(BaseModel):
     normalized_signals: int
     pain_points: int
     quarantined_items: int
+    calibration_reviews: int = 0
     generated_at: str

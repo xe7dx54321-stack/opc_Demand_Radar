@@ -9,10 +9,11 @@ from pydantic import ValidationError
 
 from demand_radar.config.load_config import load_yaml
 from demand_radar.config.schemas import NormalizedSignal, PainPoint
+from demand_radar.extraction.base import BasePainExtractor, PainPointCandidate
+from demand_radar.extraction.llm_extractor_stub import LLMExtractorStub
 from demand_radar.extraction.rule_based_extractor import RuleBasedPainExtractor
 from demand_radar.state.processed_store import load_normalized_signals, write_pain_points
 from demand_radar.state.quarantine_store import append_quarantine
-from demand_radar.state.raw_store import next_ids
 from demand_radar.state.state_gate import pain_point_gate
 
 
@@ -29,13 +30,14 @@ def run_pain_extraction(
     mode = str(extraction_config.get("pain_extraction", {}).get("default_mode", "rule_based"))
     extractor = _build_extractor(mode)
     normalized_signals = load_normalized_signals(normalized_path)
-    pain_ids = next_ids("pain", [], len(normalized_signals))
     accepted: list[PainPoint] = []
+    next_pain_number = 1
 
-    for signal, pain_point_id in zip(normalized_signals, pain_ids, strict=True):
+    for signal in normalized_signals:
+        pain_point_id = _pain_point_id(next_pain_number)
         working_context = build_working_context(signal, domain_config, extraction_config)
         try:
-            candidate = extractor.extract(signal, pain_point_id, working_context)
+            candidates = _as_candidate_list(extractor.extract(signal, pain_point_id, working_context))
         except Exception as exc:  # pragma: no cover - defensive boundary
             append_quarantine(
                 "pain_point",
@@ -46,27 +48,41 @@ def run_pain_extraction(
             )
             continue
 
-        gate = pain_point_gate(candidate, signal.normalized_text, min_confidence=min_confidence)
-        if not gate.passed:
+        if not candidates:
             append_quarantine(
                 "pain_point",
-                gate.reason or "schema_invalid",
-                {"candidate": candidate, "normalized_signal": signal.model_dump(mode="json")},
-                item_id=str(candidate.get("pain_point_id") or signal.normalized_signal_id),
+                "missing_evidence_quote",
+                {"candidate": {}, "normalized_signal": signal.model_dump(mode="json")},
+                item_id=signal.normalized_signal_id,
                 path=quarantine_path,
             )
             continue
 
-        try:
-            accepted.append(PainPoint.model_validate(candidate))
-        except ValidationError as exc:
-            append_quarantine(
-                "pain_point",
-                "schema_invalid",
-                {"candidate": candidate, "errors": exc.errors(), "normalized_signal": signal.model_dump(mode="json")},
-                item_id=str(candidate.get("pain_point_id") or signal.normalized_signal_id),
-                path=quarantine_path,
-            )
+        for candidate in candidates:
+            candidate = dict(candidate)
+            candidate["pain_point_id"] = _pain_point_id(next_pain_number)
+            next_pain_number += 1
+            gate = pain_point_gate(candidate, signal.normalized_text, min_confidence=min_confidence)
+            if not gate.passed:
+                append_quarantine(
+                    "pain_point",
+                    gate.reason or "schema_invalid",
+                    {"candidate": candidate, "normalized_signal": signal.model_dump(mode="json")},
+                    item_id=str(candidate.get("pain_point_id") or signal.normalized_signal_id),
+                    path=quarantine_path,
+                )
+                continue
+
+            try:
+                accepted.append(PainPoint.model_validate(candidate))
+            except ValidationError as exc:
+                append_quarantine(
+                    "pain_point",
+                    "schema_invalid",
+                    {"candidate": candidate, "errors": exc.errors(), "normalized_signal": signal.model_dump(mode="json")},
+                    item_id=str(candidate.get("pain_point_id") or signal.normalized_signal_id),
+                    path=quarantine_path,
+                )
 
     write_pain_points(accepted, output_path)
     return accepted
@@ -97,9 +113,21 @@ def build_working_context(
     }
 
 
-def _build_extractor(mode: str) -> RuleBasedPainExtractor:
+def _as_candidate_list(result: object) -> list[PainPointCandidate]:
+    if isinstance(result, list):
+        return result
+    if isinstance(result, dict):
+        return [result]
+    return []
+
+
+def _pain_point_id(number: int) -> str:
+    return f"pain_{number:06d}"
+
+
+def _build_extractor(mode: str) -> BasePainExtractor:
     if mode == "rule_based":
         return RuleBasedPainExtractor()
-    if mode == "llm":
-        raise NotImplementedError("LLM extraction mode is reserved for a later stage.")
+    if mode in {"llm", "llm_stub"}:
+        return LLMExtractorStub()
     raise ValueError(f"Unsupported pain extraction mode: {mode}")

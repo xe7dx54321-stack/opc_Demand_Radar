@@ -1,0 +1,21 @@
+calibration:
+  enabled: true
+  review_labels:
+    - good_extraction
+    - weak_extraction
+    - false_positive
+    - false_negative
+    - bad_quote
+    - bad_persona
+    - bad_pain_description
+    - missing_workaround
+    - missing_payment_signal
+    - should_quarantine
+
+  required_review_fields:
+    - label
+    - reviewer_note
+
+  report:
+    include_examples: true
+    max_examples_per_label: 10
