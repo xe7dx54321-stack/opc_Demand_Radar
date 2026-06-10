@@ -6,18 +6,18 @@
 - Normalized signals: 20
 - Pain points: 16
 - Quarantined items: 4
-- Calibration reviews: 0
-- Generated at: 2026-06-10T06:29:40Z
+- Calibration reviews: 3
+- Generated at: 2026-06-10T07:01:00Z
 
 ## Extraction Quality Overview
 
-- Good extraction: 0
+- Good extraction: 1
 - Weak extraction: 0
 - False positive: 0
 - False negative: 0
-- Bad quote: 0
+- Bad quote: 1
 - Bad persona: 0
-- Should quarantine: 0
+- Should quarantine: 1
 
 ## Review Breakdown
 
@@ -32,9 +32,9 @@
   - None
 
 ### bad_quote
-- count: 0
+- count: 1
 - examples:
-  - None
+  - review_000002 (pain_000002): UI validation: quote is too narrow
 
 ### false_negative
 - count: 0
@@ -47,9 +47,9 @@
   - None
 
 ### good_extraction
-- count: 0
+- count: 1
 - examples:
-  - None
+  - review_000001 (pain_000001): UI validation: good extraction
 
 ### missing_payment_signal
 - count: 0
@@ -62,9 +62,9 @@
   - None
 
 ### should_quarantine
-- count: 0
+- count: 1
 - examples:
-  - None
+  - review_000003 (pain_000003): UI validation: should be quarantined
 
 ### weak_extraction
 - count: 0
@@ -82,5 +82,5 @@
 ## Next-Step Readiness
 
 - Ready for LLM extractor: no
-- Blocking issues: No human calibration reviews recorded yet.
+- Blocking issues: Bad quote examples need prompt or quote extraction fixes.
 - Recommended next phase: Add real structured LLM extraction only after reviewing calibration notes.

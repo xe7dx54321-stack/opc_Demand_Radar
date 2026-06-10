@@ -10,6 +10,8 @@ No automated web crawling, clustering, scoring, or MVP generation is included in
 
 Stage 1.5 adds real-signal calibration and LLM extractor readiness. It still does not call a real LLM or external API.
 
+Stage 1.6 adds a local Streamlit Review UI for low-friction calibration review. It is still an internal local tool, not a formal web app.
+
 ## Stage 1 Scope
 
 The current pipeline is intentionally narrow:
@@ -44,6 +46,21 @@ It adds:
 - `LLMExtractorStub`, which does not call external APIs
 
 It still excludes automated crawling, clustering, truth scoring, fit scoring, Top Demand Candidates, and MVP generation.
+
+## Stage 1.6 Scope
+
+Stage 1.6: Review UI for Calibration.
+
+This layer adds a local Streamlit interface for reviewing extracted pain points and quarantined items. It lets a reviewer inspect raw text, normalized text, extraction fields, evidence quote, quarantine reason, and the latest review status in one place.
+
+It adds:
+
+- `demand-radar review-ui`
+- `src/demand_radar/ui/review_app.py`
+- `src/demand_radar/ui/review_service.py`
+- `src/demand_radar/calibration/review_store.py`
+
+The UI writes reviews to `data/processed/calibration_reviews.jsonl`. Reviews are feedback memory only: they do not edit raw signals, normalized signals, quarantine records, or `pain_points.jsonl`.
 
 ## Install
 
@@ -103,6 +120,20 @@ Rebuild the calibration report:
 demand-radar build-calibration-report
 ```
 
+Run the local Review UI:
+
+```bash
+demand-radar review-ui
+```
+
+The UI reads the current local pipeline files, lets you click a review label button, and can rebuild `outputs/calibration_report.md`.
+
+Fallback Streamlit command:
+
+```bash
+python -m streamlit run src/demand_radar/ui/review_app.py
+```
+
 ## CLI Commands
 
 ```text
@@ -115,6 +146,7 @@ demand-radar run-stage1 --input examples/sample_signals.csv
 demand-radar run-calibration --input examples/real_signal_samples.csv
 demand-radar calibration-review add --raw-signal-id sig_000001 --label good_extraction --note "quote is useful"
 demand-radar build-calibration-report
+demand-radar review-ui
 ```
 
 ## Input Format
@@ -154,6 +186,7 @@ source_type = manual
 data/raw/raw_signals.jsonl
 data/processed/normalized_signals.jsonl
 data/processed/pain_points.jsonl
+data/processed/calibration_reviews.jsonl
 data/quarantine/invalid_outputs.jsonl
 outputs/pain_points_report.md
 outputs/calibration_report.md
@@ -163,6 +196,8 @@ outputs/run_summary.json
 Only pain points that pass State Gate enter `pain_points.jsonl`. Invalid schema, missing evidence, quote mismatch, low confidence, empty text, duplicate signals, and extractor errors go to quarantine.
 
 `calibration_report.md` summarizes human review labels such as `good_extraction`, `weak_extraction`, `false_positive`, `false_negative`, `bad_quote`, `bad_persona`, and `should_quarantine`. These reviews are separate from `pain_points.jsonl`; review labels do not automatically mutate accepted pain points.
+
+The Review UI displays pain points, quarantine items, raw and normalized text, evidence quote highlighting, latest review state, and optional correction fields for expected persona, expected quote, and expected pain description.
 
 ## Directory Structure
 
@@ -190,6 +225,7 @@ prompts/
 src/demand_radar/
   cli.py
   calibration/
+  ui/
   config/
   intake/
   cleaning/
@@ -216,7 +252,7 @@ python -m pytest
 - No truth score.
 - No fit score.
 - No Top Demand Candidates report.
-- No web UI.
+- No formal multi-user web app. Stage 1.6 only includes a local Streamlit Review UI.
 
 ## Next Stage
 

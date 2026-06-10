@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+import subprocess
+import sys
 from pathlib import Path
 from typing import Annotated
 
@@ -142,6 +144,30 @@ def run_calibration(
         "Built calibration report -> outputs/calibration_report.md "
         f"(reviews={calibration_summary.calibration_reviews})"
     )
+
+
+@app.command("review-ui")
+def review_ui(
+    port: Annotated[int, typer.Option("--port", help="Local Streamlit port.")] = 8501,
+) -> None:
+    """Launch the local Streamlit calibration review UI."""
+
+    app_path = Path(__file__).parent / "ui" / "review_app.py"
+    command = [
+        sys.executable,
+        "-m",
+        "streamlit",
+        "run",
+        str(app_path),
+        "--server.port",
+        str(port),
+        "--server.headless",
+        "true",
+        "--browser.gatherUsageStats",
+        "false",
+    ]
+    typer.echo(f"Starting Review UI at http://localhost:{port}")
+    raise typer.Exit(subprocess.call(command))
 
 
 @calibration_review_app.command("add")
