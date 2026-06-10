@@ -61,6 +61,9 @@ def run_pain_extraction(
         for candidate in candidates:
             candidate = dict(candidate)
             candidate["pain_point_id"] = _pain_point_id(next_pain_number)
+            candidate["batch_id"] = signal.batch_id
+            candidate["signal_focus"] = signal.signal_focus
+            candidate["expected_quality"] = signal.expected_quality
             next_pain_number += 1
             gate = pain_point_gate(candidate, signal.normalized_text, min_confidence=min_confidence)
             if not gate.passed:

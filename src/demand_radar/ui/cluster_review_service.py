@@ -24,6 +24,9 @@ class ClusterReviewItem(BaseModel):
     personas: list[str] = Field(default_factory=list)
     domain_tags: list[str] = Field(default_factory=list)
     workflow_family: str | None = None
+    batch_ids: list[str] = Field(default_factory=list)
+    signal_focuses: list[str] = Field(default_factory=list)
+    expected_quality_mix: dict[str, int] = Field(default_factory=dict)
     related_pain_point_ids: list[str] = Field(default_factory=list)
     evidence_count: int
     source_count: int
@@ -94,6 +97,20 @@ def add_cluster_review(
     )
 
 
+def get_available_cluster_batches(items: list[ClusterReviewItem]) -> list[str]:
+    batches = {batch_id for item in items for batch_id in _item_batches(item)}
+    return sorted(batches)
+
+
+def filter_cluster_items_by_batch(
+    items: list[ClusterReviewItem],
+    batch_id: str,
+) -> list[ClusterReviewItem]:
+    if batch_id == "All":
+        return items
+    return [item for item in items if batch_id in _item_batches(item)]
+
+
 def _item_from_cluster(cluster: DemandCluster, reviews: list[ClusterReview]) -> ClusterReviewItem:
     latest = get_latest_cluster_review(cluster.cluster_id, reviews=reviews)
     payload = cluster.model_dump(mode="json")
@@ -106,3 +123,7 @@ def _item_from_cluster(cluster: DemandCluster, reviews: list[ClusterReview]) -> 
         }
     )
     return ClusterReviewItem.model_validate(payload)
+
+
+def _item_batches(item: ClusterReviewItem) -> list[str]:
+    return [batch_id for batch_id in item.batch_ids if batch_id] or ["default"]

@@ -6,6 +6,8 @@ from typing import Iterable
 
 import streamlit as st
 
+from demand_radar.batch.batch_report import build_batch_summary_report
+from demand_radar.batch.batch_summary import build_batch_summary
 from demand_radar.calibration.calibration_schema import VALID_REVIEW_LABELS
 from demand_radar.clustering.cluster_report import build_cluster_report
 from demand_radar.clustering.merge_report import build_merge_report, build_reviewed_groups_report
@@ -14,6 +16,8 @@ from demand_radar.reporting.calibration_report import build_calibration_report
 from demand_radar.ui.cluster_review_service import (
     ClusterReviewItem,
     add_cluster_review,
+    filter_cluster_items_by_batch,
+    get_available_cluster_batches,
     get_cluster_review_summary,
     load_cluster_review_items,
 )
@@ -21,12 +25,16 @@ from demand_radar.ui.chinese_presenter import build_chinese_review_view, looks_l
 from demand_radar.ui.merge_review_service import (
     MergeReviewItem,
     add_merge_review,
+    filter_merge_items_by_batch,
+    get_available_merge_batches,
     get_merge_review_summary,
     load_merge_review_items,
 )
 from demand_radar.ui.review_service import (
     ReviewItem,
     add_review,
+    filter_items_by_batch,
+    get_available_batches,
     get_review_summary,
     load_review_items,
 )
@@ -193,26 +201,66 @@ QUARANTINE_REASON_LABELS = {
     "extractor_error": "抽取器异常",
 }
 
+BATCH_LABELS = {
+    "All": "全部批次",
+    "default": "默认批次",
+    "batch_stage26_ai_research": "人工智能投资/产业研究批次",
+    "batch_stage26_content_workflow": "内容选题与生产批次",
+    "batch_stage26_agent_workflow": "智能体工作流批次",
+    "batch_stage26_devtools": "开发者工具链批次",
+    "batch_stage26_enterprise_knowledge": "企业知识工作流批次",
+    "batch_stage26_noise": "噪音与弱信号批次",
+}
+
+SIGNAL_FOCUS_LABELS = {
+    "pain": "痛点",
+    "workaround": "替代方案",
+    "competitor_gap": "竞品缺口",
+    "feature_gap": "功能缺口",
+    "weak_signal": "弱信号",
+    "noise": "噪音",
+    "hiring_signal": "招聘信号",
+    "workflow_repetition": "重复工作流",
+}
+
+EXPECTED_QUALITY_LABELS = {
+    "strong": "强",
+    "medium": "中",
+    "weak": "弱",
+    "noise": "噪音",
+}
+
 
 def main() -> None:
     st.set_page_config(page_title="需求雷达审核台", layout="wide")
+    _hide_streamlit_chrome()
     st.title("需求雷达审核台")
     st.caption(
         "本地校准审核界面。审核结果会作为反馈记忆追加保存，不会修改原始信号、"
         "标准化信号、已抽取痛点或需求主题候选。"
     )
 
-    pain_tab, cluster_tab, merge_tab = st.tabs(["痛点校准", "需求主题审核", "合并建议审核"])
+    pain_items = load_review_items()
+    cluster_items = load_cluster_review_items()
+    merge_items = load_merge_review_items()
+    batch_filter = _sidebar_batch_filter(pain_items, cluster_items, merge_items)
+    _render_current_batch_summary(batch_filter)
+
+    pain_tab, cluster_tab, merge_tab, batch_tab = st.tabs(
+        ["痛点校准", "需求主题审核", "合并建议审核", "批次总览"]
+    )
     with pain_tab:
-        _render_pain_review_page()
+        _render_pain_review_page(pain_items, batch_filter)
     with cluster_tab:
-        _render_cluster_review_page()
+        _render_cluster_review_page(cluster_items, batch_filter)
     with merge_tab:
-        _render_merge_review_page()
+        _render_merge_review_page(merge_items, batch_filter)
+    with batch_tab:
+        _render_batch_overview_page(batch_filter)
 
 
-def _render_pain_review_page() -> None:
-    items = load_review_items()
+def _render_pain_review_page(items: list[ReviewItem], batch_filter: str) -> None:
+    items = filter_items_by_batch(items, batch_filter)
     summary = get_review_summary(items)
     _render_summary(summary)
 
@@ -231,8 +279,8 @@ def _render_pain_review_page() -> None:
         _render_item(item)
 
 
-def _render_cluster_review_page() -> None:
-    items = load_cluster_review_items()
+def _render_cluster_review_page(items: list[ClusterReviewItem], batch_filter: str) -> None:
+    items = filter_cluster_items_by_batch(items, batch_filter)
     summary = get_cluster_review_summary(items)
     _render_cluster_summary(summary)
 
@@ -244,7 +292,7 @@ def _render_cluster_review_page() -> None:
         )
 
     if not items:
-        st.info("还没有需求主题候选。请先运行 `demand-radar run-stage2` 或 `demand-radar run-cluster`。")
+        st.info("还没有需求主题候选。请先运行需求主题生成流程。")
         return
 
     st.caption(f"当前显示 {len(items)} 个需求主题候选。")
@@ -252,8 +300,8 @@ def _render_cluster_review_page() -> None:
         _render_cluster_item(item)
 
 
-def _render_merge_review_page() -> None:
-    items = load_merge_review_items()
+def _render_merge_review_page(items: list[MergeReviewItem], batch_filter: str) -> None:
+    items = filter_merge_items_by_batch(items, batch_filter)
     summary = get_merge_review_summary(items)
     _render_merge_summary(summary)
 
@@ -273,12 +321,98 @@ def _render_merge_review_page() -> None:
         )
 
     if not items:
-        st.info("还没有合并建议。请先运行 `demand-radar run-stage25` 或 `demand-radar suggest-merges`。")
+        st.info("还没有合并建议。请先运行合并建议生成流程。")
         return
 
     st.caption(f"当前显示 {len(items)} 条合并建议。")
     for item in items:
         _render_merge_item(item)
+
+
+def _render_batch_overview_page(batch_filter: str) -> None:
+    result = build_batch_summary()
+    if st.button("重建批次总览报告", type="primary", key="rebuild_batch_report"):
+        rebuilt = build_batch_summary_report()
+        st.success(
+            "批次总览报告已重建："
+            f"批次数 {len(rebuilt.batches)}，第三阶段准备度："
+            f"{_readiness_label(rebuilt.readiness.ready_for_truth_scoring)}。"
+        )
+        result = rebuilt
+
+    selected_batches = result.batches if batch_filter == "All" else [
+        batch for batch in result.batches if batch.batch_id == batch_filter
+    ]
+    st.subheader("批次质量矩阵")
+    st.caption("批次只是分析维度，不会修改原始信号、痛点、需求主题或合并建议。")
+    if not selected_batches:
+        st.info("当前批次没有可展示的数据。")
+        return
+
+    for batch in selected_batches:
+        with st.expander(_batch_label(batch.batch_id), expanded=True):
+            cols = st.columns(6)
+            cols[0].metric("原始信号", batch.raw_signals)
+            cols[1].metric("痛点", batch.pain_points)
+            cols[2].metric("隔离率", _percent(batch.quarantine_rate))
+            cols[3].metric("需求主题", batch.demand_clusters)
+            cols[4].metric("合并建议", batch.merge_candidates)
+            cols[5].metric("已确认需求组", batch.reviewed_groups)
+            st.markdown(
+                f"抽取产出率：`{_percent(batch.extraction_yield)}` · "
+                f"单证据主题比例：`{_percent(batch.singleton_rate)}` · "
+                f"合并建议密度：`{_percent(batch.merge_candidate_rate)}`"
+            )
+            st.markdown(
+                f"校准审核：通过 `{batch.good_extractions}`，较弱 `{batch.weak_extractions}`，"
+                f"误报 `{batch.false_positives}`，引用问题 `{batch.bad_quotes}`，应隔离 `{batch.should_quarantine}`。"
+            )
+
+    st.subheader("第三阶段准备度")
+    readiness = result.readiness
+    readiness_cols = st.columns(4)
+    readiness_cols[0].metric("样本量达标", "是" if readiness.sample_size_ok else "否")
+    readiness_cols[1].metric("痛点量达标", "是" if readiness.pain_volume_ok else "否")
+    readiness_cols[2].metric("需求组达标", "是" if readiness.group_volume_ok else "否")
+    readiness_cols[3].metric("收敛达标", "是" if readiness.clustering_convergence_ok else "否")
+    st.info(
+        f"真值评分准备度：{_readiness_label(readiness.ready_for_truth_scoring)}。"
+        f"{readiness.recommendation}"
+    )
+
+
+def _sidebar_batch_filter(
+    pain_items: list[ReviewItem],
+    cluster_items: list[ClusterReviewItem],
+    merge_items: list[MergeReviewItem],
+) -> str:
+    batches = sorted(
+        {
+            *get_available_batches(pain_items),
+            *get_available_cluster_batches(cluster_items),
+            *get_available_merge_batches(merge_items),
+        }
+    )
+    with st.sidebar:
+        st.header("全局批次")
+        return st.selectbox("批次筛选", ["All", *batches], format_func=_batch_label)
+
+
+def _render_current_batch_summary(batch_filter: str) -> None:
+    result = build_batch_summary()
+    batch = result.overall if batch_filter == "All" else next(
+        (item for item in result.batches if item.batch_id == batch_filter),
+        None,
+    )
+    st.caption(f"当前批次：{_batch_label(batch_filter)}")
+    if batch is None:
+        return
+    columns = st.columns(5)
+    columns[0].metric("原始信号", batch.raw_signals)
+    columns[1].metric("痛点", batch.pain_points)
+    columns[2].metric("需求主题", batch.demand_clusters)
+    columns[3].metric("合并建议", batch.merge_candidates)
+    columns[4].metric("已确认需求组", batch.reviewed_groups)
 
 
 def _render_summary(summary: object) -> None:
@@ -425,6 +559,9 @@ def _render_cluster_item(item: ClusterReviewItem) -> None:
         with right:
             st.subheader("审核状态")
             _render_cluster_review_status(item)
+            st.markdown(f"**批次：** {_batch_list_label(item.batch_ids)}")
+            st.markdown(f"**信号关注点：** {_signal_focus_list_label(item.signal_focuses)}")
+            st.markdown(f"**预期质量：** {_quality_mix_label(item.expected_quality_mix)}")
             st.markdown(f"**聚类方法：** {_cluster_method_label(item.cluster_method)}")
             st.markdown(f"**相关痛点：** {len(item.related_pain_point_ids)} 条")
 
@@ -441,8 +578,8 @@ def _render_merge_item(item: MergeReviewItem) -> None:
         left, right = st.columns([3, 2])
         with left:
             st.subheader("合并建议")
-            st.markdown(f"**Cluster A：** {item.title_a}")
-            st.markdown(f"**Cluster B：** {item.title_b}")
+            st.markdown(f"**主题甲：** {item.title_a}")
+            st.markdown(f"**主题乙：** {item.title_b}")
             st.markdown(f"**建议理由：** {item.merge_reason_zh}")
             if item.risk_note_zh:
                 st.warning(item.risk_note_zh)
@@ -450,6 +587,7 @@ def _render_merge_item(item: MergeReviewItem) -> None:
         with right:
             st.subheader("审核状态")
             _render_merge_review_status(item)
+            st.markdown(f"**批次：** {_batch_list_label(item.batch_ids)}")
             st.markdown(f"**相似度：** {item.similarity_score:.1f}")
             st.markdown(f"**建议强度：** {_strength_label(item.strength)}")
             st.markdown(f"**共享用户：** {_persona_list_label(item.shared_personas)}")
@@ -481,10 +619,10 @@ def _render_merge_diagnostics(item: MergeReviewItem) -> None:
 
     left, right = st.columns(2)
     with left:
-        st.markdown("**Cluster A 代表性证据说明**")
+        st.markdown("**主题甲代表性证据说明**")
         _render_list_or_empty(item.representative_quotes_a)
     with right:
-        st.markdown("**Cluster B 代表性证据说明**")
+        st.markdown("**主题乙代表性证据说明**")
         _render_list_or_empty(item.representative_quotes_b)
 
 
@@ -580,6 +718,9 @@ def _render_merge_review_controls(item: MergeReviewItem) -> None:
 
 def _render_metadata(item: ReviewItem) -> None:
     metadata = [
+        f"批次：`{_batch_label(item.batch_id or 'default')}`",
+        f"信号关注点：`{_signal_focus_label(item.signal_focus or '')}`",
+        f"预期质量：`{_expected_quality_label(item.expected_quality or '')}`",
         f"来源：`{_source_name_label(item.source_name or '')}` / `{_source_type_label(item.source_type or '')}`",
         f"语言：`{_language_label(item.language or '')}`",
         f"领域标签：`{_domain_tags_label(item.domain_tags)}`",
@@ -587,6 +728,8 @@ def _render_metadata(item: ReviewItem) -> None:
     st.markdown("  \n".join(metadata))
     if item.url:
         st.markdown(f"原文追溯：[打开来源链接]({item.url})")
+    if item.source_note:
+        st.caption(f"来源备注：{item.source_note}")
     st.caption("内部编号已隐藏；需要审计时可查看本地数据文件。")
 
 
@@ -675,6 +818,26 @@ def _unique_values(values: Iterable[str | None]) -> list[str]:
     return sorted({value for value in values if value})
 
 
+def _hide_streamlit_chrome() -> None:
+    st.markdown(
+        """
+        <style>
+        [data-testid="stDeployButton"],
+        [data-testid="stToolbar"],
+        #MainMenu,
+        footer {
+            display: none !important;
+            visibility: hidden !important;
+        }
+        header {
+            visibility: hidden !important;
+        }
+        </style>
+        """,
+        unsafe_allow_html=True,
+    )
+
+
 def _range_label(value: str) -> str:
     return RANGE_LABELS.get(value, value)
 
@@ -698,6 +861,56 @@ def _strength_label(value: str) -> str:
         "weak": "弱",
     }
     return labels.get(value, value or "未知")
+
+
+def _batch_label(value: str) -> str:
+    return BATCH_LABELS.get(value, value or "默认批次")
+
+
+def _percent(value: float | None) -> str:
+    if value is None:
+        return "暂无"
+    return f"{value * 100:.1f}%"
+
+
+def _readiness_label(value: str) -> str:
+    labels = {
+        "yes": "已具备",
+        "partial": "部分具备",
+        "no": "暂不具备",
+    }
+    return labels.get(value, value or "未知")
+
+
+def _batch_list_label(values: list[str]) -> str:
+    cleaned = [value for value in values if value]
+    if not cleaned:
+        return _batch_label("default")
+    return "，".join(_batch_label(value) for value in cleaned)
+
+
+def _signal_focus_label(value: str) -> str:
+    return SIGNAL_FOCUS_LABELS.get(value, value or "未标注")
+
+
+def _signal_focus_list_label(values: list[str]) -> str:
+    cleaned = [value for value in values if value]
+    if not cleaned:
+        return "未标注"
+    return "，".join(_signal_focus_label(value) for value in cleaned)
+
+
+def _expected_quality_label(value: str) -> str:
+    return EXPECTED_QUALITY_LABELS.get(value, value or "未标注")
+
+
+def _quality_mix_label(values: dict[str, int]) -> str:
+    if not values:
+        return "未标注"
+    return "，".join(
+        f"{_expected_quality_label(key)} {value}"
+        for key, value in sorted(values.items())
+    )
 
 
 def _persona_label(value: str) -> str:

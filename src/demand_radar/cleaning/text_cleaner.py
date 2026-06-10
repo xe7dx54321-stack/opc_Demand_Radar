@@ -61,6 +61,10 @@ def normalize_signals(
             url=raw_signal.url,
             language=raw_signal.language,
             domain_tags=raw_signal.domain_tags,
+            batch_id=raw_signal.batch_id,
+            source_note=raw_signal.source_note,
+            signal_focus=raw_signal.signal_focus,
+            expected_quality=raw_signal.expected_quality,
             content_hash=raw_signal.content_hash,
         )
         normalized.append(signal)

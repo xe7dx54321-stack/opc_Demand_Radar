@@ -33,6 +33,7 @@ class MergeReviewItem(BaseModel):
     shared_personas: list[str] = Field(default_factory=list)
     shared_domain_tags: list[str] = Field(default_factory=list)
     shared_keywords: list[str] = Field(default_factory=list)
+    batch_ids: list[str] = Field(default_factory=list)
     merge_reason_zh: str
     risk_note_zh: str | None = None
     representative_quotes_a: list[str] = Field(default_factory=list)
@@ -126,3 +127,21 @@ def add_merge_review(
         expected_group_summary_zh=expected_group_summary_zh or None,
         path=reviews_path,
     )
+
+
+def get_available_merge_batches(items: list[MergeReviewItem]) -> list[str]:
+    batches = {batch_id for item in items for batch_id in _item_batches(item)}
+    return sorted(batches)
+
+
+def filter_merge_items_by_batch(
+    items: list[MergeReviewItem],
+    batch_id: str,
+) -> list[MergeReviewItem]:
+    if batch_id == "All":
+        return items
+    return [item for item in items if batch_id in _item_batches(item)]
+
+
+def _item_batches(item: MergeReviewItem) -> list[str]:
+    return [batch_id for batch_id in item.batch_ids if batch_id] or ["default"]

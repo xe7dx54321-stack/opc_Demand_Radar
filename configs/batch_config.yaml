@@ -1,0 +1,25 @@
+batch:
+  enabled: true
+
+  default_batch_id: default
+
+  expected_quality_values:
+    - strong
+    - medium
+    - weak
+    - noise
+
+  signal_focus_values:
+    - pain
+    - workaround
+    - competitor_gap
+    - feature_gap
+    - weak_signal
+    - noise
+    - hiring_signal
+    - workflow_repetition
+
+  report:
+    include_batch_breakdown: true
+    include_quality_matrix: true
+    include_stage_readiness: true

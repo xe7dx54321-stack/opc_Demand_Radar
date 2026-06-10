@@ -24,3 +24,4 @@ outputs/*.json
 !outputs/demand_clusters_report.md
 !outputs/cluster_merge_suggestions.md
 !outputs/reviewed_cluster_groups_report.md
+!outputs/batch_summary_report.md

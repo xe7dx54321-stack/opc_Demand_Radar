@@ -150,6 +150,7 @@ def _candidate_payload(
         "shared_personas": similarity.shared_personas,
         "shared_domain_tags": similarity.shared_domain_tags,
         "shared_keywords": similarity.shared_keywords,
+        "batch_ids": _unique([*left.batch_ids, *right.batch_ids]),
         "merge_reason_zh": _merge_reason(left, right, similarity, max_reason_chars),
         "risk_note_zh": _risk_note(similarity),
         "representative_quotes_a": left.representative_quotes[:3],
@@ -196,6 +197,15 @@ def _risk_note(similarity: Any) -> str | None:
 
 def _label_values(values: list[str], labels: dict[str, str]) -> str:
     return "、".join(labels.get(value, value) for value in values)
+
+
+def _unique(values: list[str | None]) -> list[str]:
+    result: list[str] = []
+    for value in values:
+        text = str(value or "").strip()
+        if text and text not in result:
+            result.append(text)
+    return result
 
 
 def _load_merge_config(path: str | Path) -> dict[str, Any]:

@@ -92,6 +92,37 @@ def test_merge_report_generates_markdown_and_summary(tmp_path: Path) -> None:
     assert summary_json["merge_candidates"] == 1
 
 
+def test_merge_report_ignores_review_when_candidate_pair_changed(tmp_path: Path) -> None:
+    clusters_path = tmp_path / "clusters.jsonl"
+    candidates_path = tmp_path / "candidates.jsonl"
+    reviews_path = tmp_path / "reviews.jsonl"
+    report_path = tmp_path / "cluster_merge_suggestions.md"
+    summary_path = tmp_path / "run_summary.json"
+    write_demand_clusters([make_cluster("cluster_000001"), make_cluster("cluster_000002")], clusters_path)
+    write_merge_candidates([make_candidate()], candidates_path)
+    append_cluster_group_review(
+        "merge_candidate_000001",
+        "cluster_000009",
+        "cluster_000010",
+        "confirm_merge",
+        reviewer_note="旧运行里的同 ID 候选，不应贴到当前 pair。",
+        path=reviews_path,
+    )
+
+    summary = build_merge_report(
+        clusters_path,
+        candidates_path,
+        reviews_path,
+        report_path,
+        summary_path,
+    )
+
+    report = report_path.read_text(encoding="utf-8")
+    assert summary.reviewed_candidates == 0
+    assert summary.confirmed_merges == 0
+    assert "Latest Review: 未审核" in report
+
+
 def test_reviewed_groups_report_generates_markdown_and_summary(tmp_path: Path) -> None:
     groups_path = tmp_path / "groups.jsonl"
     report_path = tmp_path / "reviewed_cluster_groups_report.md"

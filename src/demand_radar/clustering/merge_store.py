@@ -216,6 +216,7 @@ def _build_group(
         ),
         personas=_unique(persona for cluster in clusters for persona in cluster.personas),
         domain_tags=_unique(tag for cluster in clusters for tag in cluster.domain_tags),
+        batch_ids=_unique(batch_id for cluster in clusters for batch_id in cluster.batch_ids),
         evidence_count=sum(cluster.evidence_count for cluster in clusters),
         source_count=sum(cluster.source_count for cluster in clusters),
         representative_pain_descriptions=_unique(

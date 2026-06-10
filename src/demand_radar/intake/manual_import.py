@@ -29,6 +29,10 @@ KNOWN_FIELDS = {
     "published_at",
     "language",
     "domain_tags",
+    "batch_id",
+    "source_note",
+    "signal_focus",
+    "expected_quality",
 }
 
 
@@ -72,6 +76,10 @@ def import_file(
             "collected_at": utc_now_iso(),
             "language": _optional_text(row.get("language")),
             "domain_tags": _split_tags(row.get("domain_tags")),
+            "batch_id": _optional_text(row.get("batch_id")),
+            "source_note": _optional_text(row.get("source_note")),
+            "signal_focus": _optional_text(row.get("signal_focus")),
+            "expected_quality": _optional_text(row.get("expected_quality")),
             "metadata": _metadata_from_extra_fields(row),
             "content_hash": content_hash,
         }

@@ -11,3 +11,4 @@ def test_stage1_configs_load() -> None:
     assert configs["extraction"]["pain_extraction"]["min_confidence"] == 0.65
     assert configs["clustering"]["clustering"]["similarity_threshold"] == 70
     assert configs["merge_suggestion"]["merge_suggestion"]["candidate_threshold"] == 62
+    assert configs["batch"]["batch"]["enabled"] is True

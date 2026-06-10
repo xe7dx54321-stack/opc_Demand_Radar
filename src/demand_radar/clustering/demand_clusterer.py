@@ -149,6 +149,9 @@ def _build_cluster(
     confidence = _cluster_confidence(group)
     title = _cluster_title(personas, workflow_family, group)
     summary = _cluster_summary(personas, workflow_family, group)
+    expected_quality_mix = Counter(
+        quality for pain in group if (quality := _batch_value(pain.expected_quality))
+    )
     return DemandCluster(
         cluster_id=cluster_id,
         cluster_title_zh=title,
@@ -156,6 +159,9 @@ def _build_cluster(
         personas=personas,
         domain_tags=domain_tags,
         workflow_family=workflow_family,
+        batch_ids=_unique_non_empty(_batch_id(pain.batch_id) for pain in group),
+        signal_focuses=_unique_non_empty(pain.signal_focus for pain in group),
+        expected_quality_mix=dict(expected_quality_mix),
         related_pain_point_ids=[pain.pain_point_id for pain in group],
         evidence_count=len(group),
         source_count=len({pain.raw_signal_id for pain in group}),
@@ -282,6 +288,14 @@ def _unique_non_empty(values: Any) -> list[str]:
         if text and text not in result:
             result.append(text)
     return result
+
+
+def _batch_id(value: str | None) -> str:
+    return _batch_value(value) or "default"
+
+
+def _batch_value(value: str | None) -> str:
+    return str(value or "").strip()
 
 
 def _load_clustering_config(path: str | Path) -> dict[str, Any]:

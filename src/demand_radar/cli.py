@@ -9,6 +9,7 @@ from typing import Annotated
 
 import typer
 
+from demand_radar.batch.batch_report import build_batch_summary_report
 from demand_radar.calibration.calibration_review import append_calibration_review
 from demand_radar.cleaning.text_cleaner import normalize_signals
 from demand_radar.clustering.cluster_report import build_cluster_report
@@ -47,6 +48,8 @@ RUNTIME_FILES = [
     Path("outputs/demand_clusters_report.md"),
     Path("outputs/cluster_merge_suggestions.md"),
     Path("outputs/reviewed_cluster_groups_report.md"),
+    Path("outputs/batch_summary_report.md"),
+    Path("outputs/batch_quality_matrix.csv"),
     Path("outputs/run_summary.json"),
 ]
 
@@ -56,11 +59,19 @@ STAGE2_REGENERATED_FILES = [
     Path("data/processed/normalized_signals.jsonl"),
     Path("data/processed/pain_points.jsonl"),
     Path("data/processed/demand_clusters.jsonl"),
+    Path("data/processed/cluster_merge_candidates.jsonl"),
+    Path("data/processed/reviewed_cluster_groups.jsonl"),
     Path("data/quarantine/invalid_outputs.jsonl"),
     Path("data/quarantine/invalid_clusters.jsonl"),
+    Path("data/quarantine/invalid_merge_candidates.jsonl"),
+    Path("data/quarantine/invalid_reviewed_groups.jsonl"),
     Path("outputs/pain_points_report.md"),
     Path("outputs/calibration_report.md"),
     Path("outputs/demand_clusters_report.md"),
+    Path("outputs/cluster_merge_suggestions.md"),
+    Path("outputs/reviewed_cluster_groups_report.md"),
+    Path("outputs/batch_summary_report.md"),
+    Path("outputs/batch_quality_matrix.csv"),
     Path("outputs/run_summary.json"),
 ]
 
@@ -193,6 +204,18 @@ def build_reviewed_groups_report_command() -> None:
     )
 
 
+@app.command("build-batch-summary")
+def build_batch_summary_command() -> None:
+    """Build the Stage 2.6 batch summary report."""
+
+    summary = build_batch_summary_report()
+    typer.echo(
+        "Built batch summary report -> outputs/batch_summary_report.md "
+        f"(batches={len(summary.batches)}, ready_for_truth_scoring="
+        f"{summary.readiness.ready_for_truth_scoring})"
+    )
+
+
 @app.command("run-stage1")
 def run_stage1(
     input: Annotated[Path, typer.Option("--input", exists=True, readable=True, help="CSV or JSONL input file.")],
@@ -314,6 +337,47 @@ def run_stage25(
     typer.echo(
         "Built reviewed groups report -> outputs/reviewed_cluster_groups_report.md "
         f"(groups={groups_summary.reviewed_groups}, clusters={groups_summary.included_clusters})"
+    )
+
+
+@app.command("run-stage26")
+def run_stage26(
+    input: Annotated[
+        Path,
+        typer.Option("--input", exists=True, readable=True, help="CSV or JSONL input file."),
+    ] = Path("examples/real_signal_samples_stage26.csv"),
+) -> None:
+    """Run Stage 2.6 batch radar pipeline from expanded real-signal samples."""
+
+    init(reset=False)
+    _run_stage2_core(input)
+
+    candidates = suggest_cluster_merges()
+    typer.echo(
+        "Generated merge candidates -> data/processed/cluster_merge_candidates.jsonl "
+        f"(candidates={len(candidates)})"
+    )
+    merge_summary = build_merge_report()
+    typer.echo(
+        "Built merge suggestions report -> outputs/cluster_merge_suggestions.md "
+        f"(candidates={merge_summary.merge_candidates}, reviewed={merge_summary.reviewed_candidates}, "
+        f"confirmed={merge_summary.confirmed_merges})"
+    )
+    groups = build_reviewed_cluster_groups()
+    typer.echo(
+        "Built reviewed cluster groups -> data/processed/reviewed_cluster_groups.jsonl "
+        f"(groups={len(groups)})"
+    )
+    groups_summary = build_reviewed_groups_report()
+    typer.echo(
+        "Built reviewed groups report -> outputs/reviewed_cluster_groups_report.md "
+        f"(groups={groups_summary.reviewed_groups}, clusters={groups_summary.included_clusters})"
+    )
+    batch_summary = build_batch_summary_report()
+    typer.echo(
+        "Built batch summary report -> outputs/batch_summary_report.md "
+        f"(batches={len(batch_summary.batches)}, ready_for_truth_scoring="
+        f"{batch_summary.readiness.ready_for_truth_scoring})"
     )
 
 

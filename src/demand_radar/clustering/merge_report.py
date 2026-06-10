@@ -82,7 +82,15 @@ def build_merge_report(
     latest_reviews = [
         review
         for candidate in candidates
-        if (review := get_latest_review_for_candidate(candidate.merge_candidate_id, reviews)) is not None
+        if (
+            review := get_latest_review_for_candidate(
+                candidate.merge_candidate_id,
+                reviews,
+                cluster_id_a=candidate.cluster_id_a,
+                cluster_id_b=candidate.cluster_id_b,
+            )
+        )
+        is not None
     ]
     label_counts = Counter(review.label for review in latest_reviews)
     summary = MergeReportSummary(
@@ -145,7 +153,12 @@ def _write_merge_report(
     if not candidates:
         lines.append("No merge candidates generated.")
     for index, candidate in enumerate(candidates, start=1):
-        latest_review = get_latest_review_for_candidate(candidate.merge_candidate_id, reviews)
+        latest_review = get_latest_review_for_candidate(
+            candidate.merge_candidate_id,
+            reviews,
+            cluster_id_a=candidate.cluster_id_a,
+            cluster_id_b=candidate.cluster_id_b,
+        )
         lines.extend(_merge_candidate_lines(index, candidate, latest_review))
     report_path.write_text("\n".join(lines).rstrip() + "\n", encoding="utf-8")
 

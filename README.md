@@ -16,6 +16,8 @@ Stage 2 adds a lightweight Demand Clustering Loop and cluster review workflow. D
 
 Stage 2.5 adds cluster merge suggestions and reviewed cluster groups. Merge suggestions are candidate state only; confirmed reviews generate reviewed groups without mutating `demand_clusters.jsonl`.
 
+Stage 2.6 adds real-signal expansion and batch radar runs. It introduces batch fields for manual samples, runs the full pipeline on 50-100 signals, and reports batch-level extraction, clustering, merge, and Stage 3 readiness metrics.
+
 ## Stage 1 Scope
 
 The current pipeline is intentionally narrow:
@@ -108,6 +110,41 @@ It adds:
 - `demand-radar run-stage25`
 
 Only human `confirm_merge` reviews create reviewed cluster groups. `reject_merge` and `not_same_demand` are stored as feedback memory but do not create groups. Future truth scoring should prefer `reviewed_cluster_groups.jsonl` when it exists, then fall back to original demand clusters.
+
+## Stage 2.6 Scope
+
+Stage 2.6: Real Signal Expansion & Batch Radar Run.
+
+This layer expands the manual sample set from the original 20 calibration samples to an 80-row batch sample file. The point is not to score opportunities yet; it is to see whether pain extraction, quarantine, clustering, merge suggestions, and reviewed groups remain stable at a more realistic 50-100 signal scale.
+
+It adds:
+
+- `examples/real_signal_samples_stage26.csv`
+- `configs/batch_config.yaml`
+- `outputs/batch_summary_report.md`
+- optional runtime `outputs/batch_quality_matrix.csv`
+- `demand-radar run-stage26`
+- `demand-radar build-batch-summary`
+- Review UI batch filtering across pain calibration, demand cluster review, and merge suggestion review
+
+The Stage 2.6 sample file adds these optional fields:
+
+```text
+batch_id
+source_note
+signal_focus
+expected_quality
+```
+
+`batch_id` groups samples into reviewable batches such as `batch_stage26_ai_research`, `batch_stage26_content_workflow`, `batch_stage26_agent_workflow`, `batch_stage26_devtools`, `batch_stage26_enterprise_knowledge`, and `batch_stage26_noise`.
+
+`source_note` is a human note about where the excerpt came from, such as `GitHub issue-style excerpt` or `微信群讨论脱敏转述`.
+
+`signal_focus` records why the sample was included: `pain`, `workaround`, `competitor_gap`, `feature_gap`, `weak_signal`, `noise`, `hiring_signal`, or `workflow_repetition`.
+
+`expected_quality` is the human expectation before running extraction: `strong`, `medium`, `weak`, or `noise`.
+
+These fields are analysis dimensions only. They do not overwrite raw state, accepted pain points, generated clusters, merge candidates, or human reviews.
 
 ## Install
 
@@ -207,13 +244,25 @@ demand-radar build-reviewed-groups
 demand-radar build-reviewed-groups-report
 ```
 
+Run the Stage 2.6 expanded batch radar pipeline:
+
+```bash
+demand-radar run-stage26 --input examples/real_signal_samples_stage26.csv
+```
+
+Rebuild only the batch summary report:
+
+```bash
+demand-radar build-batch-summary
+```
+
 Run the local Review UI:
 
 ```bash
 demand-radar review-ui --port 8502
 ```
 
-Open `http://127.0.0.1:8502` after the command starts. The UI reads the current local pipeline files, shows Chinese review tabs for pain extraction, demand clusters, and merge suggestions, lets you click review label buttons, and can rebuild `outputs/calibration_report.md`, `outputs/demand_clusters_report.md`, `outputs/cluster_merge_suggestions.md`, and `outputs/reviewed_cluster_groups_report.md`.
+Open `http://127.0.0.1:8502` after the command starts. The UI reads the current local pipeline files, shows Chinese review tabs for pain extraction, demand clusters, merge suggestions, and batch overview, lets you click review label buttons, and can rebuild `outputs/calibration_report.md`, `outputs/demand_clusters_report.md`, `outputs/cluster_merge_suggestions.md`, `outputs/reviewed_cluster_groups_report.md`, and `outputs/batch_summary_report.md`. The global batch filter applies to the pain, cluster, and merge review tabs.
 
 Fallback Streamlit command:
 
@@ -241,6 +290,8 @@ demand-radar build-merge-report
 demand-radar build-reviewed-groups
 demand-radar build-reviewed-groups-report
 demand-radar run-stage25 --input examples/real_signal_samples.csv
+demand-radar run-stage26 --input examples/real_signal_samples_stage26.csv
+demand-radar build-batch-summary
 demand-radar review-ui --port 8502
 ```
 
@@ -257,6 +308,10 @@ source_type
 published_at
 language
 domain_tags
+batch_id
+source_note
+signal_focus
+expected_quality
 ```
 
 Required fields:
@@ -274,6 +329,8 @@ source_type = manual
 ```
 
 `domain_tags` can be comma-separated or semicolon-separated.
+
+The four batch fields are optional and backward compatible. Older CSV files without them still import normally.
 
 ## Output Files
 
@@ -296,6 +353,8 @@ outputs/calibration_report.md
 outputs/demand_clusters_report.md
 outputs/cluster_merge_suggestions.md
 outputs/reviewed_cluster_groups_report.md
+outputs/batch_summary_report.md
+outputs/batch_quality_matrix.csv
 outputs/run_summary.json
 ```
 
@@ -315,6 +374,19 @@ The Review UI displays pain points, quarantine items, Chinese demand summaries, 
 
 `reviewed_cluster_groups.jsonl` stores only human-confirmed demand groups. It is built from confirmed pairwise reviews using connected components, so `A+B` and `B+C` become one reviewed group `[A, B, C]`. It never overwrites `demand_clusters.jsonl`.
 
+`batch_summary_report.md` summarizes Stage 2.6 batch-level quality and readiness. It includes raw signal counts, pain point counts, quarantine rate, demand clusters, singleton clusters, merge candidates, reviewed groups, calibration review labels, a quality matrix, and a mechanical Stage 3 readiness judgement.
+
+Stage 3 readiness uses fixed rules:
+
+```text
+raw_signals >= 50 -> sample_size_ok
+pain_points >= 35 -> pain_volume_ok
+reviewed_groups >= 5 -> group_volume_ok
+singleton_rate <= 0.75 -> clustering_convergence_ok
+```
+
+If all four pass, `ready_for_truth_scoring` is `yes`. If two or three pass, it is `partial`. If fewer than two pass, it is `no`.
+
 ## Directory Structure
 
 ```text
@@ -325,10 +397,12 @@ configs/
   calibration_config.yaml
   clustering_config.yaml
   merge_suggestion_config.yaml
+  batch_config.yaml
 examples/
   sample_signals.csv
   sample_signals.jsonl
   real_signal_samples.csv
+  real_signal_samples_stage26.csv
 data/
   raw/
   processed/
@@ -339,6 +413,7 @@ outputs/
   demand_clusters_report.md
   cluster_merge_suggestions.md
   reviewed_cluster_groups_report.md
+  batch_summary_report.md
   run_summary.json
 prompts/
   pain_extraction.md
@@ -373,6 +448,7 @@ python -m pytest
 - Clustering is lightweight rule-based text similarity only; no embeddings or vector database.
 - Merge suggestions are lightweight rule-based diagnostics only; confirmed groups still require human review.
 - Confirmed merge reviews do not mutate `demand_clusters.jsonl`.
+- Batch fields are reporting and filtering dimensions only; they do not change the underlying candidate state.
 - No truth score.
 - No fit score.
 - No Top Demand Candidates report.
@@ -380,7 +456,7 @@ python -m pytest
 
 ## Next Stage
 
-After Stage 2.5 is stable on reviewed groups, the next stage can add:
+After Stage 2.6 is stable on a 50-100 signal batch run, the next stage can add:
 
 - LLM structured extraction behind the existing extractor interface.
 - Stronger clustering with embeddings or LLM-assisted labeling if the lightweight method is too noisy.

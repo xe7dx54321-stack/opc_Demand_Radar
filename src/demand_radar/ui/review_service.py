@@ -30,6 +30,10 @@ class ReviewItem(BaseModel):
     url: str | None = None
     language: str | None = None
     domain_tags: list[str] = Field(default_factory=list)
+    batch_id: str | None = None
+    source_note: str | None = None
+    signal_focus: str | None = None
+    expected_quality: str | None = None
 
     pain_description: str | None = None
     persona: str | None = None
@@ -147,6 +151,16 @@ def add_review(
     )
 
 
+def get_available_batches(items: list[ReviewItem]) -> list[str]:
+    return sorted({item.batch_id or "default" for item in items})
+
+
+def filter_items_by_batch(items: list[ReviewItem], batch_id: str) -> list[ReviewItem]:
+    if batch_id == "All":
+        return items
+    return [item for item in items if (item.batch_id or "default") == batch_id]
+
+
 def evidence_quote_found(item: ReviewItem) -> bool:
     quote = (item.evidence_quote or "").strip()
     text = item.normalized_text or ""
@@ -171,6 +185,10 @@ def _item_from_pain_point(
         url=raw_signal.url if raw_signal else normalized_signal.url if normalized_signal else None,
         language=raw_signal.language if raw_signal else normalized_signal.language if normalized_signal else None,
         domain_tags=raw_signal.domain_tags if raw_signal else normalized_signal.domain_tags if normalized_signal else [],
+        batch_id=_first_value(pain_point.batch_id, raw_signal.batch_id if raw_signal else None, normalized_signal.batch_id if normalized_signal else None),
+        source_note=_first_value(raw_signal.source_note if raw_signal else None, normalized_signal.source_note if normalized_signal else None),
+        signal_focus=_first_value(pain_point.signal_focus, raw_signal.signal_focus if raw_signal else None, normalized_signal.signal_focus if normalized_signal else None),
+        expected_quality=_first_value(pain_point.expected_quality, raw_signal.expected_quality if raw_signal else None, normalized_signal.expected_quality if normalized_signal else None),
         pain_description=pain_point.pain_description,
         persona=pain_point.persona,
         scenario=pain_point.scenario,
@@ -196,6 +214,12 @@ def _item_from_quarantine(
     normalized_signal = normalized_by_id.get(normalized_id or "") or normalized_by_raw_id.get(raw_id or "")
     candidate = payload.get("candidate") if isinstance(payload.get("candidate"), dict) else {}
     raw_signal_id = raw_id or (normalized_signal.raw_signal_id if normalized_signal else record.item_id or record.quarantine_id)
+    batch_id = _first_value(
+        str(candidate.get("batch_id") or "") or None,
+        raw_signal.batch_id if raw_signal else None,
+        normalized_signal.batch_id if normalized_signal else None,
+        _payload_batch_id(payload),
+    )
 
     return ReviewItem(
         raw_signal_id=raw_signal_id,
@@ -210,6 +234,10 @@ def _item_from_quarantine(
         url=raw_signal.url if raw_signal else normalized_signal.url if normalized_signal else None,
         language=raw_signal.language if raw_signal else normalized_signal.language if normalized_signal else None,
         domain_tags=raw_signal.domain_tags if raw_signal else normalized_signal.domain_tags if normalized_signal else [],
+        batch_id=batch_id,
+        source_note=_first_value(raw_signal.source_note if raw_signal else None, normalized_signal.source_note if normalized_signal else None, _payload_source_note(payload)),
+        signal_focus=_first_value(str(candidate.get("signal_focus") or "") or None, raw_signal.signal_focus if raw_signal else None, normalized_signal.signal_focus if normalized_signal else None, _payload_signal_focus(payload)),
+        expected_quality=_first_value(str(candidate.get("expected_quality") or "") or None, raw_signal.expected_quality if raw_signal else None, normalized_signal.expected_quality if normalized_signal else None, _payload_expected_quality(payload)),
         pain_description=str(candidate.get("pain_description") or "") or None,
         persona=str(candidate.get("persona") or "") or None,
         scenario=str(candidate.get("scenario") or "") or None,
@@ -238,6 +266,10 @@ def _item_from_raw(raw_signal: RawSignal, normalized_signal: NormalizedSignal | 
         url=raw_signal.url,
         language=raw_signal.language,
         domain_tags=raw_signal.domain_tags,
+        batch_id=raw_signal.batch_id,
+        source_note=raw_signal.source_note,
+        signal_focus=raw_signal.signal_focus,
+        expected_quality=raw_signal.expected_quality,
     )
 
 
@@ -290,6 +322,30 @@ def _payload_text(payload: dict[str, Any]) -> str | None:
     return None
 
 
+def _payload_batch_id(payload: dict[str, Any]) -> str | None:
+    return _payload_field(payload, "batch_id")
+
+
+def _payload_source_note(payload: dict[str, Any]) -> str | None:
+    return _payload_field(payload, "source_note")
+
+
+def _payload_signal_focus(payload: dict[str, Any]) -> str | None:
+    return _payload_field(payload, "signal_focus")
+
+
+def _payload_expected_quality(payload: dict[str, Any]) -> str | None:
+    return _payload_field(payload, "expected_quality")
+
+
+def _payload_field(payload: dict[str, Any], field_name: str) -> str | None:
+    for key in ("raw_signal", "normalized_signal"):
+        nested = payload.get(key)
+        if isinstance(nested, dict) and nested.get(field_name):
+            return str(nested[field_name])
+    return None
+
+
 def _optional_float(value: object) -> float | None:
     try:
         return float(value) if value is not None else None
@@ -307,3 +363,11 @@ def _title(
     if normalized_signal:
         return normalized_signal.title
     return fallback or "Untitled review item"
+
+
+def _first_value(*values: str | None) -> str | None:
+    for value in values:
+        text = str(value or "").strip()
+        if text:
+            return text
+    return None

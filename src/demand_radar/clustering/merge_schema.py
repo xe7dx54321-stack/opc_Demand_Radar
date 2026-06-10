@@ -37,6 +37,7 @@ class ClusterMergeCandidate(BaseModel):
     shared_personas: list[str] = Field(default_factory=list)
     shared_domain_tags: list[str] = Field(default_factory=list)
     shared_keywords: list[str] = Field(default_factory=list)
+    batch_ids: list[str] = Field(default_factory=list)
     merge_reason_zh: str
     risk_note_zh: str | None = None
     representative_quotes_a: list[str] = Field(default_factory=list)
@@ -128,6 +129,7 @@ class ReviewedClusterGroup(BaseModel):
     related_pain_point_ids: list[str]
     personas: list[str] = Field(default_factory=list)
     domain_tags: list[str] = Field(default_factory=list)
+    batch_ids: list[str] = Field(default_factory=list)
     evidence_count: int
     source_count: int
     representative_pain_descriptions: list[str] = Field(default_factory=list)

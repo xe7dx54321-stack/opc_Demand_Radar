@@ -23,6 +23,10 @@ class RawSignal(BaseModel):
     collected_at: str
     language: str | None = None
     domain_tags: list[str] = Field(default_factory=list)
+    batch_id: str | None = None
+    source_note: str | None = None
+    signal_focus: str | None = None
+    expected_quality: str | None = None
     metadata: dict[str, Any] = Field(default_factory=dict)
     content_hash: str
 
@@ -46,6 +50,10 @@ class NormalizedSignal(BaseModel):
     url: str | None = None
     language: str | None = None
     domain_tags: list[str] = Field(default_factory=list)
+    batch_id: str | None = None
+    source_note: str | None = None
+    signal_focus: str | None = None
+    expected_quality: str | None = None
     content_hash: str
 
     @field_validator("raw_signal_id", "normalized_signal_id", "source_name", "title", "normalized_text", "content_hash")
@@ -76,6 +84,9 @@ class PainPoint(BaseModel):
     confidence: float
     extraction_mode: str
     extraction_notes: str | None = None
+    batch_id: str | None = None
+    signal_focus: str | None = None
+    expected_quality: str | None = None
 
     @field_validator("pain_point_id", "raw_signal_id", "normalized_signal_id", "pain_description", "evidence_quote", "extraction_mode")
     @classmethod

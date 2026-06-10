@@ -17,6 +17,9 @@ class DemandCluster(BaseModel):
     personas: list[str] = Field(default_factory=list)
     domain_tags: list[str] = Field(default_factory=list)
     workflow_family: str | None = None
+    batch_ids: list[str] = Field(default_factory=list)
+    signal_focuses: list[str] = Field(default_factory=list)
+    expected_quality_mix: dict[str, int] = Field(default_factory=dict)
 
     related_pain_point_ids: list[str]
     evidence_count: int
