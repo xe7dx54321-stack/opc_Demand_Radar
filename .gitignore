@@ -20,3 +20,5 @@ outputs/*.json
 !data/processed/.gitkeep
 !data/quarantine/.gitkeep
 !outputs/pain_points_report.md
+!outputs/calibration_report.md
+!outputs/demand_clusters_report.md

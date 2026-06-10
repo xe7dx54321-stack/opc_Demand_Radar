@@ -6,12 +6,12 @@
 - Normalized signals: 20
 - Pain points: 16
 - Quarantined items: 4
-- Calibration reviews: 3
-- Generated at: 2026-06-10T07:01:00Z
+- Calibration reviews: 9
+- Generated at: 2026-06-10T08:32:20Z
 
 ## Extraction Quality Overview
 
-- Good extraction: 1
+- Good extraction: 7
 - Weak extraction: 0
 - False positive: 0
 - False negative: 0
@@ -47,9 +47,15 @@
   - None
 
 ### good_extraction
-- count: 1
+- count: 7
 - examples:
   - review_000001 (pain_000001): UI validation: good extraction
+  - review_000004 (pain_000004): 标记为通过
+  - review_000005 (pain_000005): 标记为通过
+  - review_000006 (pain_000006): 标记为通过
+  - review_000007 (pain_000011): 标记为通过
+  - review_000008 (pain_000013): 标记为通过
+  - review_000009 (pain_000016): 标记为通过
 
 ### missing_payment_signal
 - count: 0

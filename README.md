@@ -12,6 +12,8 @@ Stage 1.5 adds real-signal calibration and LLM extractor readiness. It still doe
 
 Stage 1.6 adds a local Streamlit Review UI for low-friction calibration review. The visible interface is Chinese-first for local review work. It is still an internal local tool, not a formal web app.
 
+Stage 2 adds a lightweight Demand Clustering Loop and cluster review workflow. Demand clusters are candidate state only; truth scoring and fit scoring are still out of scope.
+
 ## Stage 1 Scope
 
 The current pipeline is intentionally narrow:
@@ -61,6 +63,25 @@ It adds:
 - `src/demand_radar/calibration/review_store.py`
 
 The UI writes reviews to `data/processed/calibration_reviews.jsonl`. Reviews are feedback memory only: they do not edit raw signals, normalized signals, quarantine records, or `pain_points.jsonl`.
+
+## Stage 2 Scope
+
+Stage 2: Demand Clustering Loop & Cluster Review.
+
+This layer groups extracted pain points into Chinese demand topic candidates using a lightweight rule and text-similarity approach. Singleton clusters are kept instead of being forced into weak groups, and cluster review feedback is stored separately from the generated cluster state.
+
+It adds:
+
+- `configs/clustering_config.yaml`
+- `data/processed/demand_clusters.jsonl`
+- `data/processed/cluster_reviews.jsonl`
+- `data/quarantine/invalid_clusters.jsonl`
+- `outputs/demand_clusters_report.md`
+- `demand-radar run-cluster`
+- `demand-radar build-cluster-report`
+- `demand-radar run-stage2`
+
+The Review UI now includes a `需求主题审核` tab. It shows Chinese demand titles, summaries, representative pain descriptions, evidence summaries, current alternatives, and cluster review buttons. Cluster reviews are feedback memory only: they do not mutate `demand_clusters.jsonl`.
 
 ## Install
 
@@ -120,13 +141,32 @@ Rebuild the calibration report:
 demand-radar build-calibration-report
 ```
 
+Run Stage 2 clustering from existing pain points:
+
+```bash
+demand-radar run-stage2
+```
+
+Rebuild Stage 2 from the real-signal sample file and then cluster:
+
+```bash
+demand-radar run-stage2 --input examples/real_signal_samples.csv
+```
+
+You can also run the two cluster steps separately:
+
+```bash
+demand-radar run-cluster
+demand-radar build-cluster-report
+```
+
 Run the local Review UI:
 
 ```bash
 demand-radar review-ui --port 8502
 ```
 
-Open `http://127.0.0.1:8502` after the command starts. The UI reads the current local pipeline files, shows a Chinese review interface, lets you click a review label button, and can rebuild `outputs/calibration_report.md`.
+Open `http://127.0.0.1:8502` after the command starts. The UI reads the current local pipeline files, shows Chinese review tabs for pain extraction and demand clusters, lets you click review label buttons, and can rebuild `outputs/calibration_report.md` and `outputs/demand_clusters_report.md`.
 
 Fallback Streamlit command:
 
@@ -146,6 +186,9 @@ demand-radar run-stage1 --input examples/sample_signals.csv
 demand-radar run-calibration --input examples/real_signal_samples.csv
 demand-radar calibration-review add --raw-signal-id sig_000001 --label good_extraction --note "quote is useful"
 demand-radar build-calibration-report
+demand-radar run-cluster
+demand-radar build-cluster-report
+demand-radar run-stage2 --input examples/real_signal_samples.csv
 demand-radar review-ui --port 8502
 ```
 
@@ -187,9 +230,13 @@ data/raw/raw_signals.jsonl
 data/processed/normalized_signals.jsonl
 data/processed/pain_points.jsonl
 data/processed/calibration_reviews.jsonl
+data/processed/demand_clusters.jsonl
+data/processed/cluster_reviews.jsonl
 data/quarantine/invalid_outputs.jsonl
+data/quarantine/invalid_clusters.jsonl
 outputs/pain_points_report.md
 outputs/calibration_report.md
+outputs/demand_clusters_report.md
 outputs/run_summary.json
 ```
 
@@ -199,6 +246,10 @@ Only pain points that pass State Gate enter `pain_points.jsonl`. Invalid schema,
 
 The Review UI displays pain points, quarantine items, Chinese demand summaries, Chinese evidence summaries, latest review state, and optional correction fields for expected persona, expected evidence summary, and expected pain description. Visible labels, filters, buttons, warnings, and status messages are Chinese; stored review labels remain the stable schema values such as `good_extraction` and `bad_quote`.
 
+`demand_clusters_report.md` summarizes Stage 2 demand topic candidates. It includes Chinese titles, Chinese summaries, target users, domains, evidence counts, representative pain descriptions, representative evidence summaries, current alternatives, cluster confidence, and review status.
+
+`cluster_reviews.jsonl` stores labels such as `good_cluster`, `too_broad`, `too_narrow`, `wrong_grouping`, `duplicate_cluster`, `bad_title`, `should_merge`, `should_split`, and `not_a_real_demand`. These reviews never rewrite generated clusters.
+
 ## Directory Structure
 
 ```text
@@ -207,6 +258,7 @@ configs/
   source_registry.yaml
   extraction_config.yaml
   calibration_config.yaml
+  clustering_config.yaml
 examples/
   sample_signals.csv
   sample_signals.jsonl
@@ -218,6 +270,7 @@ data/
 outputs/
   pain_points_report.md
   calibration_report.md
+  demand_clusters_report.md
   run_summary.json
 prompts/
   pain_extraction.md
@@ -225,6 +278,7 @@ prompts/
 src/demand_radar/
   cli.py
   calibration/
+  clustering/
   ui/
   config/
   intake/
@@ -248,7 +302,7 @@ python -m pytest
 - No Reddit, Hacker News, or GitHub Issues API import.
 - No real LLM extraction yet.
 - LLMExtractorStub is interface-only and never calls external APIs.
-- No clustering.
+- Clustering is lightweight rule-based text similarity only; no embeddings or vector database.
 - No truth score.
 - No fit score.
 - No Top Demand Candidates report.
@@ -256,10 +310,10 @@ python -m pytest
 
 ## Next Stage
 
-After Stage 1 is stable on 20-50 manual signals, the next stage can add:
+After Stage 2 is stable on reviewed clusters, the next stage can add:
 
 - LLM structured extraction behind the existing extractor interface.
-- Demand Clustering Loop.
+- Stronger clustering with embeddings or LLM-assisted labeling if the lightweight method is too noisy.
 - Truth Scoring Loop.
 - Fit Scoring Loop.
 - Top Demand Candidates report.

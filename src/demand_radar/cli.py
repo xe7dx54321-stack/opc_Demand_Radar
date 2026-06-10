@@ -11,6 +11,8 @@ import typer
 
 from demand_radar.calibration.calibration_review import append_calibration_review
 from demand_radar.cleaning.text_cleaner import normalize_signals
+from demand_radar.clustering.cluster_report import build_cluster_report
+from demand_radar.clustering.demand_clusterer import run_demand_clustering
 from demand_radar.config.load_config import load_configs
 from demand_radar.intake.manual_import import import_file
 from demand_radar.loops.pain_extraction_loop import run_pain_extraction
@@ -28,9 +30,27 @@ RUNTIME_FILES = [
     Path("data/processed/normalized_signals.jsonl"),
     Path("data/processed/pain_points.jsonl"),
     Path("data/processed/calibration_reviews.jsonl"),
+    Path("data/processed/demand_clusters.jsonl"),
+    Path("data/processed/cluster_reviews.jsonl"),
     Path("data/quarantine/invalid_outputs.jsonl"),
+    Path("data/quarantine/invalid_clusters.jsonl"),
     Path("outputs/pain_points_report.md"),
     Path("outputs/calibration_report.md"),
+    Path("outputs/demand_clusters_report.md"),
+    Path("outputs/run_summary.json"),
+]
+
+
+STAGE2_REGENERATED_FILES = [
+    Path("data/raw/raw_signals.jsonl"),
+    Path("data/processed/normalized_signals.jsonl"),
+    Path("data/processed/pain_points.jsonl"),
+    Path("data/processed/demand_clusters.jsonl"),
+    Path("data/quarantine/invalid_outputs.jsonl"),
+    Path("data/quarantine/invalid_clusters.jsonl"),
+    Path("outputs/pain_points_report.md"),
+    Path("outputs/calibration_report.md"),
+    Path("outputs/demand_clusters_report.md"),
     Path("outputs/run_summary.json"),
 ]
 
@@ -99,6 +119,26 @@ def build_calibration_report_command() -> None:
     )
 
 
+@app.command("run-cluster")
+def run_cluster() -> None:
+    """Run the Stage 2 Demand Clustering Loop from current pain points."""
+
+    clusters = run_demand_clustering()
+    typer.echo(f"Generated {len(clusters)} demand clusters -> data/processed/demand_clusters.jsonl")
+
+
+@app.command("build-cluster-report")
+def build_cluster_report_command() -> None:
+    """Build the Stage 2 demand clusters report."""
+
+    summary = build_cluster_report()
+    typer.echo(
+        "Built cluster report -> outputs/demand_clusters_report.md "
+        f"(clusters={summary.demand_clusters}, singleton={summary.singleton_clusters}, "
+        f"reviews={summary.cluster_reviews})"
+    )
+
+
 @app.command("run-stage1")
 def run_stage1(
     input: Annotated[Path, typer.Option("--input", exists=True, readable=True, help="CSV or JSONL input file.")],
@@ -143,6 +183,47 @@ def run_calibration(
     typer.echo(
         "Built calibration report -> outputs/calibration_report.md "
         f"(reviews={calibration_summary.calibration_reviews})"
+    )
+
+
+@app.command("run-stage2")
+def run_stage2(
+    input: Annotated[
+        Path | None,
+        typer.Option("--input", exists=True, readable=True, help="Optional CSV or JSONL input file."),
+    ] = None,
+) -> None:
+    """Run Stage 2 clustering, optionally rebuilding pain points from input first."""
+
+    init(reset=False)
+    if input is not None:
+        _clear_regenerated_stage2_files()
+        imported = import_file(input)
+        typer.echo(f"Imported {len(imported)} raw signals -> data/raw/raw_signals.jsonl")
+        normalized = normalize_signals()
+        typer.echo(f"Normalized {len(normalized)} signals -> data/processed/normalized_signals.jsonl")
+        pain_points = run_pain_extraction()
+        typer.echo(f"Extracted {len(pain_points)} valid pain points -> data/processed/pain_points.jsonl")
+        pain_summary = build_pain_points_report()
+        typer.echo(
+            "Built pain report -> outputs/pain_points_report.md "
+            f"(raw={pain_summary.raw_signals}, normalized={pain_summary.normalized_signals}, "
+            f"pain_points={pain_summary.pain_points}, quarantine={pain_summary.quarantined_items})"
+        )
+        calibration_summary = build_calibration_report()
+        typer.echo(
+            "Built calibration report -> outputs/calibration_report.md "
+            f"(reviews={calibration_summary.calibration_reviews})"
+        )
+
+    clusters = run_demand_clustering()
+    typer.echo(f"Generated {len(clusters)} demand clusters -> data/processed/demand_clusters.jsonl")
+    cluster_summary = build_cluster_report()
+    typer.echo(
+        "Built cluster report -> outputs/demand_clusters_report.md "
+        f"(pain_points={cluster_summary.pain_points}, clusters={cluster_summary.demand_clusters}, "
+        f"singleton={cluster_summary.singleton_clusters}, invalid={cluster_summary.invalid_clusters}, "
+        f"cluster_reviews={cluster_summary.cluster_reviews})"
     )
 
 
@@ -198,6 +279,12 @@ def add_calibration_review(
         should_be_quarantined=should_be_quarantined,
     )
     typer.echo(f"Added calibration review {review.review_id} -> data/processed/calibration_reviews.jsonl")
+
+
+def _clear_regenerated_stage2_files() -> None:
+    for path in STAGE2_REGENERATED_FILES:
+        path.parent.mkdir(parents=True, exist_ok=True)
+        path.write_text("", encoding="utf-8")
 
 
 def main() -> None:

@@ -9,4 +9,4 @@ def test_stage1_configs_load() -> None:
     assert configs["sources"]["sources"][0]["name"] == "manual_import"
     assert configs["extraction"]["pain_extraction"]["default_mode"] == "rule_based"
     assert configs["extraction"]["pain_extraction"]["min_confidence"] == 0.65
-
+    assert configs["clustering"]["clustering"]["similarity_threshold"] == 70

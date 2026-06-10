@@ -23,4 +23,5 @@ def load_configs(config_dir: str | Path = "configs") -> dict[str, dict[str, Any]
         "sources": load_yaml(config_dir / "source_registry.yaml"),
         "extraction": load_yaml(config_dir / "extraction_config.yaml"),
         "calibration": load_yaml(config_dir / "calibration_config.yaml"),
+        "clustering": load_yaml(config_dir / "clustering_config.yaml"),
     }

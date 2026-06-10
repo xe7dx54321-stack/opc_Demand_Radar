@@ -1,0 +1,16 @@
+clustering:
+  enabled: true
+  similarity_threshold: 70
+  singleton_clusters: true
+  max_representative_quotes: 3
+
+  fields:
+    pain_description_weight: 0.45
+    job_to_be_done_weight: 0.25
+    current_workaround_weight: 0.15
+    persona_weight: 0.10
+    domain_weight: 0.05
+
+  cluster_title:
+    language: zh
+    max_chars: 80
