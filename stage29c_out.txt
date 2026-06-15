@@ -1,0 +1,16 @@
+Initialized Stage 1 workspace. Loaded configs: domain, sources, extraction, calibration, clustering, merge_suggestion, batch, semantic_merge
+Imported 120 raw signals -> data/raw/raw_signals.jsonl
+Normalized 120 signals -> data/processed/normalized_signals.jsonl
+Extracted 91 valid pain points -> data/processed/pain_points.jsonl
+Built pain report -> outputs/pain_points_report.md (raw=120, normalized=120, pain_points=91, quarantine=29)
+Built calibration report -> outputs/calibration_report.md (reviews=9)
+Generated 89 demand clusters -> data/processed/demand_clusters.jsonl
+Built cluster report -> outputs/demand_clusters_report.md (pain_points=91, clusters=89, singleton=87, invalid=0, cluster_reviews=0)
+Generated merge candidates -> data/processed/cluster_merge_candidates.jsonl (candidates=131)
+Calibrated LLM judgments -> data/processed/calibrated_llm_semantic_merge_judgments.jsonl (judgments=131, auto_confirmed=31, auto_rejected=17, human_exceptions=83)
+Preflight: ok=131 repaired=0 invalid=0
+Cache: reads=0 writes=131 bypassed=131 stale_prevented=4
+Built calibrated AI groups -> data/processed/calibrated_llm_ai_reviewed_cluster_groups.jsonl (groups=6)
+Built calibration report -> outputs/llm_semantic_merge_calibration_report.md (cal_exception_rate=0.634, cal_groups=6)
+Built batch summary -> outputs/batch_summary_report.md (ready_for_truth_scoring=partial)
+Stage 2.9C complete (CalibLLM): confirmed=31 rejected=17 exceptions=83 groups=6

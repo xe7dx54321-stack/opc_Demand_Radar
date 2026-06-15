@@ -2,12 +2,12 @@
 
 ## Run Summary
 
-- Raw signals: 20
-- Normalized signals: 20
-- Pain points: 16
-- Quarantined items: 4
+- Raw signals: 120
+- Normalized signals: 120
+- Pain points: 91
+- Quarantined items: 29
 - Calibration reviews: 9
-- Generated at: 2026-06-10T08:32:20Z
+- Generated at: 2026-06-15T08:22:49Z
 
 ## Extraction Quality Overview
 

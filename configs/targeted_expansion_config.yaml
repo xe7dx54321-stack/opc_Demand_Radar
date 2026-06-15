@@ -1,0 +1,36 @@
+﻿targeted_expansion:
+  enabled: true
+  input:
+    base_sample_path: examples/real_signal_samples_stage26.csv
+    collection_plan_path: data/processed/targeted_signal_collection_plan.jsonl
+    truth_scores_path: data/processed/truth_scores.jsonl
+  output:
+    template_path: examples/stage33_targeted_signal_template.csv
+    filled_sample_path: examples/real_signal_samples_stage33.csv
+    combined_sample_path: examples/combined_signal_samples_stage33.csv
+  targets:
+    total_new_signals: 40
+    signals_per_candidate: 10
+    min_payment_or_cost_signal_ratio: 0.30
+    min_workaround_signal_ratio: 0.30
+    min_non_forum_source_ratio: 0.25
+  validation:
+    require_target_group_id: true
+    require_evidence_intent: true
+    require_source_url_or_note: true
+    allow_synthetic: false
+    exclude_synthetic_from_scoring: true
+  evidence_intents:
+    - paid_alternative
+    - budget_signal
+    - manual_workaround
+    - current_solution
+    - business_impact
+    - time_cost
+    - product_review
+    - case_study
+  rerun:
+    run_stage26: true
+    run_stage29c: true
+    run_stage3: true
+    run_stage32: true

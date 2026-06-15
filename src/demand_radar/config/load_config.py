@@ -26,4 +26,5 @@ def load_configs(config_dir: str | Path = "configs") -> dict[str, dict[str, Any]
         "clustering": load_yaml(config_dir / "clustering_config.yaml"),
         "merge_suggestion": load_yaml(config_dir / "merge_suggestion_config.yaml"),
         "batch": load_yaml(config_dir / "batch_config.yaml"),
+        "semantic_merge": load_yaml(config_dir / "semantic_merge_config.yaml"),
     }

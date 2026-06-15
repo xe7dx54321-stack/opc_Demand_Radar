@@ -1,0 +1,13 @@
+{
+  "template_rows": 36,
+  "filled_signals": 40,
+  "valid_signals": 40,
+  "warning_signals": 0,
+  "invalid_signals": 0,
+  "excluded_synthetic": 0,
+  "combined_input_rows": 120,
+  "base_rows": 80,
+  "targeted_rows_included": 40,
+  "duplicates_removed": 0,
+  "created_at": "2026-06-15T08:58:13Z"
+}

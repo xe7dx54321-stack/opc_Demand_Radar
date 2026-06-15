@@ -1,4 +1,4 @@
-from pathlib import Path
+﻿from pathlib import Path
 
 from demand_radar.batch.batch_summary import build_batch_summary
 from demand_radar.calibration.review_store import append_review
@@ -30,6 +30,9 @@ def test_build_batch_summary_counts_pipeline_state_by_batch(tmp_path: Path) -> N
         merge_candidates_path=paths["merge_candidates"],
         merge_reviews_path=paths["merge_reviews"],
         reviewed_groups_path=paths["reviewed_groups"],
+        ai_reviewed_groups_path=tmp_path / "ai_groups.jsonl",
+        human_exceptions_path=tmp_path / "exceptions.jsonl",
+        semantic_judgments_path=tmp_path / "judgments.jsonl",
     )
 
     batches = {batch.batch_id: batch for batch in result.batches}
@@ -81,6 +84,9 @@ def test_build_batch_summary_defaults_missing_batch_to_default(tmp_path: Path) -
         merge_candidates_path=tmp_path / "candidates.jsonl",
         merge_reviews_path=tmp_path / "merge_reviews.jsonl",
         reviewed_groups_path=tmp_path / "groups.jsonl",
+        ai_reviewed_groups_path=tmp_path / "ai_groups.jsonl",
+        human_exceptions_path=tmp_path / "exceptions.jsonl",
+        semantic_judgments_path=tmp_path / "judgments.jsonl",
     )
 
     assert [batch.batch_id for batch in result.batches] == ["default"]
@@ -322,3 +328,4 @@ def _group(cluster_ids: list[str], batch_ids: list[str]) -> ReviewedClusterGroup
         evidence_count=2,
         source_count=2,
     )
+

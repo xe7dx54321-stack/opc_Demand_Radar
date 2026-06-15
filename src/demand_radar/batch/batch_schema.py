@@ -21,15 +21,22 @@ class BatchSummary(BaseModel):
     singleton_clusters: int
     merge_candidates: int
     reviewed_groups: int
+    ai_reviewed_groups: int = 0
+    total_reviewed_groups: int = 0
 
     calibration_reviews: int
     cluster_reviews: int
     merge_reviews: int
+    semantic_judgments: int = 0
+    auto_confirmed_merges: int = 0
+    auto_rejected_merges: int = 0
+    human_exceptions: int = 0
 
     extraction_yield: float | None = None
     quarantine_rate: float | None = None
     singleton_rate: float | None = None
     merge_candidate_rate: float | None = None
+    human_exception_rate: float | None = None
 
     good_extractions: int = 0
     weak_extractions: int = 0
@@ -47,6 +54,11 @@ class Stage3Readiness(BaseModel):
     pain_volume_ok: bool
     group_volume_ok: bool
     clustering_convergence_ok: bool
+    exception_rate_ok: bool = False
+    auto_confirmed_groups_ok: bool = False
+    human_exception_rate: float | None = None
+    auto_confirmed_groups: int = 0
+    total_reviewed_groups: int = 0
     ready_for_truth_scoring: str
     recommendation: str
 

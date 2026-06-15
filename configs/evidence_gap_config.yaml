@@ -1,0 +1,53 @@
+﻿evidence_gap:
+  enabled: true
+
+  input:
+    truth_score_path: data/processed/truth_scores.jsonl
+    min_level:
+      - medium
+      - strong
+    include_next_actions:
+      - needs_more_evidence
+      - keep_watch
+    include_weak: false
+
+  target_thresholds:
+    strong_truth_score: 75
+    proceed_to_fit_scoring_min_score: 70
+
+  dimensions:
+    pain_evidence_strength:
+      target: 75
+      min_for_fit: 65
+    frequency_repetition:
+      target: 70
+      min_for_fit: 60
+    existing_workaround:
+      target: 70
+      min_for_fit: 55
+    willingness_to_pay:
+      target: 65
+      min_for_fit: 50
+    persona_clarity:
+      target: 75
+      min_for_fit: 60
+
+  collection:
+    default_target_new_signals: 5
+    max_target_new_signals: 12
+    preferred_source_types:
+      - forum_post
+      - product_review
+      - github_issue
+      - community_discussion
+      - job_posting
+      - landing_page
+      - pricing_page
+      - case_study
+      - interview_note
+    languages:
+      - zh
+      - en
+
+  output:
+    language: zh

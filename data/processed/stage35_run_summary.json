@@ -1,0 +1,22 @@
+{
+  "run_id": "s35run_000001",
+  "before_snapshot_name": "before_stage35",
+  "before_snapshot_path": "outputs\\archive\\before_stage35_20260615_142132",
+  "lineage_baseline_quality": "full",
+  "selected_candidates": 2,
+  "template_rows": 24,
+  "filled_signals": 0,
+  "valid_signals": 0,
+  "warning_signals": 0,
+  "invalid_signals": 0,
+  "excluded_signals": 0,
+  "combined_rows": 0,
+  "payment_or_cost_signals": 0,
+  "workaround_or_current_solution_signals": 0,
+  "business_impact_or_time_cost_signals": 0,
+  "attribution_rate": null,
+  "stable_delta_improved": null,
+  "stable_proceed_to_fit_scoring": null,
+  "stage4_gate_status": "blocked",
+  "created_at": "2026-06-15T14:21:32Z"
+}

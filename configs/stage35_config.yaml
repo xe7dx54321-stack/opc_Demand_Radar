@@ -1,0 +1,81 @@
+﻿stage35:
+  enabled: true
+
+  snapshot:
+    required: true
+    snapshot_name: before_stage35
+    archive_dir: outputs/archive/before_stage35
+
+  candidate_selection:
+    mode: explicit
+    max_candidates: 2
+    preferred_keywords:
+      - "AI产业跟踪"
+      - "项目初筛"
+      - "企业知识"
+      - "知识工作流"
+    exclude_keywords:
+      - "内容团队选题"
+      - "AI Agent工作流"
+
+  input:
+    base_sample_path: examples/combined_signal_samples_stage33.csv
+    fallback_base_sample_path: examples/real_signal_samples_stage26.csv
+    truth_scores_path: data/processed/truth_scores.jsonl
+    evidence_gap_path: data/processed/evidence_gap_analysis.jsonl
+    collection_plan_path: data/processed/targeted_signal_collection_plan.jsonl
+
+  output:
+    template_path: examples/stage35_targeted_signal_template.csv
+    filled_sample_path: examples/real_signal_samples_stage35.csv
+    combined_sample_path: examples/combined_signal_samples_stage35.csv
+
+  targets:
+    total_new_signals: 24
+    min_signals_per_candidate: 10
+    max_signals_per_candidate: 14
+    min_payment_or_cost_signal_ratio: 0.60
+    min_workaround_or_current_solution_ratio: 0.25
+    min_business_impact_or_time_cost_ratio: 0.20
+    min_non_forum_source_ratio: 0.35
+
+  evidence_intents:
+    priority:
+      - paid_alternative
+      - budget_signal
+      - current_solution
+      - business_impact
+      - time_cost
+      - manual_workaround
+    allowed:
+      - paid_alternative
+      - budget_signal
+      - manual_workaround
+      - current_solution
+      - business_impact
+      - time_cost
+      - product_review
+      - case_study
+      - pricing_page
+      - landing_page
+
+  validation:
+    require_target_group_id: true
+    require_target_truth_score_id: true
+    require_source_url_or_note: true
+    allow_synthetic: false
+    exclude_synthetic_from_scoring: true
+    min_raw_text_chars: 80
+
+  rerun:
+    run_stage26: true
+    run_stage29c: true
+    run_stage3: true
+    run_stage32: true
+    run_stage34: true
+
+  stage4_gate:
+    min_truth_score_for_tentative_fit: 70
+    require_proceed_to_fit_scoring_for_formal_fit: true
+    min_attribution_rate: 0.50
+    min_delta_confidence: medium

@@ -1,0 +1,28 @@
+lineage:
+  enabled: true
+
+  input:
+    before_truth_scores_path: outputs/archive/before_stage33/truth_scores.jsonl
+    after_truth_scores_path: data/processed/truth_scores.jsonl
+    targeted_signals_path: examples/real_signal_samples_stage33.csv
+    combined_signals_path: examples/combined_signal_samples_stage33.csv
+    pain_points_path: data/processed/pain_points.jsonl
+    demand_clusters_path: data/processed/demand_clusters.jsonl
+    reviewed_groups_path: data/processed/calibrated_llm_ai_reviewed_cluster_groups.jsonl
+
+  matching:
+    title_similarity_weight: 0.25
+    persona_overlap_weight: 0.15
+    domain_overlap_weight: 0.10
+    targeted_signal_overlap_weight: 0.35
+    pain_point_overlap_weight: 0.15
+    strong_match_threshold: 0.75
+    weak_match_threshold: 0.50
+
+  drift:
+    group_drift_threshold: 0.50
+    evidence_loss_threshold: 0.50
+    split_detection_min_matches: 2
+
+  output:
+    language: zh

@@ -1,4 +1,4 @@
-.venv/
+﻿.venv/
 __pycache__/
 *.py[cod]
 .pytest_cache/
@@ -13,6 +13,7 @@ __pycache__/
 data/raw/*.jsonl
 data/processed/*.jsonl
 data/quarantine/*.jsonl
+data/cache/
 outputs/*.csv
 outputs/*.json
 
@@ -25,3 +26,11 @@ outputs/*.json
 !outputs/cluster_merge_suggestions.md
 !outputs/reviewed_cluster_groups_report.md
 !outputs/batch_summary_report.md
+!outputs/semantic_merge_audit.md
+!outputs/semantic_merge_judgment_report.md
+!outputs/ai_reviewed_cluster_groups_report.md
+!outputs/human_exception_queue_report.md
+!outputs/llm_semantic_merge_judgment_report.md
+!outputs/llm_ai_reviewed_cluster_groups_report.md
+!outputs/llm_human_exception_queue_report.md
+!outputs/llm_semantic_merge_comparison_report.md

@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from collections import Counter, defaultdict
 from pathlib import Path
-from typing import Any, Iterable
+from typing import Iterable
 
 from demand_radar.batch.batch_schema import BatchSummary, BatchSummaryResult, Stage3Readiness
 from demand_radar.calibration.review_store import load_reviews
@@ -15,6 +15,11 @@ from demand_radar.clustering.merge_store import (
     load_reviewed_cluster_groups,
 )
 from demand_radar.config.schemas import QuarantineRecord
+from demand_radar.semantic_merge.semantic_merge_store import (
+    load_ai_reviewed_cluster_groups,
+    load_human_exception_items,
+    load_semantic_merge_judgments,
+)
 from demand_radar.state.processed_store import load_normalized_signals, load_pain_points
 from demand_radar.state.quarantine_store import load_quarantine
 from demand_radar.state.raw_store import load_raw_signals, utc_now_iso
@@ -34,6 +39,9 @@ def build_batch_summary(
     merge_candidates_path: str | Path = "data/processed/cluster_merge_candidates.jsonl",
     merge_reviews_path: str | Path = "data/processed/cluster_group_reviews.jsonl",
     reviewed_groups_path: str | Path = "data/processed/reviewed_cluster_groups.jsonl",
+    semantic_judgments_path: str | Path = "data/processed/semantic_merge_judgments.jsonl",
+    ai_reviewed_groups_path: str | Path = "data/processed/ai_reviewed_cluster_groups.jsonl",
+    human_exceptions_path: str | Path = "data/processed/human_exception_queue.jsonl",
 ) -> BatchSummaryResult:
     raw_signals = load_raw_signals(raw_path)
     normalized_signals = load_normalized_signals(normalized_path)
@@ -45,6 +53,9 @@ def build_batch_summary(
     merge_candidates = load_merge_candidates(merge_candidates_path)
     merge_reviews = load_cluster_group_reviews(merge_reviews_path)
     reviewed_groups = load_reviewed_cluster_groups(reviewed_groups_path)
+    semantic_judgments = load_semantic_merge_judgments(semantic_judgments_path)
+    ai_reviewed_groups = load_ai_reviewed_cluster_groups(ai_reviewed_groups_path)
+    human_exceptions = load_human_exception_items(human_exceptions_path)
 
     raw_batch_by_id = {signal.raw_signal_id: _batch_id(signal.batch_id) for signal in raw_signals}
     normalized_batch_by_id = {
@@ -53,12 +64,8 @@ def build_batch_summary(
     normalized_batch_by_raw = {
         signal.raw_signal_id: _batch_id(signal.batch_id) for signal in normalized_signals
     }
-    pain_batch_by_id = {
-        pain.pain_point_id: _batch_id(pain.batch_id) for pain in pain_points
-    }
-    pain_batch_by_raw = {
-        pain.raw_signal_id: _batch_id(pain.batch_id) for pain in pain_points
-    }
+    pain_batch_by_id = {pain.pain_point_id: _batch_id(pain.batch_id) for pain in pain_points}
+    pain_batch_by_raw = {pain.raw_signal_id: _batch_id(pain.batch_id) for pain in pain_points}
     cluster_batches_by_id = {cluster.cluster_id: _batch_ids(cluster.batch_ids) for cluster in clusters}
     candidate_batches_by_id = {
         candidate.merge_candidate_id: _batch_ids(candidate.batch_ids)
@@ -105,6 +112,9 @@ def build_batch_summary(
         add(_batch_ids(candidate.batch_ids), "merge_candidates")
     for group in reviewed_groups:
         add(_batch_ids(group.batch_ids), "reviewed_groups")
+    for group in ai_reviewed_groups:
+        add(_batch_ids(group.batch_ids), "ai_reviewed_groups")
+
     for review in calibration_reviews:
         batch_id = (
             pain_batch_by_id.get(review.pain_point_id or "")
@@ -118,6 +128,7 @@ def build_batch_summary(
         label_counts[batch_id][review.label] += 1
     for review in cluster_reviews:
         add(cluster_batches_by_id.get(review.cluster_id, [DEFAULT_BATCH_ID]), "cluster_reviews")
+
     matching_merge_reviews = [
         review
         for review in merge_reviews
@@ -125,6 +136,15 @@ def build_batch_summary(
     ]
     for review in matching_merge_reviews:
         add(candidate_batches_by_id.get(review.merge_candidate_id, [DEFAULT_BATCH_ID]), "merge_reviews")
+    for judgment in semantic_judgments:
+        batch_ids = candidate_batches_by_id.get(judgment.merge_candidate_id, [DEFAULT_BATCH_ID])
+        add(batch_ids, "semantic_judgments")
+        if judgment.auto_action == "auto_confirm":
+            add(batch_ids, "auto_confirmed_merges")
+        elif judgment.auto_action == "auto_reject":
+            add(batch_ids, "auto_rejected_merges")
+    for item in human_exceptions:
+        add(candidate_batches_by_id.get(item.merge_candidate_id, [DEFAULT_BATCH_ID]), "human_exceptions")
 
     if not all_batches:
         all_batches.add(DEFAULT_BATCH_ID)
@@ -144,9 +164,14 @@ def build_batch_summary(
             "singleton_clusters": sum(1 for cluster in clusters if cluster.evidence_count == 1),
             "merge_candidates": len(merge_candidates),
             "reviewed_groups": len(reviewed_groups),
+            "ai_reviewed_groups": len(ai_reviewed_groups),
             "calibration_reviews": len(calibration_reviews),
             "cluster_reviews": len(cluster_reviews),
             "merge_reviews": len(matching_merge_reviews),
+            "semantic_judgments": len(semantic_judgments),
+            "auto_confirmed_merges": sum(1 for judgment in semantic_judgments if judgment.auto_action == "auto_confirm"),
+            "auto_rejected_merges": sum(1 for judgment in semantic_judgments if judgment.auto_action == "auto_reject"),
+            "human_exceptions": len(human_exceptions),
         }
     )
     overall_labels = Counter(review.label for review in calibration_reviews)
@@ -168,6 +193,9 @@ def _summary_from_counts(
     raw_signals = counts["raw_signals"]
     normalized_signals = counts["normalized_signals"]
     demand_clusters = counts["demand_clusters"]
+    semantic_judgments = counts["semantic_judgments"]
+    reviewed_groups = counts["reviewed_groups"]
+    ai_reviewed_groups = counts["ai_reviewed_groups"]
     return BatchSummary(
         batch_id=batch_id,
         raw_signals=raw_signals,
@@ -177,14 +205,21 @@ def _summary_from_counts(
         demand_clusters=demand_clusters,
         singleton_clusters=counts["singleton_clusters"],
         merge_candidates=counts["merge_candidates"],
-        reviewed_groups=counts["reviewed_groups"],
+        reviewed_groups=reviewed_groups,
+        ai_reviewed_groups=ai_reviewed_groups,
+        total_reviewed_groups=reviewed_groups + ai_reviewed_groups,
         calibration_reviews=counts["calibration_reviews"],
         cluster_reviews=counts["cluster_reviews"],
         merge_reviews=counts["merge_reviews"],
+        semantic_judgments=semantic_judgments,
+        auto_confirmed_merges=counts["auto_confirmed_merges"],
+        auto_rejected_merges=counts["auto_rejected_merges"],
+        human_exceptions=counts["human_exceptions"],
         extraction_yield=_rate(counts["pain_points"], normalized_signals),
         quarantine_rate=_rate(counts["quarantined_items"], raw_signals),
         singleton_rate=_rate(counts["singleton_clusters"], demand_clusters),
         merge_candidate_rate=_rate(counts["merge_candidates"], demand_clusters),
+        human_exception_rate=_rate(counts["human_exceptions"], semantic_judgments),
         good_extractions=labels["good_extraction"],
         weak_extractions=labels["weak_extraction"],
         false_positives=labels["false_positive"],
@@ -197,23 +232,38 @@ def _summary_from_counts(
 def _stage3_readiness(overall: BatchSummary) -> Stage3Readiness:
     sample_size_ok = overall.raw_signals >= 50
     pain_volume_ok = overall.pain_points >= 35
-    group_volume_ok = overall.reviewed_groups >= 5
+    group_volume_ok = overall.total_reviewed_groups >= 5
     clustering_convergence_ok = (overall.singleton_rate or 0) <= 0.75
-    passed = sum([sample_size_ok, pain_volume_ok, group_volume_ok, clustering_convergence_ok])
-    if passed == 4:
+    exception_rate_ok = overall.human_exception_rate is not None and overall.human_exception_rate <= 0.40
+    auto_confirmed_groups_ok = overall.ai_reviewed_groups >= 3
+    passed = sum(
+        [
+            sample_size_ok,
+            pain_volume_ok,
+            group_volume_ok,
+            exception_rate_ok,
+            auto_confirmed_groups_ok,
+        ]
+    )
+    if passed == 5:
         ready = "yes"
-        recommendation = "样本量、痛点量、聚类收敛和已确认需求组均达标，可以进入真值评分。"
+        recommendation = "样本量、痛点量、AI/人工确认需求组、异常比例和自动确认组数量均达标，可以进入真值评分。"
     elif passed >= 2:
         ready = "partial"
-        recommendation = "已有部分基础，但建议继续补充人工审核或调校聚类/合并建议后再进入真值评分。"
+        recommendation = "已有部分基础，但建议继续处理人工异常队列、调校语义合并阈值，或补充 reviewed groups 后再进入真值评分。"
     else:
         ready = "no"
-        recommendation = "证据规模或收敛程度不足，建议继续扩充样本并完成更多人工合并确认。"
+        recommendation = "证据规模、自动合并质量或需求组数量不足，建议继续扩充样本并处理异常队列。"
     return Stage3Readiness(
         sample_size_ok=sample_size_ok,
         pain_volume_ok=pain_volume_ok,
         group_volume_ok=group_volume_ok,
         clustering_convergence_ok=clustering_convergence_ok,
+        exception_rate_ok=exception_rate_ok,
+        auto_confirmed_groups_ok=auto_confirmed_groups_ok,
+        human_exception_rate=overall.human_exception_rate,
+        auto_confirmed_groups=overall.ai_reviewed_groups,
+        total_reviewed_groups=overall.total_reviewed_groups,
         ready_for_truth_scoring=ready,
         recommendation=recommendation,
     )

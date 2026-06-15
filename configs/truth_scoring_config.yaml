@@ -1,0 +1,44 @@
+﻿truth_scoring:
+  enabled: true
+
+  input:
+    preferred_sources:
+      - calibrated_llm_ai_reviewed_groups
+      - ai_reviewed_cluster_groups
+      - reviewed_cluster_groups
+
+    exclude_sources:
+      - singleton_clusters
+      - human_exception_queue
+      - quarantine
+
+  weights:
+    pain_evidence_strength: 0.30
+    frequency_repetition: 0.20
+    existing_workaround: 0.20
+    willingness_to_pay: 0.20
+    persona_clarity: 0.10
+
+  levels:
+    strong: 75
+    medium: 55
+    weak: 35
+
+  gates:
+    min_evidence_count_for_medium: 2
+    min_evidence_count_for_strong: 3
+    max_level_if_single_source: medium
+    max_level_if_low_persona_clarity: medium
+    max_level_if_low_pain_evidence: weak
+
+  rule_based:
+    enabled: true
+
+  llm:
+    enabled: false
+    mode: stub
+
+  output:
+    language: zh
+    include_evidence_quotes: true
+    include_risk_flags: true

@@ -1,0 +1,13 @@
+{
+  "name": "before_stage35",
+  "created_at": "2026-06-15T14:10:12.290780+00:00",
+  "files": [
+    "truth_scores.jsonl",
+    "calibrated_llm_ai_reviewed_cluster_groups.jsonl",
+    "evidence_gap_analysis.jsonl",
+    "targeted_signal_collection_plan.jsonl",
+    "stable_truth_score_delta.jsonl",
+    "candidate_lineage.jsonl",
+    "targeted_evidence_attribution.jsonl"
+  ]
+}

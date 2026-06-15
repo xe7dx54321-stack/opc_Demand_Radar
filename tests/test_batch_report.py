@@ -1,4 +1,4 @@
-import csv
+﻿import csv
 import json
 from pathlib import Path
 
@@ -42,6 +42,9 @@ def test_batch_summary_report_and_quality_matrix_are_generated(tmp_path: Path) -
         merge_candidates_path=tmp_path / "candidates.jsonl",
         merge_reviews_path=tmp_path / "merge_reviews.jsonl",
         reviewed_groups_path=tmp_path / "groups.jsonl",
+        ai_reviewed_groups_path=tmp_path / "ai_groups.jsonl",
+        human_exceptions_path=tmp_path / "exceptions.jsonl",
+        semantic_judgments_path=tmp_path / "judgments.jsonl",
     )
 
     report = report_path.read_text(encoding="utf-8")
@@ -71,7 +74,11 @@ def test_batch_summary_report_handles_empty_state(tmp_path: Path) -> None:
         merge_candidates_path=tmp_path / "candidates.jsonl",
         merge_reviews_path=tmp_path / "merge_reviews.jsonl",
         reviewed_groups_path=tmp_path / "groups.jsonl",
+        ai_reviewed_groups_path=tmp_path / "ai_groups.jsonl",
+        human_exceptions_path=tmp_path / "exceptions.jsonl",
+        semantic_judgments_path=tmp_path / "judgments.jsonl",
     )
 
     assert result.overall.raw_signals == 0
     assert [batch.batch_id for batch in result.batches] == ["default"]
+

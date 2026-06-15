@@ -1,0 +1,105 @@
+semantic_merge:
+  enabled: true
+
+  mode: llm
+  # mode options:
+  #   rule_based_stub  - offline, no API calls
+  #   llm              - real LLM structured output (requires .env)
+
+  llm:
+    provider: responses_compatible
+    # provider options:
+    #   openai_compatible      - OpenAI /chat/completions format
+    #   anthropic_compatible   - Anthropic /messages format
+    #   responses_compatible   - OpenAI Responses API /responses format (ailinkmax)
+
+    model: "claude-sonnet-4-6"
+    base_url_env: DEMAND_RADAR_LLM_BASE_URL
+    api_key_env: DEMAND_RADAR_LLM_API_KEY
+
+    timeout_seconds: 60
+    max_retries: 2
+    temperature: 0.0
+    max_tokens: 4000
+
+    write_separate_outputs: true
+
+  thresholds:
+    auto_confirm:
+      confidence: 0.82
+      require_group_title: true
+      require_group_summary: true
+      require_evidence_alignment: true
+      require_workflow_judgment: true
+      # These flags block auto_confirm only (not auto_reject)
+      # weak_evidence alone should not block auto_reject
+      block_conflict_flags:
+        - different_persona
+        - different_workflow
+        - different_pain
+        - ambiguous_scope
+        - too_broad
+        - too_narrow
+
+    auto_reject:
+      confidence: 0.75
+      require_reason: true
+      require_workflow_judgment: false
+
+    human_exception:
+      confidence: 0.82
+
+  batch:
+    max_candidates_per_run: 200
+    cache_enabled: true
+    force_rerun: false
+    cache_key_fields:
+      - merge_candidate_id
+      - cluster_id_a
+      - cluster_id_b
+      - model
+      - provider
+      - prompt_version
+      - gate_policy_version
+
+  calibration:
+    enabled: true
+    prompt_version: semantic_merge_judge_v2
+    gate_policy_version: semantic_merge_gate_v2
+    compare_with_previous_llm_run: true
+
+  candidate_preflight:
+    enabled: true
+    allow_missing_similarity_score: false
+    missing_similarity_action: repair
+    min_required_fields:
+      - cluster_id_a
+      - cluster_id_b
+
+  comparison:
+    enabled: true
+    baseline_mode: rule_based_stub
+    candidate_limit: null
+
+  require_evidence_alignment: true
+  require_workflow_judgment: true
+  require_reason_zh: true
+
+  decisions:
+    - confirm_merge
+    - reject_merge
+    - maybe_merge
+
+  conflict_flags:
+    - different_persona
+    - different_workflow
+    - different_pain
+    - weak_evidence
+    - ambiguous_scope
+    - too_broad
+    - too_narrow
+    - title_mismatch
+
+  output:
+    language: zh
+    max_reason_chars: 500

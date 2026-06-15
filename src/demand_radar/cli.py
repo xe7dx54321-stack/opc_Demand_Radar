@@ -2,6 +2,18 @@
 
 from __future__ import annotations
 
+import os as _os
+from pathlib import Path as _Path
+
+_env_file = _Path(__file__).parent.parent.parent / ".env"
+if _env_file.exists():
+    with open(_env_file, encoding="utf-8") as _f:
+        for _line in _f:
+            _line = _line.strip()
+            if _line and not _line.startswith("#") and "=" in _line:
+                _k, _v = _line.split("=", 1)
+                _os.environ.setdefault(_k, _v)
+
 import subprocess
 import sys
 from pathlib import Path
@@ -22,9 +34,57 @@ from demand_radar.intake.manual_import import import_file
 from demand_radar.loops.pain_extraction_loop import run_pain_extraction
 from demand_radar.reporting.calibration_report import build_calibration_report
 from demand_radar.reporting.pain_points_report import build_pain_points_report
+from demand_radar.semantic_merge.semantic_merge_judge import run_semantic_merge_judge
+from demand_radar.semantic_merge.semantic_merge_report import (
+    build_ai_reviewed_groups_report,
+    build_human_exception_report,
+    build_semantic_merge_report,
+)
+from demand_radar.semantic_merge.semantic_merge_store import build_ai_reviewed_cluster_groups
 from demand_radar.state.raw_store import ensure_jsonl_file
+from demand_radar.semantic_merge.llm_judge_runner import (
+    build_llm_ai_reviewed_cluster_groups,
+    run_llm_semantic_merge_judge,
+)
+from demand_radar.semantic_merge.llm_comparison_report import build_semantic_merge_comparison_report
+from demand_radar.semantic_merge.llm_reports import (
+    build_llm_ai_reviewed_groups_report,
+    build_llm_human_exception_report,
+    build_llm_semantic_merge_report,
+)
 
 
+
+from demand_radar.truth_scoring.truth_pipeline import run_truth_scoring
+from demand_radar.truth_scoring.truth_report import (
+    build_top_truth_candidates_report,
+    build_truth_scoring_report,
+)
+from demand_radar.truth_scoring.truth_store import load_truth_scores
+
+from demand_radar.evidence_gap.evidence_gap_analyzer import analyze_gaps
+from demand_radar.evidence_gap.evidence_gap_report import (
+    build_evidence_gap_report,
+    build_targeted_signal_plan_report,
+)
+from demand_radar.evidence_gap.evidence_gap_store import (
+    load_gap_analysis,
+    write_gap_analysis,
+    write_collection_plans,
+)
+from demand_radar.evidence_gap.signal_collection_plan import build_collection_plans
+
+from demand_radar.targeted_expansion.template_builder import build_template
+from demand_radar.targeted_expansion.targeted_validator import validate_targeted_signals, load_validations
+from demand_radar.targeted_expansion.combined_input_builder import build_combined_input
+from demand_radar.targeted_expansion.expansion_pipeline import run_stage33 as _run_stage33_pipeline
+from demand_radar.targeted_expansion.expansion_report import (
+    build_targeted_expansion_report,
+    build_truth_score_delta_report,
+)
+from demand_radar.targeted_expansion.expansion_store import (
+    load_expansion_summary, load_truth_score_deltas, write_expansion_summary,
+)
 app = typer.Typer(help="Domain-Bounded Demand Radar Stage 1 CLI.")
 calibration_review_app = typer.Typer(help="Human calibration review commands.")
 app.add_typer(calibration_review_app, name="calibration-review")
@@ -39,15 +99,23 @@ RUNTIME_FILES = [
     Path("data/processed/cluster_merge_candidates.jsonl"),
     Path("data/processed/cluster_group_reviews.jsonl"),
     Path("data/processed/reviewed_cluster_groups.jsonl"),
+    Path("data/processed/semantic_merge_judgments.jsonl"),
+    Path("data/processed/ai_reviewed_cluster_groups.jsonl"),
+    Path("data/processed/human_exception_queue.jsonl"),
+    Path("data/processed/semantic_merge_human_audits.jsonl"),
     Path("data/quarantine/invalid_outputs.jsonl"),
     Path("data/quarantine/invalid_clusters.jsonl"),
     Path("data/quarantine/invalid_merge_candidates.jsonl"),
     Path("data/quarantine/invalid_reviewed_groups.jsonl"),
+    Path("data/quarantine/invalid_ai_reviewed_groups.jsonl"),
     Path("outputs/pain_points_report.md"),
     Path("outputs/calibration_report.md"),
     Path("outputs/demand_clusters_report.md"),
     Path("outputs/cluster_merge_suggestions.md"),
     Path("outputs/reviewed_cluster_groups_report.md"),
+    Path("outputs/semantic_merge_judgment_report.md"),
+    Path("outputs/ai_reviewed_cluster_groups_report.md"),
+    Path("outputs/human_exception_queue_report.md"),
     Path("outputs/batch_summary_report.md"),
     Path("outputs/batch_quality_matrix.csv"),
     Path("outputs/run_summary.json"),
@@ -61,15 +129,22 @@ STAGE2_REGENERATED_FILES = [
     Path("data/processed/demand_clusters.jsonl"),
     Path("data/processed/cluster_merge_candidates.jsonl"),
     Path("data/processed/reviewed_cluster_groups.jsonl"),
+    Path("data/processed/semantic_merge_judgments.jsonl"),
+    Path("data/processed/ai_reviewed_cluster_groups.jsonl"),
+    Path("data/processed/human_exception_queue.jsonl"),
     Path("data/quarantine/invalid_outputs.jsonl"),
     Path("data/quarantine/invalid_clusters.jsonl"),
     Path("data/quarantine/invalid_merge_candidates.jsonl"),
     Path("data/quarantine/invalid_reviewed_groups.jsonl"),
+    Path("data/quarantine/invalid_ai_reviewed_groups.jsonl"),
     Path("outputs/pain_points_report.md"),
     Path("outputs/calibration_report.md"),
     Path("outputs/demand_clusters_report.md"),
     Path("outputs/cluster_merge_suggestions.md"),
     Path("outputs/reviewed_cluster_groups_report.md"),
+    Path("outputs/semantic_merge_judgment_report.md"),
+    Path("outputs/ai_reviewed_cluster_groups_report.md"),
+    Path("outputs/human_exception_queue_report.md"),
     Path("outputs/batch_summary_report.md"),
     Path("outputs/batch_quality_matrix.csv"),
     Path("outputs/run_summary.json"),
@@ -213,6 +288,56 @@ def build_batch_summary_command() -> None:
         "Built batch summary report -> outputs/batch_summary_report.md "
         f"(batches={len(summary.batches)}, ready_for_truth_scoring="
         f"{summary.readiness.ready_for_truth_scoring})"
+    )
+
+
+@app.command("semantic-merge-judge")
+def semantic_merge_judge_command() -> None:
+    """Run the Stage 2.7 AI semantic merge judge from current merge candidates."""
+
+    judgments = run_semantic_merge_judge()
+    auto_confirmed = sum(1 for judgment in judgments if judgment.auto_action == "auto_confirm")
+    auto_rejected = sum(1 for judgment in judgments if judgment.auto_action == "auto_reject")
+    human_exceptions = sum(1 for judgment in judgments if judgment.auto_action == "human_exception")
+    typer.echo(
+        "Built semantic merge judgments -> data/processed/semantic_merge_judgments.jsonl "
+        f"(judgments={len(judgments)}, auto_confirmed={auto_confirmed}, "
+        f"auto_rejected={auto_rejected}, human_exceptions={human_exceptions})"
+    )
+
+
+@app.command("build-ai-reviewed-groups")
+def build_ai_reviewed_groups_command() -> None:
+    """Build AI reviewed cluster groups from auto-confirmed semantic judgments."""
+
+    groups = build_ai_reviewed_cluster_groups()
+    summary = build_ai_reviewed_groups_report()
+    typer.echo(
+        "Built AI reviewed cluster groups -> data/processed/ai_reviewed_cluster_groups.jsonl "
+        f"(groups={len(groups)}, clusters={summary.included_clusters})"
+    )
+
+
+@app.command("build-semantic-merge-report")
+def build_semantic_merge_report_command() -> None:
+    """Build the Stage 2.7 semantic merge judgment report."""
+
+    summary = build_semantic_merge_report()
+    typer.echo(
+        "Built semantic merge judgment report -> outputs/semantic_merge_judgment_report.md "
+        f"(judgments={summary.judgments}, auto_confirmed={summary.auto_confirmed}, "
+        f"human_exceptions={summary.human_exceptions})"
+    )
+
+
+@app.command("build-human-exception-report")
+def build_human_exception_report_command() -> None:
+    """Build the Stage 2.7 human exception queue report."""
+
+    summary = build_human_exception_report()
+    typer.echo(
+        "Built human exception queue report -> outputs/human_exception_queue_report.md "
+        f"(exceptions={summary.exceptions}, high={summary.high_priority})"
     )
 
 
@@ -381,6 +506,435 @@ def run_stage26(
     )
 
 
+@app.command("run-stage27")
+def run_stage27(
+    input: Annotated[
+        Path | None,
+        typer.Option("--input", exists=True, readable=True, help="Optional CSV or JSONL input file."),
+    ] = None,
+) -> None:
+    """Run Stage 2.7 semantic merge judge and AI reviewed group generation."""
+
+    init(reset=False)
+    if input is not None:
+        _run_stage2_core(input)
+        candidates = suggest_cluster_merges()
+        typer.echo(
+            "Generated merge candidates -> data/processed/cluster_merge_candidates.jsonl "
+            f"(candidates={len(candidates)})"
+        )
+        merge_summary = build_merge_report()
+        typer.echo(
+            "Built merge suggestions report -> outputs/cluster_merge_suggestions.md "
+            f"(candidates={merge_summary.merge_candidates}, reviewed={merge_summary.reviewed_candidates}, "
+            f"confirmed={merge_summary.confirmed_merges})"
+        )
+
+    judgments = run_semantic_merge_judge()
+    auto_confirmed = sum(1 for judgment in judgments if judgment.auto_action == "auto_confirm")
+    auto_rejected = sum(1 for judgment in judgments if judgment.auto_action == "auto_reject")
+    human_exceptions = sum(1 for judgment in judgments if judgment.auto_action == "human_exception")
+    typer.echo(
+        "Built semantic merge judgments -> data/processed/semantic_merge_judgments.jsonl "
+        f"(judgments={len(judgments)}, auto_confirmed={auto_confirmed}, "
+        f"auto_rejected={auto_rejected}, human_exceptions={human_exceptions})"
+    )
+    semantic_summary = build_semantic_merge_report()
+    typer.echo(
+        "Built semantic merge judgment report -> outputs/semantic_merge_judgment_report.md "
+        f"(human_exception_rate={semantic_summary.human_exception_rate})"
+    )
+    exception_summary = build_human_exception_report()
+    typer.echo(
+        "Built human exception queue report -> outputs/human_exception_queue_report.md "
+        f"(exceptions={exception_summary.exceptions})"
+    )
+    groups = build_ai_reviewed_cluster_groups()
+    groups_summary = build_ai_reviewed_groups_report()
+    typer.echo(
+        "Built AI reviewed cluster groups -> data/processed/ai_reviewed_cluster_groups.jsonl "
+        f"(groups={len(groups)}, clusters={groups_summary.included_clusters})"
+    )
+    batch_summary = build_batch_summary_report()
+    typer.echo(
+        "Built batch summary report -> outputs/batch_summary_report.md "
+        f"(batches={len(batch_summary.batches)}, ready_for_truth_scoring="
+        f"{batch_summary.readiness.ready_for_truth_scoring})"
+    )
+
+
+
+@app.command("run-stage28")
+def run_stage28(
+    input: Annotated[
+        Path | None,
+        typer.Option("--input", exists=True, readable=True, help="Optional CSV or JSONL input file."),
+    ] = None,
+) -> None:
+    """Run Stage 2.8: full pipeline including AI semantic merge as main flow."""
+
+    init(reset=False)
+    if input is not None:
+        _run_stage2_core(input)
+        candidates = suggest_cluster_merges()
+        typer.echo(
+            "Generated merge candidates -> data/processed/cluster_merge_candidates.jsonl "
+            f"(candidates={len(candidates)})"
+        )
+        merge_summary = build_merge_report()
+        typer.echo(
+            "Built merge suggestions report -> outputs/cluster_merge_suggestions.md "
+            f"(candidates={merge_summary.merge_candidates}, reviewed={merge_summary.reviewed_candidates}, "
+            f"confirmed={merge_summary.confirmed_merges})"
+        )
+
+    judgments = run_semantic_merge_judge()
+    auto_confirmed = sum(1 for j in judgments if j.auto_action == "auto_confirm")
+    auto_rejected = sum(1 for j in judgments if j.auto_action == "auto_reject")
+    human_exceptions = sum(1 for j in judgments if j.auto_action == "human_exception")
+    typer.echo(
+        "Built semantic merge judgments -> data/processed/semantic_merge_judgments.jsonl "
+        f"(judgments={len(judgments)}, auto_confirmed={auto_confirmed}, "
+        f"auto_rejected={auto_rejected}, human_exceptions={human_exceptions})"
+    )
+    semantic_summary = build_semantic_merge_report()
+    typer.echo(
+        "Built semantic merge judgment report -> outputs/semantic_merge_judgment_report.md "
+        f"(human_exception_rate={semantic_summary.human_exception_rate})"
+    )
+    exception_summary = build_human_exception_report()
+    typer.echo(
+        "Built human exception queue report -> outputs/human_exception_queue_report.md "
+        f"(exceptions={exception_summary.exceptions})"
+    )
+    groups = build_ai_reviewed_cluster_groups()
+    groups_summary = build_ai_reviewed_groups_report()
+    typer.echo(
+        "Built AI reviewed cluster groups -> data/processed/ai_reviewed_cluster_groups.jsonl "
+        f"(groups={len(groups)}, clusters={groups_summary.included_clusters})"
+    )
+    batch_summary = build_batch_summary_report()
+    typer.echo(
+        "Built batch summary report -> outputs/batch_summary_report.md "
+        f"(batches={len(batch_summary.batches)}, ready_for_truth_scoring="
+        f"{batch_summary.readiness.ready_for_truth_scoring})"
+    )
+    typer.echo(
+        f"Stage 2.8 complete — AI 主流程已处理 {auto_confirmed} 条自动确认、"
+        f"{auto_rejected} 条自动拒绝，{human_exceptions} 条进入人工异常队列。"
+    )
+
+
+
+
+@app.command("llm-semantic-merge-judge")
+def llm_semantic_merge_judge_command(
+    fake_llm: Annotated[bool, typer.Option("--fake-llm", help="Use FakeLLMClient instead of real API.")] = False,
+) -> None:
+    """Run Stage 2.9 LLM semantic merge judge (writes to llm_* paths)."""
+    from demand_radar.semantic_merge.llm_client import FakeLLMClient
+
+    client = FakeLLMClient() if fake_llm else None
+    judgments = run_llm_semantic_merge_judge(client=client)
+    auto_confirmed = sum(1 for j in judgments if j.auto_action == "auto_confirm")
+    auto_rejected = sum(1 for j in judgments if j.auto_action == "auto_reject")
+    human_exceptions = sum(1 for j in judgments if j.auto_action == "human_exception")
+    typer.echo(
+        "Built LLM semantic merge judgments -> data/processed/llm_semantic_merge_judgments.jsonl "
+        f"(judgments={len(judgments)}, auto_confirmed={auto_confirmed}, "
+        f"auto_rejected={auto_rejected}, human_exceptions={human_exceptions})"
+    )
+
+
+@app.command("build-llm-ai-reviewed-groups")
+def build_llm_ai_reviewed_groups_command() -> None:
+    """Build AI reviewed cluster groups from LLM judgments (writes to llm_* paths)."""
+    groups = build_llm_ai_reviewed_cluster_groups()
+    summary = build_llm_ai_reviewed_groups_report()
+    typer.echo(
+        "Built LLM AI reviewed cluster groups -> data/processed/llm_ai_reviewed_cluster_groups.jsonl "
+        f"(groups={len(groups)}, clusters={summary.included_clusters})"
+    )
+
+
+@app.command("build-llm-semantic-merge-report")
+def build_llm_semantic_merge_report_command() -> None:
+    """Build the LLM semantic merge judgment report."""
+    summary = build_llm_semantic_merge_report()
+    typer.echo(
+        "Built LLM semantic merge report -> outputs/llm_semantic_merge_judgment_report.md "
+        f"(human_exception_rate={summary.human_exception_rate})"
+    )
+
+
+@app.command("build-llm-human-exception-report")
+def build_llm_human_exception_report_command() -> None:
+    """Build the LLM human exception queue report."""
+    summary = build_llm_human_exception_report()
+    typer.echo(
+        "Built LLM human exception report -> outputs/llm_human_exception_queue_report.md "
+        f"(exceptions={summary.exceptions})"
+    )
+
+
+@app.command("compare-semantic-merge")
+def compare_semantic_merge_command() -> None:
+    """Build the rule_based vs LLM semantic merge comparison report."""
+    summary = build_semantic_merge_comparison_report()
+    typer.echo(
+        "Built comparison report -> outputs/llm_semantic_merge_comparison_report.md "
+        f"(rule_exc_rate={summary.rule_based_exception_rate}, "
+        f"llm_exc_rate={summary.llm_exception_rate}, "
+        f"maybe_to_confirm={summary.maybe_to_confirm})"
+    )
+
+
+@app.command("run-stage29")
+def run_stage29(
+    input: Annotated[
+        Path | None,
+        typer.Option("--input", exists=True, readable=True, help="Optional CSV or JSONL input file."),
+    ] = None,
+    fake_llm: Annotated[bool, typer.Option("--fake-llm", help="Use FakeLLMClient (no API calls).")] = False,
+) -> None:
+    """Run Stage 2.9: real LLM semantic merge pilot with comparison report."""
+    from demand_radar.semantic_merge.llm_client import FakeLLMClient
+
+    init(reset=False)
+    if input is not None:
+        _run_stage2_core(input)
+        candidates = suggest_cluster_merges()
+        typer.echo(
+            "Generated merge candidates -> data/processed/cluster_merge_candidates.jsonl "
+            f"(candidates={len(candidates)})"
+        )
+        merge_summary = build_merge_report()
+        typer.echo(
+            "Built merge suggestions report -> outputs/cluster_merge_suggestions.md "
+            f"(candidates={merge_summary.merge_candidates})"
+        )
+        # Run rule_based semantic merge (Stage 2.8) for baseline
+        rb_judgments = run_semantic_merge_judge()
+        rb_confirmed = sum(1 for j in rb_judgments if j.auto_action == "auto_confirm")
+        rb_rejected = sum(1 for j in rb_judgments if j.auto_action == "auto_reject")
+        rb_exceptions = sum(1 for j in rb_judgments if j.auto_action == "human_exception")
+        typer.echo(
+            "Built rule_based judgments -> data/processed/semantic_merge_judgments.jsonl "
+            f"(judgments={len(rb_judgments)}, auto_confirmed={rb_confirmed}, "
+            f"auto_rejected={rb_rejected}, human_exceptions={rb_exceptions})"
+        )
+        build_semantic_merge_report()
+        build_human_exception_report()
+        rule_groups = build_ai_reviewed_cluster_groups()
+        build_ai_reviewed_groups_report()
+        typer.echo(f"Rule-based AI groups: {len(rule_groups)}")
+
+    # LLM semantic merge pilot
+    llm_client = FakeLLMClient() if fake_llm else None
+    llm_judgments = run_llm_semantic_merge_judge(client=llm_client)
+    llm_confirmed = sum(1 for j in llm_judgments if j.auto_action == "auto_confirm")
+    llm_rejected = sum(1 for j in llm_judgments if j.auto_action == "auto_reject")
+    llm_exceptions = sum(1 for j in llm_judgments if j.auto_action == "human_exception")
+    typer.echo(
+        "Built LLM judgments -> data/processed/llm_semantic_merge_judgments.jsonl "
+        f"(judgments={len(llm_judgments)}, auto_confirmed={llm_confirmed}, "
+        f"auto_rejected={llm_rejected}, human_exceptions={llm_exceptions})"
+    )
+    llm_groups = build_llm_ai_reviewed_cluster_groups()
+    llm_group_summary = build_llm_ai_reviewed_groups_report()
+    typer.echo(
+        f"Built LLM AI groups -> data/processed/llm_ai_reviewed_cluster_groups.jsonl "
+        f"(groups={len(llm_groups)}, clusters={llm_group_summary.included_clusters})"
+    )
+    build_llm_semantic_merge_report()
+    build_llm_human_exception_report()
+
+    comparison = build_semantic_merge_comparison_report()
+    typer.echo(
+        "Built comparison report -> outputs/llm_semantic_merge_comparison_report.md "
+        f"(rule_exc_rate={comparison.rule_based_exception_rate}, "
+        f"llm_exc_rate={comparison.llm_exception_rate}, "
+        f"maybe_to_confirm={comparison.maybe_to_confirm}, "
+        f"llm_groups={comparison.llm_ai_groups})"
+    )
+    batch_summary = build_batch_summary_report()
+    typer.echo(
+        "Built batch summary -> outputs/batch_summary_report.md "
+        f"(ready_for_truth_scoring={batch_summary.readiness.ready_for_truth_scoring})"
+    )
+    llm_label = "FakeLLM" if fake_llm else "LLM"
+    typer.echo(
+        f"Stage 2.9 complete — {llm_label} 已处理 {llm_confirmed} 条自动确认、"
+        f"{llm_rejected} 条自动拒绝，{llm_exceptions} 条进入人工异常队列。"
+    )
+
+
+
+@app.command("calibrate-llm-semantic-merge")
+def calibrate_llm_semantic_merge_command(
+    fake_llm: Annotated[bool, typer.Option("--fake-llm", help="Use FakeLLMClient instead of real API.")] = False,
+    no_cache: Annotated[bool, typer.Option("--no-cache", help="Skip reading cache; write new results.")] = False,
+    force_rerun: Annotated[bool, typer.Option("--force-rerun", help="Ignore and overwrite existing cache entries.")] = False,
+    clear_cache: Annotated[bool, typer.Option("--clear-cache", help="Clear LLM semantic merge cache before running.")] = False,
+) -> None:
+    """Run Stage 2.9C/D calibrated LLM semantic merge judge."""
+    from demand_radar.semantic_merge.calibration_runner import run_calibrated_llm_judge
+    from demand_radar.semantic_merge.llm_client import FakeLLMClient as _FakeLLM
+
+    llm_client = _FakeLLM() if fake_llm else None
+    judgments, preflight_results, cache_stats = run_calibrated_llm_judge(
+        client=llm_client,
+        no_cache=no_cache,
+        force_rerun=force_rerun,
+        clear_cache_before=clear_cache,
+    )
+    auto_confirmed = sum(1 for j in judgments if j.auto_action == "auto_confirm")
+    auto_rejected = sum(1 for j in judgments if j.auto_action == "auto_reject")
+    human_exceptions = sum(1 for j in judgments if j.auto_action == "human_exception")
+    pf_ok = sum(1 for r in preflight_results if r.status == "ok")
+    pf_repaired = sum(1 for r in preflight_results if r.status == "repaired")
+    pf_invalid = sum(1 for r in preflight_results if r.status == "invalid")
+    typer.echo(
+        "Calibrated LLM judgments -> data/processed/calibrated_llm_semantic_merge_judgments.jsonl "
+        f"(judgments={len(judgments)}, auto_confirmed={auto_confirmed}, "
+        f"auto_rejected={auto_rejected}, human_exceptions={human_exceptions}, "
+        f"preflight ok={pf_ok} repaired={pf_repaired} invalid={pf_invalid})"
+    )
+    typer.echo(
+        f"Cache: reads={cache_stats.reads} writes={cache_stats.writes} "
+        f"bypassed={cache_stats.bypassed} stale_prevented={cache_stats.stale_prevented}"
+    )
+
+
+@app.command("build-calibrated-ai-reviewed-groups")
+def build_calibrated_ai_reviewed_groups_command() -> None:
+    """Build calibrated AI reviewed cluster groups."""
+    from demand_radar.semantic_merge.calibration_runner import build_calibrated_ai_reviewed_groups
+    groups = build_calibrated_ai_reviewed_groups()
+    typer.echo(
+        "Built calibrated AI groups -> data/processed/calibrated_llm_ai_reviewed_cluster_groups.jsonl "
+        f"(groups={len(groups)})"
+    )
+
+
+@app.command("build-llm-calibration-report")
+def build_llm_calibration_report_command() -> None:
+    """Build the Stage 2.9C calibration report."""
+    from demand_radar.semantic_merge.calibration_report import build_llm_calibration_report
+    summary = build_llm_calibration_report()
+    typer.echo(
+        "Built calibration report -> outputs/llm_semantic_merge_calibration_report.md "
+        f"(cal_exception_rate={summary.cal_exception_rate}, "
+        f"cal_groups={summary.cal_ai_groups}, "
+        f"rejects_unlocked={summary.rejects_unlocked})"
+    )
+
+
+@app.command("run-stage29c")
+def run_stage29c(
+    input: Annotated[
+        Path | None,
+        typer.Option("--input", exists=True, readable=True, help="Optional CSV or JSONL input file."),
+    ] = None,
+    fake_llm: Annotated[bool, typer.Option("--fake-llm", help="Use FakeLLMClient (no API calls).")] = False,
+    no_cache: Annotated[bool, typer.Option("--no-cache", help="Skip reading cache; write new results.")] = False,
+    force_rerun: Annotated[bool, typer.Option("--force-rerun", help="Ignore and overwrite existing cache entries.")] = False,
+    clear_cache: Annotated[bool, typer.Option("--clear-cache", help="Clear LLM semantic merge cache before running.")] = False,
+) -> None:
+    """Run Stage 2.9C/D: calibrated LLM with preflight, versioned cache, split gate."""
+    from demand_radar.semantic_merge.calibration_runner import (
+        build_calibrated_ai_reviewed_groups,
+        run_calibrated_llm_judge,
+    )
+    from demand_radar.semantic_merge.calibration_report import build_llm_calibration_report
+    from demand_radar.semantic_merge.llm_client import FakeLLMClient as _FakeLLM
+    from demand_radar.config.load_config import load_yaml as _load_yaml
+
+    init(reset=False)
+    if input is not None:
+        _run_stage2_core(input)
+        candidates = suggest_cluster_merges()
+        typer.echo(
+            "Generated merge candidates -> data/processed/cluster_merge_candidates.jsonl "
+            f"(candidates={len(candidates)})"
+        )
+        build_merge_report()
+
+    llm_client = _FakeLLM() if fake_llm else None
+    judgments, preflight_results, cache_stats = run_calibrated_llm_judge(
+        client=llm_client,
+        no_cache=no_cache,
+        force_rerun=force_rerun,
+        clear_cache_before=clear_cache,
+    )
+    auto_confirmed = sum(1 for j in judgments if j.auto_action == "auto_confirm")
+    auto_rejected = sum(1 for j in judgments if j.auto_action == "auto_reject")
+    human_exceptions = sum(1 for j in judgments if j.auto_action == "human_exception")
+    pf_ok = sum(1 for r in preflight_results if r.status == "ok")
+    pf_repaired = sum(1 for r in preflight_results if r.status == "repaired")
+    pf_invalid = sum(1 for r in preflight_results if r.status == "invalid")
+    typer.echo(
+        "Calibrated LLM judgments -> data/processed/calibrated_llm_semantic_merge_judgments.jsonl "
+        f"(judgments={len(judgments)}, auto_confirmed={auto_confirmed}, "
+        f"auto_rejected={auto_rejected}, human_exceptions={human_exceptions})"
+    )
+    typer.echo(f"Preflight: ok={pf_ok} repaired={pf_repaired} invalid={pf_invalid}")
+    typer.echo(
+        f"Cache: reads={cache_stats.reads} writes={cache_stats.writes} "
+        f"bypassed={cache_stats.bypassed} stale_prevented={cache_stats.stale_prevented}"
+    )
+
+    cal_groups = build_calibrated_ai_reviewed_groups()
+    typer.echo(
+        "Built calibrated AI groups -> data/processed/calibrated_llm_ai_reviewed_cluster_groups.jsonl "
+        f"(groups={len(cal_groups)})"
+    )
+
+    # Build run metadata for calibration report
+    _cfg = _load_yaml("configs/semantic_merge_config.yaml")
+    _scfg = _cfg.get("semantic_merge", {})
+    _cal = _scfg.get("calibration", {})
+    _llm = _scfg.get("llm", {})
+    run_meta = {
+        "prompt_version": _cal.get("prompt_version", "unknown"),
+        "gate_policy_version": _cal.get("gate_policy_version", "unknown"),
+        "provider": _llm.get("provider", "fake" if fake_llm else "unknown"),
+        "cache_enabled": _scfg.get("batch", {}).get("cache_enabled", True),
+        "force_rerun": force_rerun,
+        "no_cache": no_cache,
+        "clear_cache_used": clear_cache,
+    }
+
+    calibration_summary = build_llm_calibration_report(cache_stats=cache_stats, run_meta=run_meta)
+    typer.echo(
+        "Built calibration report -> outputs/llm_semantic_merge_calibration_report.md "
+        f"(cal_exception_rate={calibration_summary.cal_exception_rate}, "
+        f"cal_groups={calibration_summary.cal_ai_groups})"
+    )
+
+    batch_summary = build_batch_summary_report()
+    typer.echo(
+        "Built batch summary -> outputs/batch_summary_report.md "
+        f"(ready_for_truth_scoring={batch_summary.readiness.ready_for_truth_scoring})"
+    )
+    label = "FakeLLM" if fake_llm else "CalibLLM"
+    typer.echo(
+        f"Stage 2.9C complete ({label}): confirmed={auto_confirmed} rejected={auto_rejected} "
+        f"exceptions={human_exceptions} groups={len(cal_groups)}"
+    )
+
+
+@app.command("clear-llm-semantic-merge-cache")
+def clear_llm_semantic_merge_cache_command(
+    cache_path: Annotated[str, typer.Option("--cache-path", help="Path to cache file.")] = "data/cache/llm_semantic_merge_cache.jsonl",
+) -> None:
+    """Clear the LLM semantic merge cache (Stage 2.9D)."""
+    from demand_radar.semantic_merge.llm_cache import LLMSemanticMergeCache
+    cache = LLMSemanticMergeCache(path=cache_path)
+    count = cache.clear()
+    typer.echo(f"Cleared {count} entries from LLM semantic merge cache: {cache_path}")
+
+
 @app.command("review-ui")
 def review_ui(
     port: Annotated[int, typer.Option("--port", help="Local Streamlit port.")] = 8501,
@@ -403,7 +957,7 @@ def review_ui(
         "--browser.gatherUsageStats",
         "false",
     ]
-    typer.echo(f"正在启动审核界面：http://127.0.0.1:{port}")
+    typer.echo(f"姝ｅ湪鍚姩瀹℃牳鐣岄潰锛歨ttp://127.0.0.1:{port}")
     raise typer.Exit(subprocess.call(command))
 
 
@@ -471,9 +1025,745 @@ def _run_stage2_core(input: Path) -> None:
     )
 
 
+
+@app.command("run-truth-scoring")
+def run_truth_scoring_command(
+    source: Annotated[str, typer.Option("--source")] = "calibrated_llm",
+) -> None:
+    """Score reviewed cluster groups using Stage 3 Truth Scoring."""
+    scores = run_truth_scoring(source=source)
+    level_counts = {}
+    for s in scores:
+        level_counts[s.truth_level] = level_counts.get(s.truth_level, 0) + 1
+    proceed = sum(1 for s in scores if s.recommended_next_action == "proceed_to_fit_scoring")
+    typer.echo(
+        f"Truth scoring complete: {len(scores)} scores "
+        f"(strong={level_counts.get('strong', 0)}, medium={level_counts.get('medium', 0)}, "
+        f"weak={level_counts.get('weak', 0)}, insufficient={level_counts.get('insufficient', 0)}, "
+        f"proceed_to_fit_scoring={proceed})"
+    )
+    typer.echo("Written -> data/processed/truth_scores.jsonl")
+
+
+@app.command("build-truth-report")
+def build_truth_report_command() -> None:
+    """Build truth_scoring_report.md from persisted truth scores."""
+    scores = load_truth_scores()
+    if not scores:
+        typer.echo("No truth scores found. Run run-truth-scoring first.")
+        raise typer.Exit(1)
+    build_truth_scoring_report(scores)
+    typer.echo(f"Built truth report -> outputs/truth_scoring_report.md ({len(scores)} scores)")
+
+
+@app.command("build-top-truth-candidates-report")
+def build_top_truth_candidates_report_command() -> None:
+    """Build top_truth_candidates_report.md (strong/medium only)."""
+    scores = load_truth_scores()
+    if not scores:
+        typer.echo("No truth scores found. Run run-truth-scoring first.")
+        raise typer.Exit(1)
+    build_top_truth_candidates_report(scores)
+    top = [s for s in scores if s.truth_level in ("strong", "medium")]
+    typer.echo(f"Built top candidates report -> outputs/top_truth_candidates_report.md ({len(top)} candidates)")
+
+
+@app.command("run-stage3")
+def run_stage3(
+    source: Annotated[str, typer.Option("--source")] = "calibrated_llm",
+) -> None:
+    """Stage 3: Truth Scoring Loop v1."""
+    typer.echo(f"Stage 3 Truth Scoring starting (source={source})")
+    scores = run_truth_scoring(source=source)
+    level_counts = {}
+    for s in scores:
+        level_counts[s.truth_level] = level_counts.get(s.truth_level, 0) + 1
+    proceed = sum(1 for s in scores if s.recommended_next_action == "proceed_to_fit_scoring")
+    typer.echo(
+        f"Scored {len(scores)} groups: strong={level_counts.get('strong', 0)}, "
+        f"medium={level_counts.get('medium', 0)}, weak={level_counts.get('weak', 0)}, "
+        f"insufficient={level_counts.get('insufficient', 0)}"
+    )
+    typer.echo(f"proceed_to_fit_scoring={proceed}")
+    typer.echo("Written -> data/processed/truth_scores.jsonl")
+
+    build_truth_scoring_report(scores)
+    typer.echo("Built -> outputs/truth_scoring_report.md")
+
+    build_top_truth_candidates_report(scores)
+    typer.echo("Built -> outputs/top_truth_candidates_report.md")
+
+    build_batch_summary_report()
+    typer.echo("Updated -> outputs/batch_summary_report.md")
+
+    typer.echo("Stage 3 complete.")
+
+
+
+@app.command("analyze-evidence-gaps")
+def analyze_evidence_gaps_command() -> None:
+    """Analyze evidence gaps for medium/strong truth candidates."""
+    scores = load_truth_scores()
+    if not scores:
+        typer.echo("No truth scores found. Run run-stage3 first.")
+        raise typer.Exit(1)
+    score_dicts = [s.model_dump() for s in scores]
+    gaps = analyze_gaps(score_dicts)
+    write_gap_analysis(gaps)
+    plans = build_collection_plans(gaps)
+    write_collection_plans(plans)
+    by_pri = {}
+    for g in gaps:
+        by_pri[g.priority] = by_pri.get(g.priority, 0) + 1
+    total_signals = sum(p.target_new_signals for p in plans)
+    typer.echo(
+        f"Evidence gap analysis complete: {len(gaps)} candidates analyzed "
+        f"(high={by_pri.get('high',0)}, medium={by_pri.get('medium',0)}, "
+        f"low={by_pri.get('low',0)}, target_new_signals={total_signals})"
+    )
+    typer.echo("Written -> data/processed/evidence_gap_analysis.jsonl")
+    typer.echo("Written -> data/processed/targeted_signal_collection_plan.jsonl")
+
+
+@app.command("build-evidence-gap-report")
+def build_evidence_gap_report_command() -> None:
+    """Build evidence_gap_report.md from persisted gap analysis."""
+    gaps = load_gap_analysis()
+    if not gaps:
+        typer.echo("No gap analysis found. Run analyze-evidence-gaps first.")
+        raise typer.Exit(1)
+    build_evidence_gap_report(gaps)
+    typer.echo(f"Built -> outputs/evidence_gap_report.md ({len(gaps)} gaps)")
+
+
+@app.command("build-targeted-signal-plan")
+def build_targeted_signal_plan_command() -> None:
+    """Build targeted_signal_collection_plan.md from persisted plans."""
+    from demand_radar.evidence_gap.evidence_gap_store import load_collection_plans
+    plans = load_collection_plans()
+    if not plans:
+        typer.echo("No collection plans found. Run analyze-evidence-gaps first.")
+        raise typer.Exit(1)
+    build_targeted_signal_plan_report(plans)
+    typer.echo(f"Built -> outputs/targeted_signal_collection_plan.md ({len(plans)} plans)")
+
+
+@app.command("run-stage32")
+def run_stage32(
+    source: Annotated[str, typer.Option("--source")] = "calibrated_llm",
+) -> None:
+    """Stage 3.2: Evidence Gap Analysis & Targeted Signal Expansion."""
+    typer.echo("Stage 3.2 Evidence Gap Analysis starting")
+
+    # Ensure truth scores exist
+    scores = load_truth_scores()
+    if not scores:
+        typer.echo("No truth scores found, running Stage 3 first...")
+        scores_raw = run_truth_scoring(source=source)
+        build_truth_scoring_report(scores_raw)
+        build_top_truth_candidates_report(scores_raw)
+        scores = scores_raw
+
+    typer.echo(f"Loaded {len(scores)} truth scores")
+    score_dicts = [s.model_dump() for s in scores]
+    gaps = analyze_gaps(score_dicts)
+    write_gap_analysis(gaps)
+    plans = build_collection_plans(gaps)
+    write_collection_plans(plans)
+
+    by_pri = {}
+    for g in gaps:
+        by_pri[g.priority] = by_pri.get(g.priority, 0) + 1
+    total_signals = sum(p.target_new_signals for p in plans)
+
+    typer.echo(
+        f"Evidence gaps: {len(gaps)} "
+        f"(high={by_pri.get('high',0)}, medium={by_pri.get('medium',0)}, "
+        f"low={by_pri.get('low',0)})"
+    )
+    typer.echo(f"Target new signals: {total_signals}")
+    typer.echo("Written -> data/processed/evidence_gap_analysis.jsonl")
+    typer.echo("Written -> data/processed/targeted_signal_collection_plan.jsonl")
+
+    build_evidence_gap_report(gaps)
+    typer.echo("Built -> outputs/evidence_gap_report.md")
+
+    build_targeted_signal_plan_report(plans)
+    typer.echo("Built -> outputs/targeted_signal_collection_plan.md")
+
+    build_batch_summary_report()
+    typer.echo("Updated -> outputs/batch_summary_report.md")
+
+    typer.echo("Stage 3.2 complete.")
+
+
+
+@app.command("build-targeted-signal-template")
+def build_targeted_signal_template_command() -> None:
+    """Build targeted signal collection template CSV for Stage 3.3."""
+    rows = build_template()
+    typer.echo(f"Template built: {len(rows)} rows -> examples/stage33_targeted_signal_template.csv")
+
+
+@app.command("validate-targeted-signals")
+def validate_targeted_signals_command(
+    input: Annotated[Path, typer.Option("--input")] = Path("examples/real_signal_samples_stage33.csv"),
+) -> None:
+    """Validate targeted signals from filled CSV."""
+    validations = validate_targeted_signals(input)
+    from collections import Counter
+    by_status = Counter(v.status for v in validations)
+    typer.echo(
+        f"Validation complete: {len(validations)} signals "
+        f"(valid={by_status.get('valid',0)}, warning={by_status.get('warning',0)}, "
+        f"invalid={by_status.get('invalid',0)}, excluded={by_status.get('excluded',0)})"
+    )
+    typer.echo("Written -> data/processed/targeted_signal_validation.jsonl")
+
+
+@app.command("build-combined-stage33-input")
+def build_combined_stage33_input_command(
+    base: Annotated[Path, typer.Option("--base")] = Path("examples/real_signal_samples_stage26.csv"),
+    targeted: Annotated[Path, typer.Option("--targeted")] = Path("examples/real_signal_samples_stage33.csv"),
+) -> None:
+    """Build combined input CSV (base + valid targeted signals)."""
+    result = build_combined_input(base_path=base, targeted_path=targeted)
+    typer.echo(
+        f"Combined input built: base={result['base_rows']}, "
+        f"targeted={result['targeted_rows_included']}, "
+        f"total={result['combined_rows']}, duplicates_removed={result['duplicates_removed']}"
+    )
+    typer.echo("Written -> examples/combined_signal_samples_stage33.csv")
+
+
+@app.command("build-targeted-expansion-report")
+def build_targeted_expansion_report_command() -> None:
+    """Build targeted_expansion_report.md."""
+    summary = load_expansion_summary()
+    validations = load_validations()
+    build_targeted_expansion_report(summary, validations)
+    typer.echo("Built -> outputs/targeted_expansion_report.md")
+
+
+@app.command("build-truth-score-delta-report")
+def build_truth_score_delta_report_command() -> None:
+    """Build truth_score_delta_report.md."""
+    deltas = load_truth_score_deltas()
+    build_truth_score_delta_report(deltas)
+    typer.echo("Built -> outputs/truth_score_delta_report.md")
+
+
+@app.command("run-stage33")
+def run_stage33(
+    targeted: Annotated[Path, typer.Option("--targeted")] = Path("examples/real_signal_samples_stage33.csv"),
+) -> None:
+    """Stage 3.3: Build template, validate, combine, and report (no LLM)."""
+    typer.echo("Stage 3.3 starting (template + validate + combine + report)")
+    targeted_path = targeted if targeted.exists() else None
+    if targeted_path is None:
+        typer.echo(f"Note: {targeted} not found, running template-only mode")
+    summary = _run_stage33_pipeline(targeted_path=targeted_path)
+    typer.echo(
+        f"Stage 3.3 complete: template={summary.template_rows}, "
+        f"combined={summary.combined_input_rows}"
+    )
+    build_batch_summary_report()
+    typer.echo("Updated -> outputs/batch_summary_report.md")
+
+
+@app.command("run-stage33-full")
+def run_stage33_full(
+    targeted: Annotated[Path, typer.Option("--targeted")] = Path("examples/real_signal_samples_stage33.csv"),
+    skip_llm: Annotated[bool, typer.Option("--skip-llm")] = False,
+) -> None:
+    """Stage 3.3 full run: template + validate + combine + LLM rerun + delta report.
+    WARNING: triggers LLM calls (requires API key unless --skip-llm).
+    """
+    import os as _os
+    typer.echo("Stage 3.3-full starting")
+    if not skip_llm:
+        if not _os.environ.get("DEMAND_RADAR_LLM_API_KEY"):
+            typer.echo("ERROR: DEMAND_RADAR_LLM_API_KEY not set. Use --skip-llm to skip LLM rerun.")
+            raise typer.Exit(1)
+
+    # Step 1: template + validate + combine
+    targeted_path = targeted if targeted.exists() else None
+    summary = _run_stage33_pipeline(targeted_path=targeted_path)
+    typer.echo(
+        f"Step 1 done: template={summary.template_rows}, "
+        f"valid={summary.valid_signals}, combined={summary.combined_input_rows}"
+    )
+
+    # Step 2: save before-truth scores for delta comparison
+    from demand_radar.truth_scoring.truth_store import load_truth_scores
+    from demand_radar.targeted_expansion.targeted_schema import TruthScoreDelta
+    from demand_radar.targeted_expansion.expansion_store import write_truth_score_deltas
+    before_scores = {s.source_group_id: s for s in load_truth_scores()}
+
+    combined_input = Path("examples/combined_signal_samples_stage33.csv")
+
+    if not skip_llm and combined_input.exists():
+        import subprocess as _sp
+        import sys as _sys
+        # Step 3: run stage 2.6 on combined input
+        typer.echo("Step 2: Running Stage 2.6 on combined input...")
+        result_26 = _sp.run(
+            [_sys.executable, "-m", "demand_radar.cli", "run-stage26", "--input", str(combined_input)],
+            capture_output=True, text=True
+        )
+        if result_26.returncode != 0:
+            typer.echo(f"WARNING: Stage 2.6 exited with code {result_26.returncode}")
+            if result_26.stderr:
+                typer.echo(result_26.stderr[:500])
+        else:
+            typer.echo("Stage 2.6 done.")
+
+        # Step 4: run stage 2.9C on combined input with force-rerun
+        typer.echo("Step 3: Running Stage 2.9C semantic merge on combined input (force-rerun)...")
+        result_29c = _sp.run(
+            [_sys.executable, "-m", "demand_radar.cli", "run-stage29c",
+             "--input", str(combined_input), "--force-rerun"],
+            capture_output=True, text=True
+        )
+        if result_29c.returncode != 0:
+            typer.echo(f"WARNING: Stage 2.9C exited with code {result_29c.returncode}")
+            if result_29c.stderr:
+                typer.echo(result_29c.stderr[:500])
+        else:
+            typer.echo("Stage 2.9C done.")
+            # Print key output lines
+            for line in result_29c.stdout.splitlines():
+                if any(k in line for k in ["auto_confirm", "auto_reject", "exception", "failure", "groups"]):
+                    typer.echo("  " + line)
+    else:
+        if skip_llm:
+            typer.echo("Step 2-3: Skipped (--skip-llm)")
+        else:
+            typer.echo(f"Step 2-3: Skipped (combined input not found at {combined_input})")
+
+    # Step 5: run truth scoring
+    typer.echo("Step 4: Running Stage 3 truth scoring...")
+    scores = run_truth_scoring(source="calibrated_llm")
+    typer.echo(f"Truth scoring done: {len(scores)} scores")
+
+    # Step 6: compute delta
+    after_scores = {s.source_group_id: s for s in scores}
+    all_group_ids = set(list(before_scores.keys()) + list(after_scores.keys()))
+    from demand_radar.state.raw_store import utc_now_iso
+    deltas = []
+    for gid in all_group_ids:
+        before = before_scores.get(gid)
+        after = after_scores.get(gid)
+        b_score = before.truth_score if before else None
+        a_score = after.truth_score if after else None
+        delta_val = round(a_score - b_score, 2) if (a_score is not None and b_score is not None) else None
+        improved = []
+        if before and after:
+            for dim in ["pain_evidence_strength", "frequency_repetition", "existing_workaround",
+                        "willingness_to_pay", "persona_clarity"]:
+                b_dim = before.dimension_scores.get(dim, 0)
+                a_dim = after.dimension_scores.get(dim, 0)
+                if a_dim > b_dim + 0.5:
+                    improved.append(dim)
+        deltas.append(TruthScoreDelta(
+            source_group_id=gid,
+            group_title_zh=after.group_title_zh if after else (before.group_title_zh if before else gid),
+            before_truth_score=b_score,
+            after_truth_score=a_score,
+            delta=delta_val,
+            before_truth_level=before.truth_level if before else None,
+            after_truth_level=after.truth_level if after else None,
+            before_next_action=before.recommended_next_action if before else None,
+            after_next_action=after.recommended_next_action if after else None,
+            improved_dimensions=improved,
+            remaining_gaps=[],
+            created_at=utc_now_iso(),
+        ))
+    write_truth_score_deltas(deltas)
+    typer.echo(f"Delta report: {len(deltas)} candidates compared")
+
+    improved_count = sum(1 for d in deltas if d.delta and d.delta > 0)
+    new_strong = sum(1 for d in deltas if d.after_truth_level == "strong" and (d.before_truth_level != "strong"))
+    new_proceed = sum(1 for d in deltas if d.after_next_action == "proceed_to_fit_scoring"
+                      and d.before_next_action != "proceed_to_fit_scoring")
+
+    build_truth_score_delta_report(deltas)
+    typer.echo("Built -> outputs/truth_score_delta_report.md")
+    build_batch_summary_report()
+    typer.echo(
+        f"Stage 3.3-full complete: improved={improved_count}, "
+        f"new_strong={new_strong}, new_proceed_to_fit={new_proceed}"
+    )
+
+
+from demand_radar.lineage.lineage_propagator import (
+    snapshot_truth_state,
+    load_snapshot_truth_scores,
+    load_current_truth_scores,
+)
+from demand_radar.lineage.evidence_attributor import attribute_targeted_evidence
+from demand_radar.lineage.candidate_matcher import match_candidate_lineage
+from demand_radar.lineage.stable_delta import compute_stable_deltas
+from demand_radar.lineage.lineage_report import (
+    build_candidate_lineage_report,
+    build_targeted_evidence_attribution_report,
+    build_stable_truth_score_delta_report,
+)
+from demand_radar.lineage.lineage_store import (
+    write_candidate_lineage,
+    write_targeted_evidence_attribution,
+    write_stable_truth_score_delta,
+    load_candidate_lineage,
+    load_targeted_evidence_attribution,
+    load_stable_truth_score_delta,
+)
+
+
+@app.command("snapshot-truth-state")
+def snapshot_truth_state_command(
+    name: Annotated[str, typer.Option("--name")] = "before_stage33",
+) -> None:
+    """Snapshot current truth state for lineage comparison."""
+    dest = snapshot_truth_state(name=name)
+    typer.echo(f"Snapshot saved to: {dest}")
+
+
+@app.command("attribute-targeted-evidence")
+def attribute_targeted_evidence_command(
+    targeted: Annotated[Path, typer.Option("--targeted")] = Path("examples/real_signal_samples_stage33.csv"),
+) -> None:
+    """Attribute targeted signals through the pipeline (raw->pain->cluster->group)."""
+    attributions = attribute_targeted_evidence(targeted_path=targeted)
+    from collections import Counter
+    counts = Counter(a.attribution_status for a in attributions)
+    typer.echo(
+        f"Attribution: {len(attributions)} signals | "
+        f"expected={counts.get('attributed_to_expected_group',0)} | "
+        f"related={counts.get('attributed_to_related_group',0)} | "
+        f"lost_extraction={counts.get('lost_in_extraction',0)} | "
+        f"lost_merge={counts.get('lost_in_merge',0)}"
+    )
+    write_targeted_evidence_attribution(attributions)
+    typer.echo("Written -> data/processed/targeted_evidence_attribution.jsonl")
+
+
+@app.command("match-candidate-lineage")
+def match_candidate_lineage_command(
+    before_snapshot: Annotated[
+        Path, typer.Option("--before-snapshot")
+    ] = Path("outputs/archive/before_stage33"),
+) -> None:
+    """Match before/after truth candidates to establish lineage."""
+    import json
+    lineage_baseline_quality = "full"
+
+    if before_snapshot.exists():
+        before_scores = load_snapshot_truth_scores(before_snapshot)
+        typer.echo(f"Loaded {len(before_scores)} before scores from snapshot: {before_snapshot}")
+    else:
+        # Fallback: use truth_score_deltas to reconstruct before scores
+        typer.echo(f"WARNING: Snapshot not found at {before_snapshot}, using delta report as fallback")
+        lineage_baseline_quality = "partial"
+        delta_path = Path("data/processed/truth_score_deltas.jsonl")
+        before_scores = []
+        if delta_path.exists():
+            for line in delta_path.read_text(encoding="utf-8").splitlines():
+                if not line.strip():
+                    continue
+                try:
+                    d = json.loads(line)
+                    if d.get("before_truth_score") is not None:
+                        before_scores.append({
+                            "truth_score_id": None,
+                            "source_group_id": d.get("source_group_id", ""),
+                            "group_title_zh": d.get("group_title_zh", ""),
+                            "truth_score": d.get("before_truth_score"),
+                            "truth_level": d.get("before_truth_level"),
+                            "recommended_next_action": d.get("before_next_action"),
+                            "personas": [],
+                            "domain_tags": [],
+                        })
+                except Exception:
+                    pass
+        typer.echo(f"Reconstructed {len(before_scores)} before scores from delta report")
+
+    after_scores = load_current_truth_scores()
+    typer.echo(f"Loaded {len(after_scores)} after scores")
+
+    attributions = load_targeted_evidence_attribution()
+    lineages = match_candidate_lineage(before_scores, after_scores, attributions)
+    write_candidate_lineage(lineages)
+
+    from collections import Counter
+    sc = Counter(l.match_strength for l in lineages)
+    typer.echo(
+        f"Lineage: {len(lineages)} | strong={sc.get('strong',0)} | weak={sc.get('weak',0)} | "
+        f"split={sc.get('split',0)} | merged={sc.get('merged',0)} | "
+        f"unmatched={sc.get('unmatched',0)} | missing_baseline={sc.get('missing_baseline',0)}"
+    )
+    typer.echo(f"lineage_baseline_quality: {lineage_baseline_quality}")
+    typer.echo("Written -> data/processed/candidate_lineage.jsonl")
+
+
+@app.command("build-stable-truth-delta")
+def build_stable_truth_delta_command() -> None:
+    """Compute stable truth score delta from lineage."""
+    lineages = load_candidate_lineage()
+    if not lineages:
+        typer.echo("No lineage data. Run match-candidate-lineage first.")
+        raise typer.Exit(1)
+    stable_deltas = compute_stable_deltas(lineages)
+    write_stable_truth_score_delta(stable_deltas)
+    from collections import Counter
+    cc = Counter(d.delta_confidence for d in stable_deltas)
+    typer.echo(
+        f"Stable deltas: {len(stable_deltas)} | "
+        f"high={cc.get('high',0)} | medium={cc.get('medium',0)} | low={cc.get('low',0)}"
+    )
+    typer.echo("Written -> data/processed/stable_truth_score_delta.jsonl")
+
+
+@app.command("build-lineage-reports")
+def build_lineage_reports_command() -> None:
+    """Build all Stage 3.4 lineage reports."""
+    lineages = load_candidate_lineage()
+    attributions = load_targeted_evidence_attribution()
+    stable_deltas = load_stable_truth_score_delta()
+
+    build_candidate_lineage_report(lineages)
+    typer.echo("Built -> outputs/candidate_lineage_report.md")
+
+    build_targeted_evidence_attribution_report(attributions)
+    typer.echo("Built -> outputs/targeted_evidence_attribution_report.md")
+
+    build_stable_truth_score_delta_report(stable_deltas)
+    typer.echo("Built -> outputs/stable_truth_score_delta_report.md")
+
+
+@app.command("run-stage34")
+def run_stage34(
+    before_snapshot: Annotated[
+        Path, typer.Option("--before-snapshot")
+    ] = Path("outputs/archive/before_stage33"),
+    targeted: Annotated[
+        Path, typer.Option("--targeted")
+    ] = Path("examples/real_signal_samples_stage33.csv"),
+) -> None:
+    """Stage 3.4: Candidate Lineage & Targeted Evidence Attribution."""
+    import json
+    typer.echo("Stage 3.4 starting: Candidate Lineage & Targeted Evidence Attribution")
+
+    # Step 1: attribute evidence
+    typer.echo("Step 1: Attributing targeted evidence through pipeline...")
+    attributions = attribute_targeted_evidence(targeted_path=targeted)
+    from collections import Counter
+    attr_counts = Counter(a.attribution_status for a in attributions)
+    write_targeted_evidence_attribution(attributions)
+    typer.echo(
+        f"  Attribution: expected={attr_counts.get('attributed_to_expected_group',0)} | "
+        f"related={attr_counts.get('attributed_to_related_group',0)} | "
+        f"lost_extraction={attr_counts.get('lost_in_extraction',0)} | "
+        f"lost_merge={attr_counts.get('lost_in_merge',0)}"
+    )
+
+    # Step 2: load before/after scores
+    lineage_baseline_quality = "full"
+    if before_snapshot.exists():
+        before_scores = load_snapshot_truth_scores(before_snapshot)
+        typer.echo(f"Step 2: Loaded {len(before_scores)} before scores from snapshot")
+    else:
+        lineage_baseline_quality = "partial"
+        typer.echo(f"Step 2: No snapshot at {before_snapshot}, using delta report fallback")
+        before_scores = []
+        delta_path = Path("data/processed/truth_score_deltas.jsonl")
+        if delta_path.exists():
+            for line in delta_path.read_text(encoding="utf-8").splitlines():
+                if not line.strip():
+                    continue
+                try:
+                    d = json.loads(line)
+                    if d.get("before_truth_score") is not None:
+                        before_scores.append({
+                            "truth_score_id": None,
+                            "source_group_id": d.get("source_group_id", ""),
+                            "group_title_zh": d.get("group_title_zh", ""),
+                            "truth_score": d.get("before_truth_score"),
+                            "truth_level": d.get("before_truth_level"),
+                            "recommended_next_action": d.get("before_next_action"),
+                            "personas": [],
+                            "domain_tags": [],
+                        })
+                except Exception:
+                    pass
+        typer.echo(f"  Reconstructed {len(before_scores)} before scores")
+
+    after_scores = load_current_truth_scores()
+    typer.echo(f"  After scores: {len(after_scores)}")
+
+    # Step 3: match lineage
+    typer.echo("Step 3: Matching candidate lineage...")
+    lineages = match_candidate_lineage(before_scores, after_scores, attributions)
+    write_candidate_lineage(lineages)
+    lc = Counter(l.match_strength for l in lineages)
+    typer.echo(
+        f"  Lineage: strong={lc.get('strong',0)} weak={lc.get('weak',0)} "
+        f"split={lc.get('split',0)} merged={lc.get('merged',0)} "
+        f"unmatched={lc.get('unmatched',0)} missing_baseline={lc.get('missing_baseline',0)}"
+    )
+
+    # Step 4: stable delta
+    typer.echo("Step 4: Computing stable truth score delta...")
+    stable_deltas = compute_stable_deltas(lineages)
+    write_stable_truth_score_delta(stable_deltas)
+    cc = Counter(d.delta_confidence for d in stable_deltas)
+    typer.echo(f"  Stable deltas: high={cc.get('high',0)} medium={cc.get('medium',0)} low={cc.get('low',0)}")
+
+    # Step 5: build reports
+    typer.echo("Step 5: Building lineage reports...")
+    build_candidate_lineage_report(lineages, lineage_baseline_quality=lineage_baseline_quality)
+    build_targeted_evidence_attribution_report(attributions)
+    build_stable_truth_score_delta_report(stable_deltas)
+    typer.echo("Built -> outputs/candidate_lineage_report.md")
+    typer.echo("Built -> outputs/targeted_evidence_attribution_report.md")
+    typer.echo("Built -> outputs/stable_truth_score_delta_report.md")
+
+    # Step 6: update batch summary
+    build_batch_summary_report()
+    typer.echo("Updated -> outputs/batch_summary_report.md")
+
+    proceed = [d for d in stable_deltas if d.recommended_next_action == "proceed_to_fit_scoring"]
+    typer.echo(
+        f"Stage 3.4 complete: lineage_baseline_quality={lineage_baseline_quality} | "
+        f"lineages={len(lineages)} | stable_proceed_to_fit={len(proceed)}"
+    )
+
+
 def main() -> None:
     app()
 
 
 if __name__ == "__main__":
     main()
+
+
+
+
+# ── Stage 3.5 commands ──────────────────────────────────────────────────────
+
+@app.command("run-stage35")
+def run_stage35_command(
+    snapshot_name: Annotated[
+        str, typer.Option("--snapshot-name")
+    ] = "before_stage35",
+    filled: Annotated[
+        Path, typer.Option("--filled")
+    ] = Path("examples/real_signal_samples_stage35.csv"),
+) -> None:
+    """Stage 3.5: Snapshot-first targeted evidence expansion (no LLM)."""
+    from demand_radar.stage35.stage35_pipeline import run_stage35
+    typer.echo("Stage 3.5 starting (template + validate + gate)...")
+    result = run_stage35(snapshot_name=snapshot_name, filled_sample_path=str(filled))
+    gate = result.get("stage4_gate_status", "not_run")
+    cands = result.get("selected_candidates", 0)
+    typer.echo(f"  Stage 3.5 done: selected_candidates={cands} stage4_gate={gate}")
+    typer.echo("  Reports: outputs/stage35_targeted_expansion_report.md")
+    typer.echo("          outputs/stage35_stage4_gate_report.md")
+
+
+@app.command("run-stage35-full")
+def run_stage35_full_command(
+    snapshot_name: Annotated[
+        str, typer.Option("--snapshot-name")
+    ] = "before_stage35",
+    filled: Annotated[
+        Path, typer.Option("--filled")
+    ] = Path("examples/real_signal_samples_stage35.csv"),
+) -> None:
+    """Stage 3.5 full: LLM rerun + lineage + gate (requires API key)."""
+    import os
+    from demand_radar.stage35.stage35_pipeline import run_stage35
+    if not os.environ.get("DEMAND_RADAR_LLM_API_KEY"):
+        typer.echo("ERROR: DEMAND_RADAR_LLM_API_KEY not set. run-stage35-full requires an LLM API key.", err=True)
+        raise typer.Exit(code=1)
+    typer.echo("WARNING: run-stage35-full will trigger LLM API calls. Press Ctrl+C to abort.")
+    # Step 1: run-stage35 (snapshot + template + validate)
+    result = run_stage35(snapshot_name=snapshot_name, filled_sample_path=str(filled))
+    if result.get("status") == "no_candidates":
+        typer.echo("Aborted: no eligible candidates.")
+        raise typer.Exit(code=1)
+    # Step 2: rebuild combined input
+    from demand_radar.targeted_expansion.combined_input_builder import build_combined_input
+    base = Path("examples/combined_signal_samples_stage33.csv")
+    if not base.exists():
+        base = Path("examples/real_signal_samples_stage26.csv")
+    stats = build_combined_input(
+        base_path=str(base),
+        targeted_path=str(filled),
+        validation_path="data/processed/stage35_targeted_signal_validation.jsonl",
+        output_path="examples/combined_signal_samples_stage35.csv",
+    )
+    typer.echo(f"  Combined input: {stats.get(chr(39)+'combined_rows'+chr(39), 0)} rows")
+    # Step 3: run-stage26
+    typer.echo("  Running stage26...")
+    run_stage26(input=Path("examples/combined_signal_samples_stage35.csv"))
+    # Step 4: run-stage29c
+    typer.echo("  Running stage29c (LLM)...")
+    run_stage29c(
+        input=Path("examples/combined_signal_samples_stage35.csv"),
+        force_rerun=True,
+    )
+    # Step 5: run-stage3
+    typer.echo("  Running stage3...")
+    run_truth_scoring_command(source="calibrated_llm")
+    # Step 6: run-stage32
+    typer.echo("  Running stage32...")
+    run_stage32_command(source="calibrated_llm")
+    # Step 7: run-stage34 with before snapshot
+    typer.echo("  Running stage34...")
+    run_stage34(before_snapshot=Path(f"outputs/archive/{snapshot_name}"))
+    # Step 8: final gate
+    typer.echo("  Evaluating Stage 4 gate...")
+    from demand_radar.stage35.stage35_gate import evaluate_stage4_gate
+    from demand_radar.lineage.lineage_store import load_stable_truth_score_delta
+    deltas = [d.model_dump() for d in load_stable_truth_score_delta()]
+    gate = evaluate_stage4_gate(deltas, lineage_baseline_quality="full")
+    from demand_radar.stage35.stage35_report import build_stage35_gate_report
+    build_stage35_gate_report(gate.model_dump())
+    typer.echo(f"Stage 3.5 full complete. Gate status: {gate.status}")
+    typer.echo("  Report: outputs/stage35_stage4_gate_report.md")
+
+
+@app.command("select-stage35-candidates")
+def select_stage35_candidates_command() -> None:
+    """Select Stage 3.5 target candidates from truth_scores."""
+    from demand_radar.stage35.stage35_candidate_selector import select_stage35_candidates
+    candidates = select_stage35_candidates()
+    typer.echo(f"Selected {len(candidates)} Stage 3.5 candidates:")
+    for c in candidates:
+        typer.echo(f"  [{c.priority_rank}] {c.group_title_zh[:60]} (score={c.current_truth_score})")
+
+
+@app.command("build-stage35-template")
+def build_stage35_template_command() -> None:
+    """Build Stage 3.5 targeted signal template CSV."""
+    from demand_radar.stage35.stage35_template_builder import build_stage35_template
+    rows = build_stage35_template()
+    typer.echo(f"Template built: {len(rows)} rows -> examples/stage35_targeted_signal_template.csv")
+
+
+@app.command("validate-stage35-signals")
+def validate_stage35_signals_command(
+    input: Annotated[
+        Path, typer.Option("--input")
+    ] = Path("examples/real_signal_samples_stage35.csv"),
+) -> None:
+    """Validate Stage 3.5 filled signals."""
+    from demand_radar.stage35.stage35_validator import validate_stage35_signals
+    if not input.exists():
+        typer.echo(f"File not found: {input}", err=True)
+        raise typer.Exit(code=1)
+    results = validate_stage35_signals(input)
+    valid_n = sum(1 for r in results if r.get("status") == "valid")
+    warn_n = sum(1 for r in results if r.get("status") == "warning")
+    inv_n = sum(1 for r in results if r.get("status") == "invalid")
+    typer.echo(f"Validation: total={len(results)} valid={valid_n} warning={warn_n} invalid={inv_n}")
