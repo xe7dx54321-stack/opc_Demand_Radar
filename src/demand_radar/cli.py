@@ -1,4 +1,4 @@
-"""Typer CLI for Stage 1 Demand Radar."""
+﻿"""Typer CLI for Stage 1 Demand Radar."""
 
 from __future__ import annotations
 
@@ -1767,3 +1767,111 @@ def validate_stage35_signals_command(
     warn_n = sum(1 for r in results if r.get("status") == "warning")
     inv_n = sum(1 for r in results if r.get("status") == "invalid")
     typer.echo(f"Validation: total={len(results)} valid={valid_n} warning={warn_n} invalid={inv_n}")
+
+
+@app.command("build-real-evidence-template")
+def build_real_evidence_template_command() -> None:
+    """Generate the real evidence pack CSV template."""
+    from demand_radar.real_evidence.real_evidence_validator import generate_template
+    out = generate_template()
+    typer.echo(f"Template generated: {out}")
+
+
+@app.command("validate-real-evidence-pack")
+def validate_real_evidence_pack_command(
+    input: Annotated[
+        _Path, typer.Option("--input")
+    ] = _Path("examples/real_evidence_pack_ai_investment_tracking.csv"),
+) -> None:
+    """Validate the filled real evidence pack CSV."""
+    from demand_radar.real_evidence.real_evidence_validator import validate_real_evidence_pack
+    if not input.exists():
+        typer.echo(f"File not found: {input}", err=True)
+        raise typer.Exit(code=1)
+    items_path = _Path("data/processed/real_evidence_items.jsonl")
+    validation_path = _Path("data/processed/real_evidence_validation.jsonl")
+    items, validations = validate_real_evidence_pack(input, items_path, validation_path)
+    valid_n = sum(1 for v in validations if v.status == "valid")
+    warn_n = sum(1 for v in validations if v.status == "warning")
+    inv_n = sum(1 for v in validations if v.status == "invalid")
+    excl_n = sum(1 for v in validations if v.status == "excluded")
+    typer.echo(
+        f"Validation complete: total={len(validations)} "
+        f"valid={valid_n} warning={warn_n} invalid={inv_n} excluded={excl_n}"
+    )
+    typer.echo(f"Items saved: {items_path}")
+    typer.echo(f"Validations saved: {validation_path}")
+
+
+@app.command("run-real-evidence-pack")
+def run_real_evidence_pack_command(
+    input: Annotated[
+        _Path, typer.Option("--input")
+    ] = _Path("examples/real_evidence_pack_ai_investment_tracking.csv"),
+) -> None:
+    """Convert validated real evidence to signal CSV for pipeline."""
+    from demand_radar.real_evidence.real_evidence_store import load_real_evidence_items, load_real_evidence_validations
+    from demand_radar.real_evidence.real_evidence_pipeline import convert_to_signal_csv
+    items = load_real_evidence_items()
+    validations = load_real_evidence_validations()
+    if not items:
+        typer.echo("No real evidence items found. Run validate-real-evidence-pack first.")
+        raise typer.Exit(code=0)
+    includeable = [i for i, v in zip(items, validations) if v.include_in_pipeline]
+    out = convert_to_signal_csv(includeable)
+    typer.echo(f"Signal CSV generated: {out} ({len(includeable)} items)")
+
+
+@app.command("build-real-evidence-report")
+def build_real_evidence_report_command() -> None:
+    """Build the real evidence pack report."""
+    from demand_radar.real_evidence.real_evidence_store import load_real_evidence_items, load_real_evidence_validations
+    from demand_radar.real_evidence.calibration_report import build_real_evidence_pack_report
+    items = load_real_evidence_items()
+    validations = load_real_evidence_validations()
+    out = build_real_evidence_pack_report(items, validations)
+    typer.echo(f"Report: {out}")
+
+
+@app.command("build-calibration-report")
+def build_calibration_report_command() -> None:
+    """Build the calibration report and recommendations."""
+    from demand_radar.real_evidence.real_evidence_store import load_calibration_reviews, load_calibration_findings
+    from demand_radar.real_evidence.calibration_report import (
+        build_calibration_report,
+        build_prompt_skill_recommendations,
+    )
+    reviews = load_calibration_reviews()
+    findings = load_calibration_findings()
+    out1 = build_calibration_report(reviews)
+    out2 = build_prompt_skill_recommendations(reviews, findings)
+    typer.echo(f"Calibration report: {out1}")
+    typer.echo(f"Recommendations: {out2}")
+
+
+@app.command("run-stage-r1")
+def run_stage_r1_command(
+    filled_input: Annotated[
+        _Path, typer.Option("--input")
+    ] = _Path("examples/real_evidence_pack_ai_investment_tracking.csv"),
+    skip_llm: Annotated[bool, typer.Option("--skip-llm/--no-skip-llm")] = True,
+) -> None:
+    """Run Stage R1: Real Evidence Pack & Calibration Loop."""
+    from demand_radar.real_evidence.real_evidence_pipeline import run_stage_r1
+    result = run_stage_r1(filled_path=filled_input, skip_llm=skip_llm)
+    if not result["filled_file_exists"]:
+        typer.echo(
+            "[Stage R1] 真实证据包尚未填写。\n"
+            f"请先填写：{filled_input}\n"
+            "使用 demand-radar build-real-evidence-template 生成模板。"
+        )
+        raise typer.Exit(code=0)
+    typer.echo(
+        f"[Stage R1] Complete. items={result['items']} "
+        f"valid={result['valid']} warning={result['warning']} "
+        f"invalid={result['invalid']} excluded={result['excluded']}"
+    )
+    if result["signal_csv_generated"]:
+        typer.echo("Signal CSV: examples/real_evidence_signals_ai_investment_tracking.csv")
+    for r in result.get("reports_generated", []):
+        typer.echo(f"Report: {r}")

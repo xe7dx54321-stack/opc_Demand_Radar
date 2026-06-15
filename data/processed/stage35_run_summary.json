@@ -1,7 +1,7 @@
 {
   "run_id": "s35run_000001",
   "before_snapshot_name": "before_stage35",
-  "before_snapshot_path": "outputs\\archive\\before_stage35_20260615_144236",
+  "before_snapshot_path": "outputs\\archive\\before_stage35_20260615_145443",
   "lineage_baseline_quality": "full",
   "selected_candidates": 2,
   "template_rows": 24,
@@ -18,5 +18,5 @@
   "stable_delta_improved": null,
   "stable_proceed_to_fit_scoring": null,
   "stage4_gate_status": "blocked",
-  "created_at": "2026-06-15T14:42:36Z"
+  "created_at": "2026-06-15T14:54:44Z"
 }

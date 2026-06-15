@@ -62,6 +62,8 @@ def _write_markdown(result: BatchSummaryResult, report_path: str | Path) -> None
     lines.extend(_evidence_gap_lines())
     lines.extend(_targeted_expansion_lines())
     lines.extend(_lineage_lines())
+    lines.extend(_stage35_lines())
+    lines.extend(_real_evidence_lines())
     report_path.write_text("\n".join(lines).rstrip() + "\n", encoding="utf-8")
 
 
@@ -468,3 +470,59 @@ def _lineage_lines() -> list[str]:
         "",
     ]
 
+
+
+def _real_evidence_lines() -> list[str]:
+    """Stage R1 section for batch summary report."""
+    import json
+    from pathlib import Path
+
+    items_path = Path("data/processed/real_evidence_items.jsonl")
+    val_path = Path("data/processed/real_evidence_validation.jsonl")
+    reviews_path = Path("data/processed/real_evidence_calibration_reviews.jsonl")
+
+    def _load(p):
+        if not p.exists():
+            return []
+        result = []
+        for line in p.read_text(encoding="utf-8").splitlines():
+            if line.strip():
+                try:
+                    result.append(json.loads(line))
+                except Exception:
+                    pass
+        return result
+
+    items = _load(items_path)
+    validations = _load(val_path)
+    reviews = _load(reviews_path)
+
+    valid_n = sum(1 for v in validations if v.get("status") == "valid")
+    warn_n = sum(1 for v in validations if v.get("status") == "warning")
+    inv_n = sum(1 for v in validations if v.get("status") == "invalid")
+
+    url_n = sum(1 for i in items if i.get("source_url"))
+    url_ratio = f"{url_n/len(items):.1%}" if items else "N/A"
+
+    user_voice = sum(
+        1 for i in items
+        if i.get("source_type") in (
+            "product_review", "community_discussion", "github_issue", "interview_note"
+        )
+    )
+    paid_signal = sum(1 for i in items if i.get("paid_alternative") or i.get("budget_signal"))
+
+    return [
+        "",
+        "## Stage R1: Real Evidence Pack & Calibration",
+        "",
+        f"- real_evidence_items: {len(items)}",
+        f"- valid: {valid_n}",
+        f"- warning: {warn_n}",
+        f"- invalid: {inv_n}",
+        f"- source_url_ratio: {url_ratio}",
+        f"- user_voice_signals: {user_voice}",
+        f"- paid_or_cost_signals: {paid_signal}",
+        f"- calibration_reviews: {len(reviews)}",
+        "",
+    ]

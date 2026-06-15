@@ -8,10 +8,10 @@
 - Template Rows: 24
 - Filled Signals: 24
 - Valid: 22 Warning: 2 Invalid: 0
-- Combined Rows: 144
-- Payment/Cost Signals: 18
+- Combined Rows: 0
+- Payment/Cost Signals: 10
 - Stage 4 Gate Status: blocked
-- Generated at: 2026-06-15 14:51 UTC
+- Generated at: 2026-06-15 14:54 UTC
 
 ## Selected Candidates
 

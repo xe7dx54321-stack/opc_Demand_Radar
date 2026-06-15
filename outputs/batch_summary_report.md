@@ -19,7 +19,7 @@
 - Calibration reviews: 9
 - Cluster reviews: 0
 - Merge reviews: 4
-- Generated at: 2026-06-15T14:47:14Z
+- Generated at: 2026-06-15T15:38:17Z
 
 ## Batch Breakdown
 
@@ -292,6 +292,29 @@ Observations:
 - strong_lineage_matches: 0
 - weak_lineage_matches: 5
 - lineage_drift_flags: 0
-- targeted_attribution_rate: 17.5%
+- targeted_attribution_rate: N/A
 - stable_delta_improved: 0
 - stable_proceed_to_fit_scoring: 0
+
+## Stage 3.5 Targeted Evidence Expansion
+
+- stage35_snapshot_status: full
+- stage35_selected_candidates: 2
+- stage35_template_rows: 24
+- stage35_valid_signals: 22
+- stage35_combined_rows: 0
+- stage35_attribution_rate: None
+- stage35_stable_delta_improved: None
+- stage35_stage4_gate_status: blocked
+
+
+## Stage R1: Real Evidence Pack & Calibration
+
+- real_evidence_items: 1
+- valid: 1
+- warning: 0
+- invalid: 0
+- source_url_ratio: 100.0%
+- user_voice_signals: 1
+- paid_or_cost_signals: 1
+- calibration_reviews: 0

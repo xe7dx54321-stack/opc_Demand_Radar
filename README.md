@@ -1268,3 +1268,110 @@ outputs/stage35_stage4_gate_report.md
 outputs/archive/before_stage35/                  (before-snapshot, full quality)
 ```
 
+
+---
+
+## Stage R1: Real Evidence Pack & Prompt / Skill Calibration Loop
+
+### Why Stage R1?
+
+Stages 3.x were **pipeline rehearsal** — validating the engineering chain with synthetic and fixture-based samples. Stage R1 marks the switch to **real-world evidence-driven calibration**.
+
+> Fake data + precise scoring ≠ real demand discovery.
+
+Stage R1 is about collecting real, traceable evidence and using it to calibrate the system's extraction prompts, collection skills, rubrics, and rejection rules.
+
+### What is a Real Evidence Pack?
+
+A CSV file where each row represents one piece of real demand evidence for a specific target direction. Every item must:
+
+1. Have a `source_url` (preferred) OR a `source_note` (for interviews/private sources)
+2. Have `raw_text` >= 80 characters (real quote or faithful summary — not AI-generated)
+3. Identify the `persona` and `workflow_stage`
+4. Include at least one signal type: pain, paid alternative, workaround, or business impact
+
+### Trusted Sources (highest to lowest)
+
+| Source Type | Weight | Use For |
+|---|---|---|
+| product_review | 0.95 | User pain + existing tools |
+| community_discussion | 0.90 | Real-world workflow pain |
+| github_issue | 0.90 | Technical pain, very precise |
+| interview_note | 0.90 | Direct evidence, private |
+| case_study | 0.75 | Business impact |
+| pricing_page | 0.70 | Paid alternative proof |
+| job_posting | 0.70 | Org spending human labor |
+| marketing_article | 0.25 | Very low — vendor bias |
+
+### What Gets Rejected
+
+- No `source_url` AND no `source_note` → **invalid**
+- `raw_text` < 80 characters → **invalid**
+- `is_synthetic=true` without `exclude_from_scoring=true` → **invalid**
+- Pure marketing copy without user evidence → **warning or invalid**
+- AI-generated content without source → **invalid**
+
+### Quick Start
+
+```bash
+# 1. Generate the evidence template
+demand-radar build-real-evidence-template
+
+# 2. Fill in examples/real_evidence_pack_ai_investment_tracking.csv
+#    with REAL sources (URLs or interview notes)
+#    Target: 30-50 items, >= 80% with source_url
+
+# 3. Validate and run
+demand-radar run-stage-r1
+
+# 4. Open UI to review and label evidence
+demand-radar review-ui --port 8502
+```
+
+### Human Calibration Labels
+
+In the UI "真实证据校准" tab, you can label each evidence item:
+
+| Label | Meaning |
+|---|---|
+| true_pain | Real user pain confirmed |
+| fake_pain | Not actually user pain |
+| too_generic | Too vague to be useful |
+| strong_signal | High quality, use in scoring |
+| weak_signal | Low quality, don't rely on it |
+| commercial_signal | Clear paid/budget evidence |
+| bad_extraction | Extraction prompt got it wrong |
+| bad_merge | Merge prompt incorrectly combined |
+| missed_pain | Extraction missed a real pain |
+
+Labels write to `data/processed/real_evidence_calibration_reviews.jsonl`.
+
+### Calibration Loop
+
+1. Collect evidence → `examples/real_evidence_pack_ai_investment_tracking.csv`
+2. Run pipeline → `demand-radar run-stage-r1`
+3. Review system outputs in UI → label items
+4. Generate calibration report → `demand-radar build-calibration-report`
+5. Read `outputs/prompt_skill_calibration_recommendations.md`
+6. Update prompts in `docs/prompts/` and rubrics in `docs/rubrics/`
+7. Repeat
+
+### Outputs
+
+```
+examples/real_evidence_pack_ai_investment_tracking_template.csv
+examples/real_evidence_pack_ai_investment_tracking.csv   (you fill this)
+examples/real_evidence_signals_ai_investment_tracking.csv
+data/processed/real_evidence_items.jsonl
+data/processed/real_evidence_validation.jsonl
+data/processed/real_evidence_calibration_reviews.jsonl
+outputs/real_evidence_pack_report.md
+outputs/real_evidence_calibration_report.md
+outputs/prompt_skill_calibration_recommendations.md
+docs/skills/real_evidence_collection_skill.md
+docs/prompts/pain_extraction_prompt_v1.md
+docs/prompts/merge_judgment_prompt_v1.md
+docs/rubrics/evidence_scoring_rubric_v1.md
+docs/rules/rejection_rules_v1.md
+docs/rules/source_weighting_v1.md
+```

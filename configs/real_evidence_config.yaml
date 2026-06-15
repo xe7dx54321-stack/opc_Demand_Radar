@@ -1,0 +1,77 @@
+﻿real_evidence:
+  enabled: true
+
+  target_direction:
+    id: ai_investment_tracking
+    title_zh: "投资人 / 研究员 AI 产业跟踪与项目初筛"
+    target_personas:
+      - 投资人
+      - 产业研究员
+      - VC/PE 分析师
+      - 创业项目筛选人员
+      - AI 行业研究人员
+
+  input:
+    template_path: examples/real_evidence_pack_ai_investment_tracking_template.csv
+    filled_pack_path: examples/real_evidence_pack_ai_investment_tracking.csv
+
+  output:
+    evidence_items_path: data/processed/real_evidence_items.jsonl
+    validation_path: data/processed/real_evidence_validation.jsonl
+    calibration_reviews_path: data/processed/real_evidence_calibration_reviews.jsonl
+
+  minimum_quality:
+    min_real_evidence_items: 30
+    target_real_evidence_items: 50
+    min_source_url_ratio: 0.80
+    min_user_voice_ratio: 0.40
+    min_paid_or_cost_signal_ratio: 0.25
+    min_workaround_signal_ratio: 0.25
+    max_marketing_only_ratio: 0.20
+
+  allowed_source_types:
+    - product_review
+    - community_discussion
+    - github_issue
+    - forum_post
+    - case_study
+    - pricing_page
+    - landing_page
+    - job_posting
+    - blog_post
+    - interview_note
+    - analyst_article
+    - product_docs
+    - newsletter
+    - social_post
+
+  high_value_source_types:
+    - product_review
+    - community_discussion
+    - github_issue
+    - case_study
+    - pricing_page
+    - interview_note
+    - job_posting
+
+  validation:
+    require_source_url_or_note: true
+    require_raw_text: true
+    min_raw_text_chars: 80
+    allow_synthetic: false
+    reject_ai_generated_without_source: true
+
+  calibration:
+    require_human_review: true
+    review_labels:
+      - true_pain
+      - fake_pain
+      - too_generic
+      - weak_signal
+      - strong_signal
+      - commercial_signal
+      - not_commercial
+      - bad_extraction
+      - bad_merge
+      - missed_pain
+      - duplicate_noise

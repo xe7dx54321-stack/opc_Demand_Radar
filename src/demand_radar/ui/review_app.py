@@ -532,9 +532,9 @@ def main() -> None:
 
 
 
-    pain_tab, cluster_tab, merge_tab, ai_judge_tab, exception_tab, llm_tab, truth_tab, gap_tab, expansion_tab, lineage_tab, stage35_tab, batch_tab = st.tabs(
+    pain_tab, cluster_tab, merge_tab, ai_judge_tab, exception_tab, llm_tab, truth_tab, gap_tab, expansion_tab, lineage_tab, stage35_tab, real_evidence_tab, batch_tab = st.tabs(
         ["痛点校准", "需求主题候选", "合并建议审核", "AI合并判断", "人工异常队列", "LLM合并对比", "真实需求评分", "证据缺口分析", "定向证据扩展", "候选谱系追踪",
-        "Stage 3.5 定向验证", "批次总览"]
+        "Stage 3.5 定向验证", "真实证据校准", "批次总览"]
     )
 
     with pain_tab:
@@ -576,6 +576,10 @@ def main() -> None:
 
     with stage35_tab:
         _render_stage35_page()
+
+
+    with real_evidence_tab:
+        _render_real_evidence_page()
 
     with batch_tab:
 
@@ -3021,3 +3025,112 @@ def _render_lineage_page() -> None:
         if total_attr:
             st.progress(attr_rate, text=f"归因率: {attr_rate:.0%}")
 
+
+
+
+def _render_real_evidence_page() -> None:
+    """Render the Real Evidence Calibration tab."""
+    import streamlit as st
+    from demand_radar.ui.real_evidence_service import (
+        get_real_evidence_summary,
+        get_real_evidence_items,
+        get_real_evidence_validations,
+        get_calibration_reviews,
+    )
+    from demand_radar.real_evidence.real_evidence_store import append_calibration_review
+    from demand_radar.real_evidence.real_evidence_schema import CalibrationReview
+    from demand_radar.state.raw_store import next_ids, utc_now_iso
+
+    st.subheader("真实证据校准 (Stage R1)")
+
+    summary = get_real_evidence_summary()
+
+    col1, col2, col3, col4 = st.columns(4)
+    col1.metric("证据条数", summary["evidence_items"])
+    col2.metric("有效", summary["valid"])
+    col3.metric("告警", summary["warning"])
+    col4.metric("无效", summary["invalid"])
+
+    col5, col6, col7 = st.columns(3)
+    col5.metric("用户声音信号", summary["user_voice_signals"])
+    col6.metric("付费/成本信号", summary["paid_or_cost_signals"])
+    col7.metric("替代方案信号", summary["workaround_signals"])
+
+    if summary["evidence_items"] == 0:
+        st.info(
+            "真实证据包尚未填写。"
+            " 请先运行: demand-radar build-real-evidence-template"
+            " 然后填写: examples/real_evidence_pack_ai_investment_tracking.csv"
+            " 再运行: demand-radar run-stage-r1"
+        )
+        return
+
+    st.markdown("---")
+
+    items = get_real_evidence_items()
+    validations = get_real_evidence_validations()
+    val_map = {v["evidence_id"]: v for v in validations}
+
+    review_labels = [
+        "true_pain", "fake_pain", "too_generic", "weak_signal", "strong_signal",
+        "commercial_signal", "not_commercial", "bad_extraction", "bad_merge",
+        "missed_pain", "duplicate_noise",
+    ]
+    label_display = {
+        "true_pain": "真痛点",
+        "fake_pain": "假痛点",
+        "too_generic": "太泛",
+        "weak_signal": "弱信号",
+        "strong_signal": "强信号",
+        "commercial_signal": "有商业化可能",
+        "not_commercial": "无商业化可能",
+        "bad_extraction": "抽取错误",
+        "bad_merge": "合并错误",
+        "missed_pain": "漏掉痛点",
+        "duplicate_noise": "噪音/重复",
+    }
+
+    st.subheader(f"证据列表 ({len(items)} 条)")
+    for item in items:
+        val = val_map.get(item["evidence_id"], {})
+        status = val.get("status", "unknown")
+        status_emoji = {"valid": "✅", "warning": "⚠️", "invalid": "❌", "excluded": "⏐"}.get(status, "?")
+        with st.expander(
+            f"{status_emoji} [{item['source_type']}] {item.get('title') or item['evidence_id'][:60]}"
+        ):
+            st.markdown(f"**Source:** {item.get('source_url') or item.get('source_note') or 'N/A'}")
+            st.markdown(f"**Persona:** {item.get('persona') or 'N/A'} | **Stage:** {item.get('workflow_stage') or 'N/A'}")
+            st.markdown(f"**Pain type:** {item.get('pain_type') or 'N/A'}")
+            if item.get("evidence_quote"):
+                st.info(f"引文: {item['evidence_quote'][:200]}")
+            if item.get("raw_text"):
+                st.text_area("原文", item["raw_text"][:500], height=80, key=f"rt_{item['evidence_id']}", disabled=True)
+
+            selected = st.multiselect(
+                "人工标注",
+                options=review_labels,
+                format_func=lambda x: label_display.get(x, x),
+                key=f"labels_{item['evidence_id']}",
+            )
+            note = st.text_input("备注", key=f"note_{item['evidence_id']}")
+            if st.button("提交标注", key=f"submit_{item['evidence_id']}"):
+                if selected:
+                    review_id = next_ids("calibration_review", 1)[0]
+                    review = CalibrationReview(
+                        review_id=review_id,
+                        evidence_id=item["evidence_id"],
+                        human_labels=selected,
+                        reviewer_note_zh=note or None,
+                        created_at=utc_now_iso(),
+                    )
+                    append_calibration_review(review)
+                    st.success(f"已提交标注: {selected}")
+                else:
+                    st.warning("请选择至少一个标签。")
+
+    if summary["calibration_reviews"] > 0:
+        st.markdown("---")
+        st.subheader(f"校准 Review 记录 ({summary['calibration_reviews']} 条)")
+        reviews = get_calibration_reviews()
+        for r in reviews[-10:]:
+            st.markdown(f"- `{r['evidence_id']}` {r['human_labels']} {r.get('reviewer_note_zh') or ''}")
