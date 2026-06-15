@@ -2,11 +2,11 @@
 
 ## Run Summary
 
-- Raw signals: 120
-- Normalized signals: 120
-- Extracted pain points: 91
-- Quarantined items: 29
-- Generated at: 2026-06-15T08:22:49Z
+- Raw signals: 144
+- Normalized signals: 144
+- Extracted pain points: 104
+- Quarantined items: 40
+- Generated at: 2026-06-15T14:42:40Z
 
 ## Pain Points
 
@@ -1372,5 +1372,200 @@ Payment signal:
 Confidence: 0.72
 Source: raw=sig_000116, normalized=norm_000116
 Evidence quote: 雪球社区讨论《如何系统性追踪 AI 产业链投资机会》：'我现在的工作流是：订阅约 30 个 AI 相关的微信公众号和 Newsletter，用 Feedly 聚合英文 AI 媒体（约 50 个源），每天早上花 45-60 分钟浏览，有价值的内容截图存微信收藏，然后每周六花 2-3 小时把所有截图整理成 Word 文档。这个流程已经是我能想到最系统的了，但依然感觉信息太多、遗漏太多、整理太慢。
+
+---
+
+### 92. pain_000125
+
+Persona: 
+Scenario: Guru knowledge management tool - $15/user/month Teams plan
+Job to be done: track and monitor high-value information across sources
+Pain: Their website highlights the core pain: 'Your team spends hours tracking down information scattered across Slack, Google Drive, and Confluence.
+Current workaround: 
+Frequency signal: 
+Payment signal: labor/time cost signal mentioned
+Confidence: 0.82
+Source: raw=sig_000125, normalized=norm_000125
+Evidence quote: Their website highlights the core pain: 'Your team spends hours tracking down information scattered across Slack, Google Drive, and Confluence.
+
+---
+
+### 93. pain_000126
+
+Persona: 
+Scenario: G2评测：企业为解决知识分散问题每年支出$200-500/人
+Job to be done: 
+Pain: 其中，小于100人的团队中有68%同时使用2-3款工具（如Notion+Confluence+Slack搜索），造成预算分散。
+Current workaround: 
+Frequency signal: 
+Payment signal: paid alternative or budget signal mentioned
+Confidence: 0.72
+Source: raw=sig_000126, normalized=norm_000126
+Evidence quote: 其中，小于100人的团队中有68%同时使用2-3款工具（如Notion+Confluence+Slack搜索），造成预算分散。
+
+---
+
+### 94. pain_000128
+
+Persona: operator
+Scenario: 知乎：运营团队每周浪费10小时在内部知识整理上
+Job to be done: produce reliable content from scattered inputs
+Pain: 2万赞）：'我们团队5个人，每周大概要花10小时在整理和查找各种文档、数据、SOP上面。分散在飞书、石墨、百度网盘和微信群聊里，每次找东西都要翻半天。
+Current workaround: 
+Frequency signal: weekly
+Payment signal: 
+Confidence: 0.72
+Source: raw=sig_000128, normalized=norm_000128
+Evidence quote: 2万赞）：'我们团队5个人，每周大概要花10小时在整理和查找各种文档、数据、SOP上面。分散在飞书、石墨、百度网盘和微信群聊里，每次找东西都要翻半天。
+
+---
+
+### 95. pain_000129
+
+Persona: 
+Scenario: Glean Enterprise AI Search - $30+/user/month enterprise pricing
+Job to be done: 
+Pain: Their pitch directly addresses the knowledge scattering pain: 'Stop searching, start finding.
+Current workaround: 
+Frequency signal: 
+Payment signal: 
+Confidence: 0.82
+Source: raw=sig_000129, normalized=norm_000129
+Evidence quote: Their pitch directly addresses the knowledge scattering pain: 'Stop searching, start finding.
+
+---
+
+### 96. pain_000131
+
+Persona: operator
+Scenario: 产品经理的现有绕过方案：维护个人Excel知识索引
+Job to be done: 
+Pain: 这个Excel通常只有自己能看，离职时会导致知识断层。另一种常见方案是建立个人微信收藏夹或备忘录，把重要文档链接手动整理进去。
+Current workaround: manual spreadsheet tracking
+Frequency signal: weekly
+Payment signal: labor/time cost signal mentioned
+Confidence: 0.72
+Source: raw=sig_000131, normalized=norm_000131
+Evidence quote: 这个Excel通常只有自己能看，离职时会导致知识断层。另一种常见方案是建立个人微信收藏夹或备忘录，把重要文档链接手动整理进去。
+
+---
+
+### 97. pain_000133
+
+Persona: investor
+Scenario: PitchBook数据订阅费用 - VC机构年付$30,000+
+Job to be done: 
+Pain: 这是投资机构为解决AI产业信息采集和项目追踪问题所支付的主要工具成本，但这些工具并不能解决多源信息整合和人工整理的问题。
+Current workaround: manual work
+Frequency signal: 
+Payment signal: labor/time cost signal mentioned
+Confidence: 0.72
+Source: raw=sig_000133, normalized=norm_000133
+Evidence quote: 这是投资机构为解决AI产业信息采集和项目追踪问题所支付的主要工具成本，但这些工具并不能解决多源信息整合和人工整理的问题。
+
+---
+
+### 98. pain_000135
+
+Persona: investor
+Scenario: 投资人错过项目的成本：信息不及时导致决策迟延
+Job to be done: 
+Pain: 一位早期投资人在播客中描述：'我们错过了一个项目，因为在追踪这家公司的6个月里，信息来源太分散——有时从Twitter看到消息，有时从朋友圈，有时从行业报告。
+Current workaround: 
+Frequency signal: 
+Payment signal: 
+Confidence: 0.72
+Source: raw=sig_000135, normalized=norm_000135
+Evidence quote: 一位早期投资人在播客中描述：'我们错过了一个项目，因为在追踪这家公司的6个月里，信息来源太分散——有时从Twitter看到消息，有时从朋友圈，有时从行业报告。
+
+---
+
+### 99. pain_000136
+
+Persona: investor
+Scenario: 投资分析师每周花15+小时在信息聚合和整理上
+Job to be done: complete developer workflow with less friction
+Pain: 在对早期VC机构投资分析师的调研中，受访者描述了典型的周度信息采集工作量：每天需要浏览5-8个信息源（科技媒体、LinkedIn、GitHub、Twitter、行业微信群、数据库等），手动整理有价值信息约需1-2小时/天，即每周5-10小时。
+Current workaround: manual work
+Frequency signal: daily
+Payment signal: paid alternative or budget signal mentioned
+Confidence: 0.72
+Source: raw=sig_000136, normalized=norm_000136
+Evidence quote: 在对早期VC机构投资分析师的调研中，受访者描述了典型的周度信息采集工作量：每天需要浏览5-8个信息源（科技媒体、LinkedIn、GitHub、Twitter、行业微信群、数据库等），手动整理有价值信息约需1-2小时/天，即每周5-10小时。
+
+---
+
+### 100. pain_000137
+
+Persona: investor
+Scenario: Crunchbase Pro订阅 - $49/月，企业版$5,000+/年
+Job to be done: track and monitor high-value information across sources
+Pain: Their value proposition explicitly targets the AI industry tracking pain: 'Track startups, funding rounds, acquisitions, and market trends across 275+ sectors including AI/ML.
+Current workaround: manual work
+Frequency signal: 
+Payment signal: labor/time cost signal mentioned
+Confidence: 0.82
+Source: raw=sig_000137, normalized=norm_000137
+Evidence quote: Their value proposition explicitly targets the AI industry tracking pain: 'Track startups, funding rounds, acquisitions, and market trends across 275+ sectors including AI/ML.
+
+---
+
+### 101. pain_000139
+
+Persona: investor
+Scenario: AI赛道信息噪音导致机构错判：GPT-4发布后90天内信息量增加800%
+Job to be done: 
+Pain: 受访机构表示，在此期间由于信息过载，有2-3个机构出现'追风投资'行为——在信息未充分验证的情况下快速跟进，其中部分投资后来被证明是基于不准确的市场判断。多位GP表示：'信息太多太快，人工筛选根本跟不上，导致判断质量下降。
+Current workaround: manual work
+Frequency signal: 
+Payment signal: labor/time cost signal mentioned
+Confidence: 0.72
+Source: raw=sig_000139, normalized=norm_000139
+Evidence quote: 受访机构表示，在此期间由于信息过载，有2-3个机构出现'追风投资'行为——在信息未充分验证的情况下快速跟进，其中部分投资后来被证明是基于不准确的市场判断。多位GP表示：'信息太多太快，人工筛选根本跟不上，导致判断质量下降。
+
+---
+
+### 102. pain_000141
+
+Persona: researcher
+Scenario: Tegus Expert Network平台 - $50,000+/年机构订阅
+Job to be done: complete developer workflow with less friction
+Pain: These tools address part of the problem (expert insights and document search) but investors still report spending significant manual time cross-referencing these insights with real-time signals from GitHub, Product Hunt,
+Current workaround: manual work
+Frequency signal: 
+Payment signal: labor/time cost signal mentioned
+Confidence: 0.82
+Source: raw=sig_000141, normalized=norm_000141
+Evidence quote: These tools address part of the problem (expert insights and document search) but investors still report spending significant manual time cross-referencing these insights with real-time signals from GitHub, Product Hunt, and social media.
+
+---
+
+### 103. pain_000143
+
+Persona: investor
+Scenario: 分析师每周手动维护AI公司追踪Excel，300+行
+Job to be done: run a repeated AI-assisted workflow reliably
+Pain: 信息来源包括：逐一打开各公司官网、LinkedIn页面、GitHub仓库、微信公众号文章，手动复制粘贴更新。
+Current workaround: manual spreadsheet tracking
+Frequency signal: weekly
+Payment signal: labor/time cost signal mentioned
+Confidence: 0.72
+Source: raw=sig_000143, normalized=norm_000143
+Evidence quote: 信息来源包括：逐一打开各公司官网、LinkedIn页面、GitHub仓库、微信公众号文章，手动复制粘贴更新。
+
+---
+
+### 104. pain_000144
+
+Persona: investor
+Scenario: AI Newsletter + Twitter List作为低成本替代追踪方案
+Job to be done: produce reliable content from scattered inputs
+Pain: It works but it's not scalable. I miss things constantly.
+Current workaround: 
+Frequency signal: daily
+Payment signal: labor/time cost signal mentioned
+Confidence: 0.72
+Source: raw=sig_000144, normalized=norm_000144
+Evidence quote: It works but it's not scalable. I miss things constantly.
 
 ---

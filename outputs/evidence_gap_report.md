@@ -6,7 +6,7 @@
 - High priority gaps: 3
 - Medium priority gaps: 0
 - Low priority gaps: 0
-- Generated at: 2026-06-15 08:59 UTC
+- Generated at: 2026-06-15 14:45 UTC
 
 ## Candidate Gap Analysis
 

@@ -5,12 +5,12 @@
 - Targeted signals: 40
 - Attributed to expected group: 5
 - Attributed to related group: 2
-- Lost in extraction: 21
+- Lost in extraction: 22
 - Lost in clustering: 0
-- Lost in merge: 12
+- Lost in merge: 11
 - Not used / excluded: 0
 - Attribution rate: 17.5%
-- Generated at: 2026-06-15 13:07 UTC
+- Generated at: 2026-06-15 14:47 UTC
 
 ## By Target Candidate
 
@@ -41,9 +41,9 @@ Evidence Intents:
 - Targeted Signals: 10
 - Attributed (expected): 1
 - Attributed (related): 0
-- Lost in extraction: 2
+- Lost in extraction: 3
 - Lost in clustering: 0
-- Lost in merge: 7
+- Lost in merge: 6
 - Attribution rate: 10.0%
 
 Evidence Intents:

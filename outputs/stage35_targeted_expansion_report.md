@@ -6,12 +6,12 @@
 - Baseline Quality: full
 - Selected Candidates: 2
 - Template Rows: 24
-- Filled Signals: 0
-- Valid: 0 Warning: 0 Invalid: 0
-- Combined Rows: 0
-- Payment/Cost Signals: 0
+- Filled Signals: 24
+- Valid: 22 Warning: 2 Invalid: 0
+- Combined Rows: 144
+- Payment/Cost Signals: 18
 - Stage 4 Gate Status: blocked
-- Generated at: 2026-06-15 14:21 UTC
+- Generated at: 2026-06-15 14:51 UTC
 
 ## Selected Candidates
 
@@ -33,4 +33,6 @@ Target Evidence Intents: paid_alternative, budget_signal, current_solution, busi
 
 ## Validation Summary
 
-No signals validated yet.
+- Valid: 22
+- Warning: 2
+- Invalid: 0

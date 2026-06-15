@@ -2,13 +2,13 @@
 
 ## Overall Summary
 
-- Raw signals: 120
-- Normalized signals: 120
-- Pain points: 91
-- Quarantined items: 29
-- Demand clusters: 89
-- Singleton clusters: 87
-- Merge candidates: 131
+- Raw signals: 144
+- Normalized signals: 144
+- Pain points: 104
+- Quarantined items: 40
+- Demand clusters: 102
+- Singleton clusters: 100
+- Merge candidates: 153
 - Human reviewed groups: 0
 - AI reviewed groups: 0
 - Total reviewed groups: 0
@@ -19,7 +19,7 @@
 - Calibration reviews: 9
 - Cluster reviews: 0
 - Merge reviews: 4
-- Generated at: 2026-06-15T13:50:43Z
+- Generated at: 2026-06-15T14:47:14Z
 
 ## Batch Breakdown
 
@@ -55,7 +55,7 @@ Observations:
 - Quarantine rate: 13.3%
 - Demand clusters: 13
 - Singleton clusters: 13
-- Merge candidates: 31
+- Merge candidates: 34
 - Human reviewed groups: 0
 - AI reviewed groups: 0
 - Total reviewed groups: 0
@@ -70,7 +70,7 @@ Extraction Quality:
 - Should quarantine: 0
 
 Observations:
-- 抽取产出率：86.7%；单证据主题比例：100.0%；合并建议密度：238.5%。
+- 抽取产出率：86.7%；单证据主题比例：100.0%；合并建议密度：261.5%。
 - AI 主审：自动确认 0，自动拒绝 0，人工异常 0，异常率 n/a。
 
 ### batch_stage26_content_workflow
@@ -80,7 +80,7 @@ Observations:
 - Quarantine rate: 0.0%
 - Demand clusters: 11
 - Singleton clusters: 10
-- Merge candidates: 30
+- Merge candidates: 31
 - Human reviewed groups: 0
 - AI reviewed groups: 0
 - Total reviewed groups: 0
@@ -95,7 +95,7 @@ Extraction Quality:
 - Should quarantine: 1
 
 Observations:
-- 抽取产出率：100.0%；单证据主题比例：90.9%；合并建议密度：272.7%。
+- 抽取产出率：100.0%；单证据主题比例：90.9%；合并建议密度：281.8%。
 - AI 主审：自动确认 0，自动拒绝 0，人工异常 0，异常率 n/a。
 
 ### batch_stage26_devtools
@@ -130,7 +130,7 @@ Observations:
 - Quarantine rate: 0.0%
 - Demand clusters: 16
 - Singleton clusters: 16
-- Merge candidates: 33
+- Merge candidates: 36
 - Human reviewed groups: 0
 - AI reviewed groups: 0
 - Total reviewed groups: 0
@@ -145,7 +145,7 @@ Extraction Quality:
 - Should quarantine: 0
 
 Observations:
-- 抽取产出率：100.0%；单证据主题比例：100.0%；合并建议密度：206.2%。
+- 抽取产出率：100.0%；单证据主题比例：100.0%；合并建议密度：225.0%。
 - AI 主审：自动确认 0，自动拒绝 0，人工异常 0，异常率 n/a。
 
 ### batch_stage26_noise
@@ -155,7 +155,7 @@ Observations:
 - Quarantine rate: 30.8%
 - Demand clusters: 9
 - Singleton clusters: 9
-- Merge candidates: 19
+- Merge candidates: 20
 - Human reviewed groups: 0
 - AI reviewed groups: 0
 - Total reviewed groups: 0
@@ -170,7 +170,7 @@ Extraction Quality:
 - Should quarantine: 0
 
 Observations:
-- 抽取产出率：69.2%；单证据主题比例：100.0%；合并建议密度：211.1%。
+- 抽取产出率：69.2%；单证据主题比例：100.0%；合并建议密度：222.2%。
 - AI 主审：自动确认 0，自动拒绝 0，人工异常 0，异常率 n/a。
 
 ### batch_stage33_targeted
@@ -180,7 +180,7 @@ Observations:
 - Quarantine rate: 52.5%
 - Demand clusters: 19
 - Singleton clusters: 19
-- Merge candidates: 45
+- Merge candidates: 48
 - Human reviewed groups: 0
 - AI reviewed groups: 0
 - Total reviewed groups: 0
@@ -195,7 +195,32 @@ Extraction Quality:
 - Should quarantine: 0
 
 Observations:
-- 抽取产出率：47.5%；单证据主题比例：100.0%；合并建议密度：236.8%。
+- 抽取产出率：47.5%；单证据主题比例：100.0%；合并建议密度：252.6%。
+- AI 主审：自动确认 0，自动拒绝 0，人工异常 0，异常率 n/a。
+
+### batch_stage35_targeted
+
+- Raw signals: 24
+- Pain points: 13
+- Quarantine rate: 45.8%
+- Demand clusters: 13
+- Singleton clusters: 13
+- Merge candidates: 31
+- Human reviewed groups: 0
+- AI reviewed groups: 0
+- Total reviewed groups: 0
+- Semantic judgments: 0
+- Human exceptions: 0
+
+Extraction Quality:
+- Good: 0
+- Weak: 0
+- False positive: 0
+- Bad quote: 0
+- Should quarantine: 0
+
+Observations:
+- 抽取产出率：54.2%；单证据主题比例：100.0%；合并建议密度：238.5%。
 - AI 主审：自动确认 0，自动拒绝 0，人工异常 0，异常率 n/a。
 
 ## Quality Matrix
@@ -203,12 +228,13 @@ Observations:
 | Batch | Raw | Pain Points | Quarantine Rate | Clusters | Singleton Rate | Merge Candidates | AI Groups | Total Groups | Human Exceptions | Notes |
 |---|---:|---:|---:|---:|---:|---:|---:|---:|---:|---|
 | batch_stage26_agent_workflow | 12 | 11 | 8.3% | 10 | 90.0% | 14 | 0 | 0 | 0 | 主题仍偏分散 |
-| batch_stage26_ai_research | 15 | 13 | 13.3% | 13 | 100.0% | 31 | 0 | 0 | 0 | 主题仍偏分散 |
-| batch_stage26_content_workflow | 12 | 12 | 0.0% | 11 | 90.9% | 30 | 0 | 0 | 0 | 主题仍偏分散 |
+| batch_stage26_ai_research | 15 | 13 | 13.3% | 13 | 100.0% | 34 | 0 | 0 | 0 | 主题仍偏分散 |
+| batch_stage26_content_workflow | 12 | 12 | 0.0% | 11 | 90.9% | 31 | 0 | 0 | 0 | 主题仍偏分散 |
 | batch_stage26_devtools | 12 | 11 | 8.3% | 11 | 100.0% | 19 | 0 | 0 | 0 | 主题仍偏分散 |
-| batch_stage26_enterprise_knowledge | 16 | 16 | 0.0% | 16 | 100.0% | 33 | 0 | 0 | 0 | 主题仍偏分散 |
-| batch_stage26_noise | 13 | 9 | 30.8% | 9 | 100.0% | 19 | 0 | 0 | 0 | 隔离比例偏高，建议复核样本质量 |
-| batch_stage33_targeted | 40 | 19 | 52.5% | 19 | 100.0% | 45 | 0 | 0 | 0 | 隔离比例偏高，建议复核样本质量 |
+| batch_stage26_enterprise_knowledge | 16 | 16 | 0.0% | 16 | 100.0% | 36 | 0 | 0 | 0 | 主题仍偏分散 |
+| batch_stage26_noise | 13 | 9 | 30.8% | 9 | 100.0% | 20 | 0 | 0 | 0 | 隔离比例偏高，建议复核样本质量 |
+| batch_stage33_targeted | 40 | 19 | 52.5% | 19 | 100.0% | 48 | 0 | 0 | 0 | 隔离比例偏高，建议复核样本质量 |
+| batch_stage35_targeted | 24 | 13 | 45.8% | 13 | 100.0% | 31 | 0 | 0 | 0 | 隔离比例偏高，建议复核样本质量 |
 
 ## Stage 3 Readiness
 
@@ -265,7 +291,7 @@ Observations:
 - candidate_lineages: 5
 - strong_lineage_matches: 0
 - weak_lineage_matches: 5
-- lineage_drift_flags: 2
-- targeted_attribution_rate: N/A
-- stable_delta_improved: 1
+- lineage_drift_flags: 0
+- targeted_attribution_rate: 17.5%
+- stable_delta_improved: 0
 - stable_proceed_to_fit_scoring: 0

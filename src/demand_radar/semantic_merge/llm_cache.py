@@ -1,4 +1,4 @@
-"""Cache for LLM semantic merge judgments (Stage 2.9 / 2.9D).
+﻿"""Cache for LLM semantic merge judgments (Stage 2.9 / 2.9D).
 
 Cache key includes: merge_candidate_id, cluster_id_a, cluster_id_b, model, provider,
 prompt_version, gate_policy_version -- so different calibration runs do not share entries.
@@ -83,7 +83,7 @@ class LLMSemanticMergeCache:
             self._load()
 
     def _load(self) -> None:
-        for line in self.path.read_text(encoding="utf-8").splitlines():
+        for line in self.path.read_text(encoding="utf-8", errors="replace").splitlines():
             line = line.strip()
             if not line:
                 continue

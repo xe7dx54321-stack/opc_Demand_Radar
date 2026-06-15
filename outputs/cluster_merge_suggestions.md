@@ -2,14 +2,14 @@
 
 ## Run Summary
 
-- Demand clusters: 89
-- Merge candidates: 131
-- Strong candidates: 65
-- Medium candidates: 66
+- Demand clusters: 102
+- Merge candidates: 153
+- Strong candidates: 79
+- Medium candidates: 74
 - Reviewed candidates: 3
 - Confirmed merges: 3
 - Rejected merges: 0
-- Generated at: 2026-06-15T08:22:51Z
+- Generated at: 2026-06-15T14:42:43Z
 
 ## Merge Candidates
 
@@ -120,6 +120,40 @@ Latest Review: 确认合并
 ### 4. 合并建议
 
 Candidate ID: merge_candidate_000004
+Cluster A: cluster_000009 / 投资人在人工智能产业跟踪中遇到的「信息分散、人工整理低效、容易遗漏」问题
+Cluster B: cluster_000095 / 投资人在人工智能产业跟踪中遇到的「人工整理低效」问题
+Similarity Score: 95.25
+Strength: 强
+
+建议理由：
+这两个需求主题的核心痛点都涉及「人工整理低效、产业跟踪、人工整理」，且目标用户都有投资人，且相关领域都包含人工智能投资研究，且当前替代方案也较相似，综合相似度为95.2。建议人工检查是否可合并为同一类需求。
+
+风险提示：
+暂无明显风险提示。
+
+相似诊断：
+- Title similarity: 83.87
+- Summary similarity: 93.90
+- Pain description similarity: 100.00
+- Workaround similarity: 100.00
+- Persona similarity: 100.00
+- Domain similarity: 100.00
+
+共享关键词：人工整理低效、产业跟踪、人工整理
+
+Cluster A 代表证据：
+- 投资团队做 人工智能 硬科技尽调时，论文、融资新闻、代码托管平台、客户案例太分散，研究员每周都要人工整理表格，容易漏掉重要更新。
+
+Cluster B 代表证据：
+- 这是投资机构为解决人工智能产业信息采集和项目追踪问题所支付的主要工具成本，但这些工具并不能解决多源信息整合和人工整理的问题。
+
+Latest Review: 未审核
+
+---
+
+### 5. 合并建议
+
+Candidate ID: merge_candidate_000005
 Cluster A: cluster_000032 / 内容团队在内容选题生产中遇到的「人工整理低效」问题
 Cluster B: cluster_000071 / 内容团队在内容选题生产中遇到的「信息分散、人工整理低效、检索困难」问题
 Similarity Score: 95.14
@@ -151,9 +185,9 @@ Latest Review: 未审核
 
 ---
 
-### 5. 合并建议
+### 6. 合并建议
 
-Candidate ID: merge_candidate_000005
+Candidate ID: merge_candidate_000006
 Cluster A: cluster_000001 / 投资人在人工智能产业跟踪中遇到的「信息分散、人工整理低效、容易遗漏」问题
 Cluster B: cluster_000017 / 投资人在人工智能产业跟踪中遇到的「信息分散、难验证、人工整理低效」问题
 Similarity Score: 93.26
@@ -185,9 +219,9 @@ Latest Review: 未审核
 
 ---
 
-### 6. 合并建议
+### 7. 合并建议
 
-Candidate ID: merge_candidate_000006
+Candidate ID: merge_candidate_000007
 Cluster A: cluster_000001 / 投资人在人工智能产业跟踪中遇到的「信息分散、人工整理低效、容易遗漏」问题
 Cluster B: cluster_000024 / 投资人在人工智能产业跟踪中遇到的「人工整理低效」问题
 Similarity Score: 92.81
@@ -219,9 +253,9 @@ Latest Review: 未审核
 
 ---
 
-### 7. 合并建议
+### 8. 合并建议
 
-Candidate ID: merge_candidate_000007
+Candidate ID: merge_candidate_000008
 Cluster A: cluster_000028 / 内容团队在内容选题生产中遇到的「信息分散、难验证、人工整理低效」问题
 Cluster B: cluster_000071 / 内容团队在内容选题生产中遇到的「信息分散、人工整理低效、检索困难」问题
 Similarity Score: 92.62
@@ -253,9 +287,9 @@ Latest Review: 未审核
 
 ---
 
-### 8. 合并建议
+### 9. 合并建议
 
-Candidate ID: merge_candidate_000008
+Candidate ID: merge_candidate_000009
 Cluster A: cluster_000028 / 内容团队在内容选题生产中遇到的「信息分散、难验证、人工整理低效」问题
 Cluster B: cluster_000032 / 内容团队在内容选题生产中遇到的「人工整理低效」问题
 Similarity Score: 92.10
@@ -287,9 +321,9 @@ Latest Review: 未审核
 
 ---
 
-### 9. 合并建议
+### 10. 合并建议
 
-Candidate ID: merge_candidate_000009
+Candidate ID: merge_candidate_000010
 Cluster A: cluster_000017 / 投资人在人工智能产业跟踪中遇到的「信息分散、难验证、人工整理低效」问题
 Cluster B: cluster_000024 / 投资人在人工智能产业跟踪中遇到的「人工整理低效」问题
 Similarity Score: 89.24
@@ -321,9 +355,9 @@ Latest Review: 未审核
 
 ---
 
-### 10. 合并建议
+### 11. 合并建议
 
-Candidate ID: merge_candidate_000010
+Candidate ID: merge_candidate_000011
 Cluster A: cluster_000022 / 研究员在相关工作流中遇到的「信息分散、人工整理低效」问题
 Cluster B: cluster_000023 / 研究员在相关工作流中遇到的「信息分散、人工整理低效、耗时过多」问题
 Similarity Score: 87.59
@@ -355,9 +389,9 @@ Latest Review: 未审核
 
 ---
 
-### 11. 合并建议
+### 12. 合并建议
 
-Candidate ID: merge_candidate_000011
+Candidate ID: merge_candidate_000012
 Cluster A: cluster_000029 / 内容团队在内容选题生产中遇到的「信息分散、人工整理低效、容易遗漏」问题
 Cluster B: cluster_000074 / 内容团队在内容选题生产中遇到的「信息分散、人工整理低效、容易遗漏」问题
 Similarity Score: 86.67
@@ -389,9 +423,9 @@ Latest Review: 未审核
 
 ---
 
-### 12. 合并建议
+### 13. 合并建议
 
-Candidate ID: merge_candidate_000012
+Candidate ID: merge_candidate_000013
 Cluster A: cluster_000009 / 投资人在人工智能产业跟踪中遇到的「信息分散、人工整理低效、容易遗漏」问题
 Cluster B: cluster_000018 / 内容团队在人工智能产业跟踪中遇到的「信息分散、人工整理低效、容易遗漏」问题
 Similarity Score: 86.42
@@ -423,9 +457,9 @@ Latest Review: 未审核
 
 ---
 
-### 13. 合并建议
+### 14. 合并建议
 
-Candidate ID: merge_candidate_000013
+Candidate ID: merge_candidate_000014
 Cluster A: cluster_000043 / 开发者在开发者工具链中遇到的「信息分散、文档不完整」问题
 Cluster B: cluster_000051 / 开发者在开发者工具链中遇到的「信息分散」问题
 Similarity Score: 86.04
@@ -457,9 +491,9 @@ Latest Review: 未审核
 
 ---
 
-### 14. 合并建议
+### 15. 合并建议
 
-Candidate ID: merge_candidate_000014
+Candidate ID: merge_candidate_000015
 Cluster A: cluster_000029 / 内容团队在内容选题生产中遇到的「信息分散、人工整理低效、容易遗漏」问题
 Cluster B: cluster_000068 / 内容团队在内容选题生产中遇到的「信息分散、人工整理低效」问题
 Similarity Score: 85.22
@@ -491,9 +525,9 @@ Latest Review: 未审核
 
 ---
 
-### 15. 合并建议
+### 16. 合并建议
 
-Candidate ID: merge_candidate_000015
+Candidate ID: merge_candidate_000016
 Cluster A: cluster_000024 / 投资人在人工智能产业跟踪中遇到的「人工整理低效」问题
 Cluster B: cluster_000064 / 创始人在人工智能产业跟踪中遇到的「人工整理低效」问题
 Similarity Score: 84.68
@@ -525,9 +559,9 @@ Latest Review: 未审核
 
 ---
 
-### 16. 合并建议
+### 17. 合并建议
 
-Candidate ID: merge_candidate_000016
+Candidate ID: merge_candidate_000017
 Cluster A: cluster_000011 / 内容团队在内容选题生产中遇到的「信息分散、人工整理低效、耗时过多」问题
 Cluster B: cluster_000029 / 内容团队在内容选题生产中遇到的「信息分散、人工整理低效、容易遗漏」问题
 Similarity Score: 84.06
@@ -559,9 +593,9 @@ Latest Review: 未审核
 
 ---
 
-### 17. 合并建议
+### 18. 合并建议
 
-Candidate ID: merge_candidate_000017
+Candidate ID: merge_candidate_000018
 Cluster A: cluster_000038 / 运营在人工智能智能体工作流中遇到的「人工整理低效」问题
 Cluster B: cluster_000042 / 创始人在人工智能智能体工作流中遇到的「人工整理低效」问题
 Similarity Score: 83.58
@@ -593,9 +627,9 @@ Latest Review: 未审核
 
 ---
 
-### 18. 合并建议
+### 19. 合并建议
 
-Candidate ID: merge_candidate_000018
+Candidate ID: merge_candidate_000019
 Cluster A: cluster_000038 / 运营在人工智能智能体工作流中遇到的「人工整理低效」问题
 Cluster B: cluster_000085 / 开发者在人工智能智能体工作流中遇到的「人工整理低效」问题
 Similarity Score: 83.58
@@ -627,9 +661,9 @@ Latest Review: 未审核
 
 ---
 
-### 19. 合并建议
+### 20. 合并建议
 
-Candidate ID: merge_candidate_000019
+Candidate ID: merge_candidate_000020
 Cluster A: cluster_000058 / 运营在企业知识工作流中遇到的「信息分散、人工整理低效、检索困难」问题
 Cluster B: cluster_000059 / 运营在企业知识工作流中遇到的「人工整理低效、检索困难、文档不完整」问题
 Similarity Score: 83.20
@@ -661,9 +695,9 @@ Latest Review: 未审核
 
 ---
 
-### 20. 合并建议
+### 21. 合并建议
 
-Candidate ID: merge_candidate_000020
+Candidate ID: merge_candidate_000021
 Cluster A: cluster_000029 / 内容团队在内容选题生产中遇到的「信息分散、人工整理低效、容易遗漏」问题
 Cluster B: cluster_000031 / 内容团队在内容选题生产中遇到的「信息分散、人工整理低效、总结困难」问题
 Similarity Score: 83.12
@@ -696,9 +730,9 @@ Latest Review: 未审核
 
 ---
 
-### 21. 合并建议
+### 22. 合并建议
 
-Candidate ID: merge_candidate_000021
+Candidate ID: merge_candidate_000022
 Cluster A: cluster_000042 / 创始人在人工智能智能体工作流中遇到的「人工整理低效」问题
 Cluster B: cluster_000085 / 开发者在人工智能智能体工作流中遇到的「人工整理低效」问题
 Similarity Score: 82.92
@@ -730,9 +764,9 @@ Latest Review: 未审核
 
 ---
 
-### 22. 合并建议
+### 23. 合并建议
 
-Candidate ID: merge_candidate_000022
+Candidate ID: merge_candidate_000023
 Cluster A: cluster_000016 / 运营在企业知识工作流中遇到的「人工整理低效、检索困难、文档不完整」问题
 Cluster B: cluster_000059 / 运营在企业知识工作流中遇到的「人工整理低效、检索困难、文档不完整」问题
 Similarity Score: 82.55
@@ -764,9 +798,9 @@ Latest Review: 未审核
 
 ---
 
-### 23. 合并建议
+### 24. 合并建议
 
-Candidate ID: merge_candidate_000023
+Candidate ID: merge_candidate_000024
 Cluster A: cluster_000042 / 创始人在人工智能智能体工作流中遇到的「人工整理低效」问题
 Cluster B: cluster_000064 / 创始人在人工智能产业跟踪中遇到的「人工整理低效」问题
 Similarity Score: 82.48
@@ -798,9 +832,43 @@ Latest Review: 未审核
 
 ---
 
-### 24. 合并建议
+### 25. 合并建议
 
-Candidate ID: merge_candidate_000024
+Candidate ID: merge_candidate_000025
+Cluster A: cluster_000097 / 投资人在人工智能产业跟踪中遇到的「人工整理低效」问题
+Cluster B: cluster_000101 / 投资人在人工智能产业跟踪中遇到的「人工整理低效」问题
+Similarity Score: 82.47
+Strength: 强
+
+建议理由：
+这两个需求主题的核心痛点都涉及「人工整理低效、产业跟踪、人工整理」，且目标用户都有投资人，且相关领域都包含人工智能投资研究，且当前替代方案也较相似，综合相似度为82.5。建议人工检查是否可合并为同一类需求。
+
+风险提示：
+需要注意：代表性痛点相似度不高。
+
+相似诊断：
+- Title similarity: 100.00
+- Summary similarity: 100.00
+- Pain description similarity: 29.89
+- Workaround similarity: 100.00
+- Persona similarity: 100.00
+- Domain similarity: 100.00
+
+共享关键词：人工整理低效、产业跟踪、人工整理
+
+Cluster A 代表证据：
+- 在对早期VC机构投资分析师的调研中，受访者描述了典型的周度信息采集工作量：每天需要浏览5-8个信息源（科技媒体、LinkedIn、代码托管平台、Twitter、行业微信群、数据库等），手动整理有价值信息约需1-2小时/天，即每周5-10小时。
+
+Cluster B 代表证据：
+- 信息来源包括：逐一打开各公司官网、LinkedIn页面、代码托管平台仓库、微信公众号文章，手动复制粘贴更新。
+
+Latest Review: 未审核
+
+---
+
+### 26. 合并建议
+
+Candidate ID: merge_candidate_000026
 Cluster A: cluster_000026 / 内容团队在内容选题生产中遇到的「信息分散、检索困难、耗时过多」问题
 Cluster B: cluster_000030 / 内容团队在内容选题生产中遇到的「信息分散、流程不可靠、耗时过多」问题
 Similarity Score: 82.15
@@ -832,9 +900,9 @@ Latest Review: 未审核
 
 ---
 
-### 25. 合并建议
+### 27. 合并建议
 
-Candidate ID: merge_candidate_000025
+Candidate ID: merge_candidate_000027
 Cluster A: cluster_000011 / 内容团队在内容选题生产中遇到的「信息分散、人工整理低效、耗时过多」问题
 Cluster B: cluster_000018 / 内容团队在人工智能产业跟踪中遇到的「信息分散、人工整理低效、容易遗漏」问题
 Similarity Score: 82.10
@@ -866,9 +934,9 @@ Latest Review: 未审核
 
 ---
 
-### 26. 合并建议
+### 28. 合并建议
 
-Candidate ID: merge_candidate_000026
+Candidate ID: merge_candidate_000028
 Cluster A: cluster_000002 / 研究员、运营在人工智能智能体工作流中遇到的「人工整理低效、检索困难、流程不可靠」问题
 Cluster B: cluster_000039 / 运营在人工智能智能体工作流中遇到的「人工整理低效、流程不可靠、文档不完整」问题
 Similarity Score: 81.86
@@ -901,9 +969,9 @@ Latest Review: 未审核
 
 ---
 
-### 27. 合并建议
+### 29. 合并建议
 
-Candidate ID: merge_candidate_000027
+Candidate ID: merge_candidate_000029
 Cluster A: cluster_000018 / 内容团队在人工智能产业跟踪中遇到的「信息分散、人工整理低效、容易遗漏」问题
 Cluster B: cluster_000068 / 内容团队在内容选题生产中遇到的「信息分散、人工整理低效」问题
 Similarity Score: 81.80
@@ -935,9 +1003,9 @@ Latest Review: 未审核
 
 ---
 
-### 28. 合并建议
+### 30. 合并建议
 
-Candidate ID: merge_candidate_000028
+Candidate ID: merge_candidate_000030
 Cluster A: cluster_000018 / 内容团队在人工智能产业跟踪中遇到的「信息分散、人工整理低效、容易遗漏」问题
 Cluster B: cluster_000031 / 内容团队在内容选题生产中遇到的「信息分散、人工整理低效、总结困难」问题
 Similarity Score: 81.49
@@ -970,9 +1038,43 @@ Latest Review: 未审核
 
 ---
 
-### 29. 合并建议
+### 31. 合并建议
 
-Candidate ID: merge_candidate_000029
+Candidate ID: merge_candidate_000031
+Cluster A: cluster_000087 / 投资人在人工智能产业跟踪中遇到的「人工整理低效」问题
+Cluster B: cluster_000101 / 投资人在人工智能产业跟踪中遇到的「人工整理低效」问题
+Similarity Score: 81.44
+Strength: 强
+
+建议理由：
+这两个需求主题的核心痛点都涉及「人工整理低效、产业跟踪、人工整理」，且目标用户都有投资人，且相关领域都包含人工智能投资研究，且当前替代方案也较相似，综合相似度为81.4。建议人工检查是否可合并为同一类需求。
+
+风险提示：
+需要注意：代表性痛点相似度不高。
+
+相似诊断：
+- Title similarity: 100.00
+- Summary similarity: 100.00
+- Pain description similarity: 25.74
+- Workaround similarity: 100.00
+- Persona similarity: 100.00
+- Domain similarity: 100.00
+
+共享关键词：人工整理低效、产业跟踪、人工整理
+
+Cluster A 代表证据：
+- 所以我们还是需要花大量时间手动刷 Twitter、LinkedIn 和行业媒体来补充最新信息。
+
+Cluster B 代表证据：
+- 信息来源包括：逐一打开各公司官网、LinkedIn页面、代码托管平台仓库、微信公众号文章，手动复制粘贴更新。
+
+Latest Review: 未审核
+
+---
+
+### 32. 合并建议
+
+Candidate ID: merge_candidate_000032
 Cluster A: cluster_000006 / 运营在企业知识工作流中遇到的「人工整理低效、噪音过多」问题
 Cluster B: cluster_000008 / 战略与商务拓展团队在企业知识工作流中遇到的「人工整理低效、噪音过多、检索困难」问题
 Similarity Score: 81.23
@@ -1004,9 +1106,9 @@ Latest Review: 未审核
 
 ---
 
-### 30. 合并建议
+### 33. 合并建议
 
-Candidate ID: merge_candidate_000030
+Candidate ID: merge_candidate_000033
 Cluster A: cluster_000001 / 投资人在人工智能产业跟踪中遇到的「信息分散、人工整理低效、容易遗漏」问题
 Cluster B: cluster_000009 / 投资人在人工智能产业跟踪中遇到的「信息分散、人工整理低效、容易遗漏」问题
 Similarity Score: 81.19
@@ -1038,9 +1140,9 @@ Latest Review: 未审核
 
 ---
 
-### 31. 合并建议
+### 34. 合并建议
 
-Candidate ID: merge_candidate_000031
+Candidate ID: merge_candidate_000034
 Cluster A: cluster_000011 / 内容团队在内容选题生产中遇到的「信息分散、人工整理低效、耗时过多」问题
 Cluster B: cluster_000027 / 内容团队在内容选题生产中遇到的「信息分散、人工整理低效、噪音过多」问题
 Similarity Score: 80.93
@@ -1072,9 +1174,9 @@ Latest Review: 未审核
 
 ---
 
-### 32. 合并建议
+### 35. 合并建议
 
-Candidate ID: merge_candidate_000032
+Candidate ID: merge_candidate_000035
 Cluster A: cluster_000004 / 开发者在开发者工具链中遇到的「检索困难、文档不完整」问题
 Cluster B: cluster_000043 / 开发者在开发者工具链中遇到的「信息分散、文档不完整」问题
 Similarity Score: 80.45
@@ -1106,9 +1208,9 @@ Latest Review: 未审核
 
 ---
 
-### 33. 合并建议
+### 36. 合并建议
 
-Candidate ID: merge_candidate_000033
+Candidate ID: merge_candidate_000036
 Cluster A: cluster_000004 / 开发者在开发者工具链中遇到的「检索困难、文档不完整」问题
 Cluster B: cluster_000045 / 开发者在开发者工具链中遇到的「需求不清晰」问题
 Similarity Score: 80.40
@@ -1140,9 +1242,43 @@ Latest Review: 未审核
 
 ---
 
-### 34. 合并建议
+### 37. 合并建议
 
-Candidate ID: merge_candidate_000034
+Candidate ID: merge_candidate_000037
+Cluster A: cluster_000087 / 投资人在人工智能产业跟踪中遇到的「人工整理低效」问题
+Cluster B: cluster_000097 / 投资人在人工智能产业跟踪中遇到的「人工整理低效」问题
+Similarity Score: 80.39
+Strength: 强
+
+建议理由：
+这两个需求主题的核心痛点都涉及「linkedin、twitter、人工整理低效、产业跟踪」，且目标用户都有投资人，且相关领域都包含人工智能投资研究，且当前替代方案也较相似，综合相似度为80.4。建议人工检查是否可合并为同一类需求。
+
+风险提示：
+需要注意：代表性痛点相似度不高。
+
+相似诊断：
+- Title similarity: 100.00
+- Summary similarity: 100.00
+- Pain description similarity: 21.56
+- Workaround similarity: 100.00
+- Persona similarity: 100.00
+- Domain similarity: 100.00
+
+共享关键词：linkedin、twitter、人工整理低效、产业跟踪、人工整理
+
+Cluster A 代表证据：
+- 所以我们还是需要花大量时间手动刷 Twitter、LinkedIn 和行业媒体来补充最新信息。
+
+Cluster B 代表证据：
+- 在对早期VC机构投资分析师的调研中，受访者描述了典型的周度信息采集工作量：每天需要浏览5-8个信息源（科技媒体、LinkedIn、代码托管平台、Twitter、行业微信群、数据库等），手动整理有价值信息约需1-2小时/天，即每周5-10小时。
+
+Latest Review: 未审核
+
+---
+
+### 38. 合并建议
+
+Candidate ID: merge_candidate_000038
 Cluster A: cluster_000045 / 开发者在开发者工具链中遇到的「需求不清晰」问题
 Cluster B: cluster_000051 / 开发者在开发者工具链中遇到的「信息分散」问题
 Similarity Score: 79.87
@@ -1174,9 +1310,77 @@ Latest Review: 未审核
 
 ---
 
-### 35. 合并建议
+### 39. 合并建议
 
-Candidate ID: merge_candidate_000035
+Candidate ID: merge_candidate_000039
+Cluster A: cluster_000024 / 投资人在人工智能产业跟踪中遇到的「人工整理低效」问题
+Cluster B: cluster_000095 / 投资人在人工智能产业跟踪中遇到的「人工整理低效」问题
+Similarity Score: 79.86
+Strength: 强
+
+建议理由：
+这两个需求主题的核心痛点都涉及「人工整理低效、产业跟踪、人工整理」，且目标用户都有投资人，且相关领域都包含人工智能投资研究，且当前替代方案也较相似，综合相似度为79.9。建议人工检查是否可合并为同一类需求。
+
+风险提示：
+需要注意：代表性痛点相似度不高。
+
+相似诊断：
+- Title similarity: 100.00
+- Summary similarity: 100.00
+- Pain description similarity: 19.42
+- Workaround similarity: 100.00
+- Persona similarity: 100.00
+- Domain similarity: 100.00
+
+共享关键词：人工整理低效、产业跟踪、人工整理
+
+Cluster A 代表证据：
+- 投资人在未标注领域相关工作中遇到需要人工处理、追踪困难的问题，需要进一步人工复核。
+
+Cluster B 代表证据：
+- 这是投资机构为解决人工智能产业信息采集和项目追踪问题所支付的主要工具成本，但这些工具并不能解决多源信息整合和人工整理的问题。
+
+Latest Review: 未审核
+
+---
+
+### 40. 合并建议
+
+Candidate ID: merge_candidate_000040
+Cluster A: cluster_000018 / 内容团队在人工智能产业跟踪中遇到的「信息分散、人工整理低效、容易遗漏」问题
+Cluster B: cluster_000095 / 投资人在人工智能产业跟踪中遇到的「人工整理低效」问题
+Similarity Score: 79.41
+Strength: 强
+
+建议理由：
+这两个需求主题的核心痛点都涉及「人工整理低效、产业跟踪、人工整理」，且相关领域都包含人工智能投资研究，且当前替代方案也较相似，综合相似度为79.4。建议人工检查是否可合并为同一类需求。
+
+风险提示：
+需要注意：目标用户不完全一致。
+
+相似诊断：
+- Title similarity: 73.02
+- Summary similarity: 83.04
+- Pain description similarity: 100.00
+- Workaround similarity: 90.41
+- Persona similarity: 0.00
+- Domain similarity: 100.00
+
+共享关键词：人工整理低效、产业跟踪、人工整理
+
+Cluster A 代表证据：
+- 投研同事每天看公众号、融资新闻、代码托管平台 和产品更新，信息太分散，人工整理很耗时，还容易漏掉关键发布。
+
+Cluster B 代表证据：
+- 这是投资机构为解决人工智能产业信息采集和项目追踪问题所支付的主要工具成本，但这些工具并不能解决多源信息整合和人工整理的问题。
+
+Latest Review: 未审核
+
+---
+
+### 41. 合并建议
+
+Candidate ID: merge_candidate_000041
 Cluster A: cluster_000029 / 内容团队在内容选题生产中遇到的「信息分散、人工整理低效、容易遗漏」问题
 Cluster B: cluster_000072 / 内容团队在内容选题生产中遇到的「信息分散、人工整理低效、容易遗漏」问题
 Similarity Score: 79.33
@@ -1208,9 +1412,9 @@ Latest Review: 未审核
 
 ---
 
-### 36. 合并建议
+### 42. 合并建议
 
-Candidate ID: merge_candidate_000036
+Candidate ID: merge_candidate_000042
 Cluster A: cluster_000042 / 创始人在人工智能智能体工作流中遇到的「人工整理低效」问题
 Cluster B: cluster_000067 / 创始人在相关工作流中遇到的「人工整理低效、容易遗漏」问题
 Similarity Score: 79.21
@@ -1242,9 +1446,9 @@ Latest Review: 未审核
 
 ---
 
-### 37. 合并建议
+### 43. 合并建议
 
-Candidate ID: merge_candidate_000037
+Candidate ID: merge_candidate_000043
 Cluster A: cluster_000016 / 运营在企业知识工作流中遇到的「人工整理低效、检索困难、文档不完整」问题
 Cluster B: cluster_000058 / 运营在企业知识工作流中遇到的「信息分散、人工整理低效、检索困难」问题
 Similarity Score: 79.15
@@ -1276,9 +1480,43 @@ Latest Review: 未审核
 
 ---
 
-### 38. 合并建议
+### 44. 合并建议
 
-Candidate ID: merge_candidate_000038
+Candidate ID: merge_candidate_000044
+Cluster A: cluster_000024 / 投资人在人工智能产业跟踪中遇到的「人工整理低效」问题
+Cluster B: cluster_000100 / 研究员在人工智能产业跟踪中遇到的「人工整理低效、检索困难」问题
+Similarity Score: 79.06
+Strength: 强
+
+建议理由：
+这两个需求主题的核心痛点都涉及「人工整理低效、产业跟踪、人工整理」，且相关领域都包含人工智能投资研究，且当前替代方案也较相似，综合相似度为79.1。建议人工检查是否可合并为同一类需求。
+
+风险提示：
+需要注意：目标用户不完全一致。
+
+相似诊断：
+- Title similarity: 80.70
+- Summary similarity: 89.31
+- Pain description similarity: 85.71
+- Workaround similarity: 91.67
+- Persona similarity: 0.00
+- Domain similarity: 100.00
+
+共享关键词：人工整理低效、产业跟踪、人工整理
+
+Cluster A 代表证据：
+- 投资人在未标注领域相关工作中遇到需要人工处理、追踪困难的问题，需要进一步人工复核。
+
+Cluster B 代表证据：
+- 研究员在未标注领域相关工作中遇到需要人工处理的问题，需要进一步人工复核。
+
+Latest Review: 未审核
+
+---
+
+### 45. 合并建议
+
+Candidate ID: merge_candidate_000045
 Cluster A: cluster_000009 / 投资人在人工智能产业跟踪中遇到的「信息分散、人工整理低效、容易遗漏」问题
 Cluster B: cluster_000017 / 投资人在人工智能产业跟踪中遇到的「信息分散、难验证、人工整理低效」问题
 Similarity Score: 79.04
@@ -1310,9 +1548,9 @@ Latest Review: 未审核
 
 ---
 
-### 39. 合并建议
+### 46. 合并建议
 
-Candidate ID: merge_candidate_000039
+Candidate ID: merge_candidate_000046
 Cluster A: cluster_000019 / 相关用户在相关工作流中遇到的「信息分散、人工整理低效」问题
 Cluster B: cluster_000022 / 研究员在相关工作流中遇到的「信息分散、人工整理低效」问题
 Similarity Score: 79.04
@@ -1344,9 +1582,9 @@ Latest Review: 未审核
 
 ---
 
-### 40. 合并建议
+### 47. 合并建议
 
-Candidate ID: merge_candidate_000040
+Candidate ID: merge_candidate_000047
 Cluster A: cluster_000032 / 内容团队在内容选题生产中遇到的「人工整理低效」问题
 Cluster B: cluster_000068 / 内容团队在内容选题生产中遇到的「信息分散、人工整理低效」问题
 Similarity Score: 78.72
@@ -1378,9 +1616,77 @@ Latest Review: 未审核
 
 ---
 
-### 41. 合并建议
+### 48. 合并建议
 
-Candidate ID: merge_candidate_000041
+Candidate ID: merge_candidate_000048
+Cluster A: cluster_000095 / 投资人在人工智能产业跟踪中遇到的「人工整理低效」问题
+Cluster B: cluster_000097 / 投资人在人工智能产业跟踪中遇到的「人工整理低效」问题
+Similarity Score: 78.57
+Strength: 强
+
+建议理由：
+这两个需求主题的核心痛点都涉及「人工整理低效、产业跟踪、人工整理」，且目标用户都有投资人，且相关领域都包含人工智能投资研究，且当前替代方案也较相似，综合相似度为78.6。建议人工检查是否可合并为同一类需求。
+
+风险提示：
+需要注意：代表性痛点相似度不高。
+
+相似诊断：
+- Title similarity: 100.00
+- Summary similarity: 100.00
+- Pain description similarity: 14.29
+- Workaround similarity: 100.00
+- Persona similarity: 100.00
+- Domain similarity: 100.00
+
+共享关键词：人工整理低效、产业跟踪、人工整理
+
+Cluster A 代表证据：
+- 这是投资机构为解决人工智能产业信息采集和项目追踪问题所支付的主要工具成本，但这些工具并不能解决多源信息整合和人工整理的问题。
+
+Cluster B 代表证据：
+- 在对早期VC机构投资分析师的调研中，受访者描述了典型的周度信息采集工作量：每天需要浏览5-8个信息源（科技媒体、LinkedIn、代码托管平台、Twitter、行业微信群、数据库等），手动整理有价值信息约需1-2小时/天，即每周5-10小时。
+
+Latest Review: 未审核
+
+---
+
+### 49. 合并建议
+
+Candidate ID: merge_candidate_000049
+Cluster A: cluster_000064 / 创始人在人工智能产业跟踪中遇到的「人工整理低效」问题
+Cluster B: cluster_000100 / 研究员在人工智能产业跟踪中遇到的「人工整理低效、检索困难」问题
+Similarity Score: 78.52
+Strength: 强
+
+建议理由：
+这两个需求主题的核心痛点都涉及「人工整理低效、产业跟踪、人工整理」，且相关领域都包含人工智能投资研究，且当前替代方案也较相似，综合相似度为78.5。建议人工检查是否可合并为同一类需求。
+
+风险提示：
+需要注意：目标用户不完全一致。
+
+相似诊断：
+- Title similarity: 80.70
+- Summary similarity: 89.31
+- Pain description similarity: 83.54
+- Workaround similarity: 91.67
+- Persona similarity: 0.00
+- Domain similarity: 100.00
+
+共享关键词：人工整理低效、产业跟踪、人工整理
+
+Cluster A 代表证据：
+- 创始人在未标注领域相关工作中遇到流程依赖人工、需要人工处理的问题，需要进一步人工复核。
+
+Cluster B 代表证据：
+- 研究员在未标注领域相关工作中遇到需要人工处理的问题，需要进一步人工复核。
+
+Latest Review: 未审核
+
+---
+
+### 50. 合并建议
+
+Candidate ID: merge_candidate_000050
 Cluster A: cluster_000006 / 运营在企业知识工作流中遇到的「人工整理低效、噪音过多」问题
 Cluster B: cluster_000038 / 运营在人工智能智能体工作流中遇到的「人工整理低效」问题
 Similarity Score: 78.36
@@ -1412,43 +1718,43 @@ Latest Review: 未审核
 
 ---
 
-### 42. 合并建议
+### 51. 合并建议
 
-Candidate ID: merge_candidate_000042
-Cluster A: cluster_000024 / 投资人在人工智能产业跟踪中遇到的「人工整理低效」问题
-Cluster B: cluster_000087 / 投资人在人工智能产业跟踪中遇到的「人工整理低效」问题
-Similarity Score: 77.84
+Candidate ID: merge_candidate_000051
+Cluster A: cluster_000001 / 投资人在人工智能产业跟踪中遇到的「信息分散、人工整理低效、容易遗漏」问题
+Cluster B: cluster_000102 / 投资人在人工智能产业跟踪中遇到的「信息分散、容易遗漏」问题
+Similarity Score: 78.31
 Strength: 强
 
 建议理由：
-这两个需求主题的核心痛点都涉及「人工整理低效、产业跟踪、人工整理」，且目标用户都有投资人，且相关领域都包含人工智能投资研究，且当前替代方案也较相似，综合相似度为77.8。建议人工检查是否可合并为同一类需求。
+这两个需求主题的核心痛点都涉及「产业跟踪、信息分散、容易遗漏」，且目标用户都有投资人，且相关领域都包含人工智能投资研究，综合相似度为78.3。建议人工检查是否可合并为同一类需求。
 
 风险提示：
-需要注意：代表性痛点相似度不高。
+暂无明显风险提示。
 
 相似诊断：
-- Title similarity: 100.00
-- Summary similarity: 100.00
-- Pain description similarity: 11.36
-- Workaround similarity: 100.00
+- Title similarity: 89.23
+- Summary similarity: 61.87
+- Pain description similarity: 100.00
+- Workaround similarity: 0.00
 - Persona similarity: 100.00
 - Domain similarity: 100.00
 
-共享关键词：人工整理低效、产业跟踪、人工整理
+共享关键词：产业跟踪、信息分散、容易遗漏
 
 Cluster A 代表证据：
-- 投资人在未标注领域相关工作中遇到需要人工处理、追踪困难的问题，需要进一步人工复核。
+- 投资人在未标注领域相关工作中遇到需要人工处理、容易遗漏的问题，需要进一步人工复核。
 
 Cluster B 代表证据：
-- 所以我们还是需要花大量时间手动刷 Twitter、LinkedIn 和行业媒体来补充最新信息。
+- 投资人在未标注领域相关工作中遇到容易遗漏的问题，需要进一步人工复核。
 
 Latest Review: 未审核
 
 ---
 
-### 43. 合并建议
+### 52. 合并建议
 
-Candidate ID: merge_candidate_000043
+Candidate ID: merge_candidate_000052
 Cluster A: cluster_000004 / 开发者在开发者工具链中遇到的「检索困难、文档不完整」问题
 Cluster B: cluster_000051 / 开发者在开发者工具链中遇到的「信息分散」问题
 Similarity Score: 77.81
@@ -1480,9 +1786,43 @@ Latest Review: 未审核
 
 ---
 
-### 44. 合并建议
+### 53. 合并建议
 
-Candidate ID: merge_candidate_000044
+Candidate ID: merge_candidate_000053
+Cluster A: cluster_000088 / 投资人在人工智能产业跟踪中遇到的「信息分散、人工整理低效」问题
+Cluster B: cluster_000101 / 投资人在人工智能产业跟踪中遇到的「人工整理低效」问题
+Similarity Score: 77.51
+Strength: 强
+
+建议理由：
+这两个需求主题的核心痛点都涉及「人工整理低效、产业跟踪、人工整理」，且目标用户都有投资人，且相关领域都包含人工智能投资研究，且当前替代方案也较相似，综合相似度为77.5。建议人工检查是否可合并为同一类需求。
+
+风险提示：
+需要注意：代表性痛点相似度不高。
+
+相似诊断：
+- Title similarity: 91.23
+- Summary similarity: 96.86
+- Pain description similarity: 20.18
+- Workaround similarity: 100.00
+- Persona similarity: 100.00
+- Domain similarity: 100.00
+
+共享关键词：人工整理低效、产业跟踪、人工整理
+
+Cluster A 代表证据：
+- 5 小时刷推特、微信公众号、36氪、TechCrunch，把看到的 人工智能 项目信息手动记录到飞书多维表格。
+
+Cluster B 代表证据：
+- 信息来源包括：逐一打开各公司官网、LinkedIn页面、代码托管平台仓库、微信公众号文章，手动复制粘贴更新。
+
+Latest Review: 未审核
+
+---
+
+### 54. 合并建议
+
+Candidate ID: merge_candidate_000054
 Cluster A: cluster_000014 / 运营在企业知识工作流中遇到的「信息分散、人工整理低效、噪音过多」问题
 Cluster B: cluster_000058 / 运营在企业知识工作流中遇到的「信息分散、人工整理低效、检索困难」问题
 Similarity Score: 77.48
@@ -1514,9 +1854,9 @@ Latest Review: 未审核
 
 ---
 
-### 45. 合并建议
+### 55. 合并建议
 
-Candidate ID: merge_candidate_000045
+Candidate ID: merge_candidate_000055
 Cluster A: cluster_000027 / 内容团队在内容选题生产中遇到的「信息分散、人工整理低效、噪音过多」问题
 Cluster B: cluster_000073 / 内容团队在内容选题生产中遇到的「信息分散、人工整理低效」问题
 Similarity Score: 77.48
@@ -1548,9 +1888,9 @@ Latest Review: 未审核
 
 ---
 
-### 46. 合并建议
+### 56. 合并建议
 
-Candidate ID: merge_candidate_000046
+Candidate ID: merge_candidate_000056
 Cluster A: cluster_000001 / 投资人在人工智能产业跟踪中遇到的「信息分散、人工整理低效、容易遗漏」问题
 Cluster B: cluster_000064 / 创始人在人工智能产业跟踪中遇到的「人工整理低效」问题
 Similarity Score: 77.42
@@ -1582,9 +1922,9 @@ Latest Review: 未审核
 
 ---
 
-### 47. 合并建议
+### 57. 合并建议
 
-Candidate ID: merge_candidate_000047
+Candidate ID: merge_candidate_000057
 Cluster A: cluster_000006 / 运营在企业知识工作流中遇到的「人工整理低效、噪音过多」问题
 Cluster B: cluster_000014 / 运营在企业知识工作流中遇到的「信息分散、人工整理低效、噪音过多」问题
 Similarity Score: 77.41
@@ -1616,9 +1956,43 @@ Latest Review: 未审核
 
 ---
 
-### 48. 合并建议
+### 58. 合并建议
 
-Candidate ID: merge_candidate_000048
+Candidate ID: merge_candidate_000058
+Cluster A: cluster_000087 / 投资人在人工智能产业跟踪中遇到的「人工整理低效」问题
+Cluster B: cluster_000095 / 投资人在人工智能产业跟踪中遇到的「人工整理低效」问题
+Similarity Score: 77.29
+Strength: 强
+
+建议理由：
+这两个需求主题的核心痛点都涉及「人工整理低效、产业跟踪、人工整理」，且目标用户都有投资人，且相关领域都包含人工智能投资研究，且当前替代方案也较相似，综合相似度为77.3。建议人工检查是否可合并为同一类需求。
+
+风险提示：
+需要注意：代表性痛点相似度不高。
+
+相似诊断：
+- Title similarity: 100.00
+- Summary similarity: 100.00
+- Pain description similarity: 9.17
+- Workaround similarity: 100.00
+- Persona similarity: 100.00
+- Domain similarity: 100.00
+
+共享关键词：人工整理低效、产业跟踪、人工整理
+
+Cluster A 代表证据：
+- 所以我们还是需要花大量时间手动刷 Twitter、LinkedIn 和行业媒体来补充最新信息。
+
+Cluster B 代表证据：
+- 这是投资机构为解决人工智能产业信息采集和项目追踪问题所支付的主要工具成本，但这些工具并不能解决多源信息整合和人工整理的问题。
+
+Latest Review: 未审核
+
+---
+
+### 59. 合并建议
+
+Candidate ID: merge_candidate_000059
 Cluster A: cluster_000046 / 开发者在开发者工具链中遇到的「难验证、人工整理低效」问题
 Cluster B: cluster_000085 / 开发者在人工智能智能体工作流中遇到的「人工整理低效」问题
 Similarity Score: 77.15
@@ -1650,9 +2024,9 @@ Latest Review: 未审核
 
 ---
 
-### 49. 合并建议
+### 60. 合并建议
 
-Candidate ID: merge_candidate_000049
+Candidate ID: merge_candidate_000060
 Cluster A: cluster_000014 / 运营在企业知识工作流中遇到的「信息分散、人工整理低效、噪音过多」问题
 Cluster B: cluster_000055 / 战略与商务拓展团队在企业知识工作流中遇到的「人工整理低效、容易遗漏、耗时过多」问题
 Similarity Score: 76.76
@@ -1684,9 +2058,9 @@ Latest Review: 未审核
 
 ---
 
-### 50. 合并建议
+### 61. 合并建议
 
-Candidate ID: merge_candidate_000050
+Candidate ID: merge_candidate_000061
 Cluster A: cluster_000071 / 内容团队在内容选题生产中遇到的「信息分散、人工整理低效、检索困难」问题
 Cluster B: cluster_000078 / 内容团队在内容选题生产中遇到的「信息分散、人工整理低效、检索困难」问题
 Similarity Score: 76.75
@@ -1718,9 +2092,43 @@ Latest Review: 未审核
 
 ---
 
-### 51. 合并建议
+### 62. 合并建议
 
-Candidate ID: merge_candidate_000051
+Candidate ID: merge_candidate_000062
+Cluster A: cluster_000082 / 运营在企业知识工作流中遇到的「人工整理低效」问题
+Cluster B: cluster_000094 / 运营在企业知识工作流中遇到的「人工整理低效、文档不完整」问题
+Similarity Score: 76.63
+Strength: 强
+
+建议理由：
+这两个需求主题的核心痛点都涉及「人工整理低效、知识工作流、人工整理」，且目标用户都有运营，且相关领域都包含企业知识工作流，且当前替代方案也较相似，综合相似度为76.6。建议人工检查是否可合并为同一类需求。
+
+风险提示：
+需要注意：代表性痛点相似度不高。
+
+相似诊断：
+- Title similarity: 88.89
+- Summary similarity: 96.10
+- Pain description similarity: 19.31
+- Workaround similarity: 100.00
+- Persona similarity: 100.00
+- Domain similarity: 100.00
+
+共享关键词：人工整理低效、知识工作流、人工整理
+
+Cluster A 代表证据：
+- 知乎《企业内部知识管理有哪些好的实践》下高赞回答：'我们公司 500 人规模，现在维护一个 400 多行的 Excel 作为内部 常见问题，每季度由运营团队手动更新。
+
+Cluster B 代表证据：
+- 这个Excel通常只有自己能看，离职时会导致知识断层。另一种常见方案是建立个人微信收藏夹或备忘录，把重要文档链接手动整理进去。
+
+Latest Review: 未审核
+
+---
+
+### 63. 合并建议
+
+Candidate ID: merge_candidate_000063
 Cluster A: cluster_000014 / 运营在企业知识工作流中遇到的「信息分散、人工整理低效、噪音过多」问题
 Cluster B: cluster_000059 / 运营在企业知识工作流中遇到的「人工整理低效、检索困难、文档不完整」问题
 Similarity Score: 76.58
@@ -1752,9 +2160,9 @@ Latest Review: 未审核
 
 ---
 
-### 52. 合并建议
+### 64. 合并建议
 
-Candidate ID: merge_candidate_000052
+Candidate ID: merge_candidate_000064
 Cluster A: cluster_000072 / 内容团队在内容选题生产中遇到的「信息分散、人工整理低效、容易遗漏」问题
 Cluster B: cluster_000074 / 内容团队在内容选题生产中遇到的「信息分散、人工整理低效、容易遗漏」问题
 Similarity Score: 76.56
@@ -1786,9 +2194,9 @@ Latest Review: 未审核
 
 ---
 
-### 53. 合并建议
+### 65. 合并建议
 
-Candidate ID: merge_candidate_000053
+Candidate ID: merge_candidate_000065
 Cluster A: cluster_000009 / 投资人在人工智能产业跟踪中遇到的「信息分散、人工整理低效、容易遗漏」问题
 Cluster B: cluster_000088 / 投资人在人工智能产业跟踪中遇到的「信息分散、人工整理低效」问题
 Similarity Score: 76.55
@@ -1820,9 +2228,111 @@ Latest Review: 未审核
 
 ---
 
-### 54. 合并建议
+### 66. 合并建议
 
-Candidate ID: merge_candidate_000054
+Candidate ID: merge_candidate_000066
+Cluster A: cluster_000087 / 投资人在人工智能产业跟踪中遇到的「人工整理低效」问题
+Cluster B: cluster_000098 / 投资人在人工智能产业跟踪中遇到的「人工整理低效」问题
+Similarity Score: 76.49
+Strength: 强
+
+建议理由：
+这两个需求主题的核心痛点都涉及「人工整理低效、产业跟踪、人工整理」，且目标用户都有投资人，且相关领域都包含人工智能投资研究，且当前替代方案也较相似，综合相似度为76.5。建议人工检查是否可合并为同一类需求。
+
+风险提示：
+需要注意：代表性痛点相似度不高。
+
+相似诊断：
+- Title similarity: 100.00
+- Summary similarity: 100.00
+- Pain description similarity: 5.97
+- Workaround similarity: 100.00
+- Persona similarity: 100.00
+- Domain similarity: 100.00
+
+共享关键词：人工整理低效、产业跟踪、人工整理
+
+Cluster A 代表证据：
+- 所以我们还是需要花大量时间手动刷 Twitter、LinkedIn 和行业媒体来补充最新信息。
+
+Cluster B 代表证据：
+- 这条材料没有呈现明确、可验证的需求痛点。
+
+Latest Review: 未审核
+
+---
+
+### 67. 合并建议
+
+Candidate ID: merge_candidate_000067
+Cluster A: cluster_000098 / 投资人在人工智能产业跟踪中遇到的「人工整理低效」问题
+Cluster B: cluster_000101 / 投资人在人工智能产业跟踪中遇到的「人工整理低效」问题
+Similarity Score: 76.35
+Strength: 强
+
+建议理由：
+这两个需求主题的核心痛点都涉及「人工整理低效、产业跟踪、人工整理」，且目标用户都有投资人，且相关领域都包含人工智能投资研究，且当前替代方案也较相似，综合相似度为76.3。建议人工检查是否可合并为同一类需求。
+
+风险提示：
+需要注意：代表性痛点相似度不高。
+
+相似诊断：
+- Title similarity: 100.00
+- Summary similarity: 100.00
+- Pain description similarity: 5.41
+- Workaround similarity: 100.00
+- Persona similarity: 100.00
+- Domain similarity: 100.00
+
+共享关键词：人工整理低效、产业跟踪、人工整理
+
+Cluster A 代表证据：
+- 这条材料没有呈现明确、可验证的需求痛点。
+
+Cluster B 代表证据：
+- 信息来源包括：逐一打开各公司官网、LinkedIn页面、代码托管平台仓库、微信公众号文章，手动复制粘贴更新。
+
+Latest Review: 未审核
+
+---
+
+### 68. 合并建议
+
+Candidate ID: merge_candidate_000068
+Cluster A: cluster_000059 / 运营在企业知识工作流中遇到的「人工整理低效、检索困难、文档不完整」问题
+Cluster B: cluster_000094 / 运营在企业知识工作流中遇到的「人工整理低效、文档不完整」问题
+Similarity Score: 76.31
+Strength: 强
+
+建议理由：
+这两个需求主题的核心痛点都涉及「人工整理低效、文档不完整、知识工作流、人工整理」，且目标用户都有运营，且相关领域都包含企业知识工作流，且当前替代方案也较相似，综合相似度为76.3。建议人工检查是否可合并为同一类需求。
+
+风险提示：
+需要注意：代表性痛点相似度不高。
+
+相似诊断：
+- Title similarity: 92.31
+- Summary similarity: 96.97
+- Pain description similarity: 14.41
+- Workaround similarity: 100.00
+- Persona similarity: 100.00
+- Domain similarity: 100.00
+
+共享关键词：人工整理低效、文档不完整、知识工作流、人工整理
+
+Cluster A 代表证据：
+- 标准作业流程、会议纪要和政策更新散在不同文档里，员工很难搜索到最新答案，最后还是手动问同事确认。
+
+Cluster B 代表证据：
+- 这个Excel通常只有自己能看，离职时会导致知识断层。另一种常见方案是建立个人微信收藏夹或备忘录，把重要文档链接手动整理进去。
+
+Latest Review: 未审核
+
+---
+
+### 69. 合并建议
+
+Candidate ID: merge_candidate_000069
 Cluster A: cluster_000064 / 创始人在人工智能产业跟踪中遇到的「人工整理低效」问题
 Cluster B: cluster_000067 / 创始人在相关工作流中遇到的「人工整理低效、容易遗漏」问题
 Similarity Score: 76.29
@@ -1854,9 +2364,9 @@ Latest Review: 未审核
 
 ---
 
-### 55. 合并建议
+### 70. 合并建议
 
-Candidate ID: merge_candidate_000055
+Candidate ID: merge_candidate_000070
 Cluster A: cluster_000035 / 运营在人工智能智能体工作流中遇到的「人工整理低效、流程不可靠」问题
 Cluster B: cluster_000039 / 运营在人工智能智能体工作流中遇到的「人工整理低效、流程不可靠、文档不完整」问题
 Similarity Score: 76.22
@@ -1888,9 +2398,9 @@ Latest Review: 未审核
 
 ---
 
-### 56. 合并建议
+### 71. 合并建议
 
-Candidate ID: merge_candidate_000056
+Candidate ID: merge_candidate_000071
 Cluster A: cluster_000028 / 内容团队在内容选题生产中遇到的「信息分散、难验证、人工整理低效」问题
 Cluster B: cluster_000073 / 内容团队在内容选题生产中遇到的「信息分散、人工整理低效」问题
 Similarity Score: 75.79
@@ -1922,9 +2432,43 @@ Latest Review: 未审核
 
 ---
 
-### 57. 合并建议
+### 72. 合并建议
 
-Candidate ID: merge_candidate_000057
+Candidate ID: merge_candidate_000072
+Cluster A: cluster_000097 / 投资人在人工智能产业跟踪中遇到的「人工整理低效」问题
+Cluster B: cluster_000098 / 投资人在人工智能产业跟踪中遇到的「人工整理低效」问题
+Similarity Score: 75.72
+Strength: 强
+
+建议理由：
+这两个需求主题的核心痛点都涉及「人工整理低效、产业跟踪、人工整理」，且目标用户都有投资人，且相关领域都包含人工智能投资研究，且当前替代方案也较相似，综合相似度为75.7。建议人工检查是否可合并为同一类需求。
+
+风险提示：
+需要注意：代表性痛点相似度不高。
+
+相似诊断：
+- Title similarity: 100.00
+- Summary similarity: 100.00
+- Pain description similarity: 2.86
+- Workaround similarity: 100.00
+- Persona similarity: 100.00
+- Domain similarity: 100.00
+
+共享关键词：人工整理低效、产业跟踪、人工整理
+
+Cluster A 代表证据：
+- 在对早期VC机构投资分析师的调研中，受访者描述了典型的周度信息采集工作量：每天需要浏览5-8个信息源（科技媒体、LinkedIn、代码托管平台、Twitter、行业微信群、数据库等），手动整理有价值信息约需1-2小时/天，即每周5-10小时。
+
+Cluster B 代表证据：
+- 这条材料没有呈现明确、可验证的需求痛点。
+
+Latest Review: 未审核
+
+---
+
+### 73. 合并建议
+
+Candidate ID: merge_candidate_000073
 Cluster A: cluster_000027 / 内容团队在内容选题生产中遇到的「信息分散、人工整理低效、噪音过多」问题
 Cluster B: cluster_000031 / 内容团队在内容选题生产中遇到的「信息分散、人工整理低效、总结困难」问题
 Similarity Score: 75.70
@@ -1957,9 +2501,9 @@ Latest Review: 未审核
 
 ---
 
-### 58. 合并建议
+### 74. 合并建议
 
-Candidate ID: merge_candidate_000058
+Candidate ID: merge_candidate_000074
 Cluster A: cluster_000043 / 开发者在开发者工具链中遇到的「信息分散、文档不完整」问题
 Cluster B: cluster_000045 / 开发者在开发者工具链中遇到的「需求不清晰」问题
 Similarity Score: 75.67
@@ -1991,77 +2535,9 @@ Latest Review: 未审核
 
 ---
 
-### 59. 合并建议
+### 75. 合并建议
 
-Candidate ID: merge_candidate_000059
-Cluster A: cluster_000009 / 投资人在人工智能产业跟踪中遇到的「信息分散、人工整理低效、容易遗漏」问题
-Cluster B: cluster_000020 / 投资人在人工智能产业跟踪中遇到的「难验证、人工整理低效、耗时过多」问题
-Similarity Score: 75.53
-Strength: 强
-
-建议理由：
-这两个需求主题的核心痛点都涉及「人工整理低效、产业跟踪、人工整理」，且目标用户都有投资人，且相关领域都包含人工智能投资研究，且当前替代方案也较相似，综合相似度为75.5。建议人工检查是否可合并为同一类需求。
-
-风险提示：
-需要注意：代表性痛点相似度不高。
-
-相似诊断：
-- Title similarity: 78.87
-- Summary similarity: 91.33
-- Pain description similarity: 27.69
-- Workaround similarity: 100.00
-- Persona similarity: 100.00
-- Domain similarity: 100.00
-
-共享关键词：人工整理低效、产业跟踪、人工整理
-
-Cluster A 代表证据：
-- 投资团队做 人工智能 硬科技尽调时，论文、融资新闻、代码托管平台、客户案例太分散，研究员每周都要人工整理表格，容易漏掉重要更新。
-
-Cluster B 代表证据：
-- 基金做 人工智能 项目初筛时，团队要手动查官网、招聘、产品截图和融资新闻。不同来源口径不一致，很难验证真实进展，尽调前期特别费时间。
-
-Latest Review: 未审核
-
----
-
-### 60. 合并建议
-
-Candidate ID: merge_candidate_000060
-Cluster A: cluster_000001 / 投资人在人工智能产业跟踪中遇到的「信息分散、人工整理低效、容易遗漏」问题
-Cluster B: cluster_000088 / 投资人在人工智能产业跟踪中遇到的「信息分散、人工整理低效」问题
-Similarity Score: 75.37
-Strength: 强
-
-建议理由：
-这两个需求主题的核心痛点都涉及「人工整理低效、产业跟踪、人工整理、信息分散」，且目标用户都有投资人，且相关领域都包含人工智能投资研究，且当前替代方案也较相似，综合相似度为75.4。建议人工检查是否可合并为同一类需求。
-
-风险提示：
-需要注意：代表性痛点相似度不高。
-
-相似诊断：
-- Title similarity: 92.54
-- Summary similarity: 97.04
-- Pain description similarity: 10.42
-- Workaround similarity: 100.00
-- Persona similarity: 100.00
-- Domain similarity: 100.00
-
-共享关键词：人工整理低效、产业跟踪、人工整理、信息分散
-
-Cluster A 代表证据：
-- 投资人在未标注领域相关工作中遇到需要人工处理、容易遗漏的问题，需要进一步人工复核。
-
-Cluster B 代表证据：
-- 5 小时刷推特、微信公众号、36氪、TechCrunch，把看到的 人工智能 项目信息手动记录到飞书多维表格。
-
-Latest Review: 未审核
-
----
-
-### 61. 合并建议
-
-Candidate ID: merge_candidate_000061
+Candidate ID: merge_candidate_000075
 Cluster A: cluster_000071 / 内容团队在内容选题生产中遇到的「信息分散、人工整理低效、检索困难」问题
 Cluster B: cluster_000073 / 内容团队在内容选题生产中遇到的「信息分散、人工整理低效」问题
 Similarity Score: 75.32
@@ -2093,9 +2569,9 @@ Latest Review: 未审核
 
 ---
 
-### 62. 合并建议
+### 76. 合并建议
 
-Candidate ID: merge_candidate_000062
+Candidate ID: merge_candidate_000076
 Cluster A: cluster_000027 / 内容团队在内容选题生产中遇到的「信息分散、人工整理低效、噪音过多」问题
 Cluster B: cluster_000072 / 内容团队在内容选题生产中遇到的「信息分散、人工整理低效、容易遗漏」问题
 Similarity Score: 75.23
@@ -2127,9 +2603,9 @@ Latest Review: 未审核
 
 ---
 
-### 63. 合并建议
+### 77. 合并建议
 
-Candidate ID: merge_candidate_000063
+Candidate ID: merge_candidate_000077
 Cluster A: cluster_000027 / 内容团队在内容选题生产中遇到的「信息分散、人工整理低效、噪音过多」问题
 Cluster B: cluster_000071 / 内容团队在内容选题生产中遇到的「信息分散、人工整理低效、检索困难」问题
 Similarity Score: 75.21
@@ -2161,9 +2637,43 @@ Latest Review: 未审核
 
 ---
 
-### 64. 合并建议
+### 78. 合并建议
 
-Candidate ID: merge_candidate_000064
+Candidate ID: merge_candidate_000078
+Cluster A: cluster_000016 / 运营在企业知识工作流中遇到的「人工整理低效、检索困难、文档不完整」问题
+Cluster B: cluster_000094 / 运营在企业知识工作流中遇到的「人工整理低效、文档不完整」问题
+Similarity Score: 75.18
+Strength: 强
+
+建议理由：
+这两个需求主题的核心痛点都涉及「人工整理低效、文档不完整、知识工作流、人工整理」，且目标用户都有运营，且相关领域都包含企业知识工作流，且当前替代方案也较相似，综合相似度为75.2。建议人工检查是否可合并为同一类需求。
+
+风险提示：
+需要注意：代表性痛点相似度不高。
+
+相似诊断：
+- Title similarity: 92.31
+- Summary similarity: 96.97
+- Pain description similarity: 9.92
+- Workaround similarity: 100.00
+- Persona similarity: 100.00
+- Domain similarity: 100.00
+
+共享关键词：人工整理低效、文档不完整、知识工作流、人工整理
+
+Cluster A 代表证据：
+- 企业知识库里历史工单、产品文档、常见问题 混在一起，客服 operator 很难筛选出最新答案，回复前还要人工确认。
+
+Cluster B 代表证据：
+- 这个Excel通常只有自己能看，离职时会导致知识断层。另一种常见方案是建立个人微信收藏夹或备忘录，把重要文档链接手动整理进去。
+
+Latest Review: 未审核
+
+---
+
+### 79. 合并建议
+
+Candidate ID: merge_candidate_000079
 Cluster A: cluster_000072 / 内容团队在内容选题生产中遇到的「信息分散、人工整理低效、容易遗漏」问题
 Cluster B: cluster_000073 / 内容团队在内容选题生产中遇到的「信息分散、人工整理低效」问题
 Similarity Score: 75.16
@@ -2195,43 +2705,9 @@ Latest Review: 未审核
 
 ---
 
-### 65. 合并建议
+### 80. 合并建议
 
-Candidate ID: merge_candidate_000065
-Cluster A: cluster_000024 / 投资人在人工智能产业跟踪中遇到的「人工整理低效」问题
-Cluster B: cluster_000088 / 投资人在人工智能产业跟踪中遇到的「信息分散、人工整理低效」问题
-Similarity Score: 75.07
-Strength: 强
-
-建议理由：
-这两个需求主题的核心痛点都涉及「人工整理低效、产业跟踪、人工整理」，且目标用户都有投资人，且相关领域都包含人工智能投资研究，且当前替代方案也较相似，综合相似度为75.1。建议人工检查是否可合并为同一类需求。
-
-风险提示：
-需要注意：代表性痛点相似度不高。
-
-相似诊断：
-- Title similarity: 91.23
-- Summary similarity: 96.86
-- Pain description similarity: 10.42
-- Workaround similarity: 100.00
-- Persona similarity: 100.00
-- Domain similarity: 100.00
-
-共享关键词：人工整理低效、产业跟踪、人工整理
-
-Cluster A 代表证据：
-- 投资人在未标注领域相关工作中遇到需要人工处理、追踪困难的问题，需要进一步人工复核。
-
-Cluster B 代表证据：
-- 5 小时刷推特、微信公众号、36氪、TechCrunch，把看到的 人工智能 项目信息手动记录到飞书多维表格。
-
-Latest Review: 未审核
-
----
-
-### 66. 合并建议
-
-Candidate ID: merge_candidate_000066
+Candidate ID: merge_candidate_000080
 Cluster A: cluster_000032 / 内容团队在内容选题生产中遇到的「人工整理低效」问题
 Cluster B: cluster_000073 / 内容团队在内容选题生产中遇到的「信息分散、人工整理低效」问题
 Similarity Score: 74.99
@@ -2263,9 +2739,9 @@ Latest Review: 未审核
 
 ---
 
-### 67. 合并建议
+### 81. 合并建议
 
-Candidate ID: merge_candidate_000067
+Candidate ID: merge_candidate_000081
 Cluster A: cluster_000006 / 运营在企业知识工作流中遇到的「人工整理低效、噪音过多」问题
 Cluster B: cluster_000082 / 运营在企业知识工作流中遇到的「人工整理低效」问题
 Similarity Score: 74.90
@@ -2297,9 +2773,9 @@ Latest Review: 未审核
 
 ---
 
-### 68. 合并建议
+### 82. 合并建议
 
-Candidate ID: merge_candidate_000068
+Candidate ID: merge_candidate_000082
 Cluster A: cluster_000076 / 内容团队在内容选题生产中遇到的「信息分散」问题
 Cluster B: cluster_000078 / 内容团队在内容选题生产中遇到的「信息分散、人工整理低效、检索困难」问题
 Similarity Score: 74.77
@@ -2331,9 +2807,9 @@ Latest Review: 未审核
 
 ---
 
-### 69. 合并建议
+### 83. 合并建议
 
-Candidate ID: merge_candidate_000069
+Candidate ID: merge_candidate_000083
 Cluster A: cluster_000017 / 投资人在人工智能产业跟踪中遇到的「信息分散、难验证、人工整理低效」问题
 Cluster B: cluster_000088 / 投资人在人工智能产业跟踪中遇到的「信息分散、人工整理低效」问题
 Similarity Score: 74.76
@@ -2365,9 +2841,43 @@ Latest Review: 未审核
 
 ---
 
-### 70. 合并建议
+### 84. 合并建议
 
-Candidate ID: merge_candidate_000070
+Candidate ID: merge_candidate_000084
+Cluster A: cluster_000088 / 投资人在人工智能产业跟踪中遇到的「信息分散、人工整理低效」问题
+Cluster B: cluster_000097 / 投资人在人工智能产业跟踪中遇到的「人工整理低效」问题
+Similarity Score: 74.75
+Strength: 中
+
+建议理由：
+这两个需求主题的核心痛点都涉及「人工整理低效、产业跟踪、人工整理」，且目标用户都有投资人，且相关领域都包含人工智能投资研究，且当前替代方案也较相似，综合相似度为74.8。建议人工检查是否可合并为同一类需求。
+
+风险提示：
+需要注意：代表性痛点相似度不高。
+
+相似诊断：
+- Title similarity: 91.23
+- Summary similarity: 96.86
+- Pain description similarity: 9.14
+- Workaround similarity: 100.00
+- Persona similarity: 100.00
+- Domain similarity: 100.00
+
+共享关键词：人工整理低效、产业跟踪、人工整理
+
+Cluster A 代表证据：
+- 5 小时刷推特、微信公众号、36氪、TechCrunch，把看到的 人工智能 项目信息手动记录到飞书多维表格。
+
+Cluster B 代表证据：
+- 在对早期VC机构投资分析师的调研中，受访者描述了典型的周度信息采集工作量：每天需要浏览5-8个信息源（科技媒体、LinkedIn、代码托管平台、Twitter、行业微信群、数据库等），手动整理有价值信息约需1-2小时/天，即每周5-10小时。
+
+Latest Review: 未审核
+
+---
+
+### 85. 合并建议
+
+Candidate ID: merge_candidate_000085
 Cluster A: cluster_000028 / 内容团队在内容选题生产中遇到的「信息分散、难验证、人工整理低效」问题
 Cluster B: cluster_000078 / 内容团队在内容选题生产中遇到的「信息分散、人工整理低效、检索困难」问题
 Similarity Score: 74.73
@@ -2399,9 +2909,43 @@ Latest Review: 未审核
 
 ---
 
-### 71. 合并建议
+### 86. 合并建议
 
-Candidate ID: merge_candidate_000071
+Candidate ID: merge_candidate_000086
+Cluster A: cluster_000025 / 投资人在人工智能产业跟踪中遇到的「检索困难」问题
+Cluster B: cluster_000098 / 投资人在人工智能产业跟踪中遇到的「人工整理低效」问题
+Similarity Score: 74.71
+Strength: 中
+
+建议理由：
+这两个需求主题的核心痛点都涉及「产业跟踪」，且目标用户都有投资人，且相关领域都包含人工智能投资研究，综合相似度为74.7。建议人工检查是否可合并为同一类需求。
+
+风险提示：
+暂无明显风险提示。
+
+相似诊断：
+- Title similarity: 80.00
+- Summary similarity: 54.84
+- Pain description similarity: 100.00
+- Workaround similarity: 0.00
+- Persona similarity: 100.00
+- Domain similarity: 100.00
+
+共享关键词：产业跟踪
+
+Cluster A 代表证据：
+- 这条材料没有呈现明确、可验证的需求痛点。
+
+Cluster B 代表证据：
+- 这条材料没有呈现明确、可验证的需求痛点。
+
+Latest Review: 未审核
+
+---
+
+### 87. 合并建议
+
+Candidate ID: merge_candidate_000087
 Cluster A: cluster_000008 / 战略与商务拓展团队在企业知识工作流中遇到的「人工整理低效、噪音过多、检索困难」问题
 Cluster B: cluster_000055 / 战略与商务拓展团队在企业知识工作流中遇到的「人工整理低效、容易遗漏、耗时过多」问题
 Similarity Score: 74.67
@@ -2433,9 +2977,9 @@ Latest Review: 未审核
 
 ---
 
-### 72. 合并建议
+### 88. 合并建议
 
-Candidate ID: merge_candidate_000072
+Candidate ID: merge_candidate_000088
 Cluster A: cluster_000035 / 运营在人工智能智能体工作流中遇到的「人工整理低效、流程不可靠」问题
 Cluster B: cluster_000038 / 运营在人工智能智能体工作流中遇到的「人工整理低效」问题
 Similarity Score: 74.63
@@ -2467,9 +3011,9 @@ Latest Review: 未审核
 
 ---
 
-### 73. 合并建议
+### 89. 合并建议
 
-Candidate ID: merge_candidate_000073
+Candidate ID: merge_candidate_000089
 Cluster A: cluster_000058 / 运营在企业知识工作流中遇到的「信息分散、人工整理低效、检索困难」问题
 Cluster B: cluster_000082 / 运营在企业知识工作流中遇到的「人工整理低效」问题
 Similarity Score: 74.58
@@ -2501,9 +3045,9 @@ Latest Review: 未审核
 
 ---
 
-### 74. 合并建议
+### 90. 合并建议
 
-Candidate ID: merge_candidate_000074
+Candidate ID: merge_candidate_000090
 Cluster A: cluster_000087 / 投资人在人工智能产业跟踪中遇到的「人工整理低效」问题
 Cluster B: cluster_000088 / 投资人在人工智能产业跟踪中遇到的「信息分散、人工整理低效」问题
 Similarity Score: 74.42
@@ -2535,9 +3079,9 @@ Latest Review: 未审核
 
 ---
 
-### 75. 合并建议
+### 91. 合并建议
 
-Candidate ID: merge_candidate_000075
+Candidate ID: merge_candidate_000091
 Cluster A: cluster_000012 / 创始人在人工智能智能体工作流中遇到的「人工整理低效、容易遗漏、总结困难」问题
 Cluster B: cluster_000042 / 创始人在人工智能智能体工作流中遇到的「人工整理低效」问题
 Similarity Score: 74.32
@@ -2569,77 +3113,77 @@ Latest Review: 未审核
 
 ---
 
-### 76. 合并建议
+### 92. 合并建议
 
-Candidate ID: merge_candidate_000076
-Cluster A: cluster_000017 / 投资人在人工智能产业跟踪中遇到的「信息分散、难验证、人工整理低效」问题
-Cluster B: cluster_000064 / 创始人在人工智能产业跟踪中遇到的「人工整理低效」问题
-Similarity Score: 74.25
-Strength: 中
-
-建议理由：
-这两个需求主题的核心痛点都涉及「人工整理低效、产业跟踪、人工整理」，且相关领域都包含人工智能投资研究，且当前替代方案也较相似，综合相似度为74.2。建议人工检查是否可合并为同一类需求。
-
-风险提示：
-需要注意：目标用户不完全一致。
-
-相似诊断：
-- Title similarity: 78.69
-- Summary similarity: 86.90
-- Pain description similarity: 69.39
-- Workaround similarity: 94.44
-- Persona similarity: 0.00
-- Domain similarity: 100.00
-
-共享关键词：人工整理低效、产业跟踪、人工整理
-
-Cluster A 代表证据：
-- 投资人在未标注领域相关工作中遇到需要人工处理、容易遗漏重要更新、容易遗漏、耗时过多的问题，需要进一步人工复核。
-
-Cluster B 代表证据：
-- 创始人在未标注领域相关工作中遇到流程依赖人工、需要人工处理的问题，需要进一步人工复核。
-
-Latest Review: 未审核
-
----
-
-### 77. 合并建议
-
-Candidate ID: merge_candidate_000077
+Candidate ID: merge_candidate_000092
 Cluster A: cluster_000020 / 投资人在人工智能产业跟踪中遇到的「难验证、人工整理低效、耗时过多」问题
-Cluster B: cluster_000087 / 投资人在人工智能产业跟踪中遇到的「人工整理低效」问题
-Similarity Score: 74.21
+Cluster B: cluster_000099 / 投资人在人工智能产业跟踪中遇到的「难验证、人工整理低效、噪音过多」问题
+Similarity Score: 74.30
 Strength: 中
 
 建议理由：
-这两个需求主题的核心痛点都涉及「人工整理低效、产业跟踪、人工整理」，且目标用户都有投资人，且相关领域都包含人工智能投资研究，且当前替代方案也较相似，综合相似度为74.2。建议人工检查是否可合并为同一类需求。
+这两个需求主题的核心痛点都涉及「人工整理低效、产业跟踪、人工整理、难验证」，且目标用户都有投资人，且相关领域都包含人工智能投资研究，且当前替代方案也较相似，综合相似度为74.3。建议人工检查是否可合并为同一类需求。
 
 风险提示：
 需要注意：代表性痛点相似度不高。
 
 相似诊断：
-- Title similarity: 85.25
-- Summary similarity: 94.48
-- Pain description similarity: 14.16
+- Title similarity: 94.29
+- Summary similarity: 94.92
+- Pain description similarity: 6.86
 - Workaround similarity: 100.00
 - Persona similarity: 100.00
 - Domain similarity: 100.00
 
-共享关键词：人工整理低效、产业跟踪、人工整理
+共享关键词：人工整理低效、产业跟踪、人工整理、难验证
 
 Cluster A 代表证据：
 - 基金做 人工智能 项目初筛时，团队要手动查官网、招聘、产品截图和融资新闻。不同来源口径不一致，很难验证真实进展，尽调前期特别费时间。
 
 Cluster B 代表证据：
-- 所以我们还是需要花大量时间手动刷 Twitter、LinkedIn 和行业媒体来补充最新信息。
+- 受访机构表示，在此期间由于信息过载，有2-3个机构出现'追风投资'行为——在信息未充分验证的情况下快速跟进，其中部分投资后来被证明是基于不准确的市场判断。多位GP表示：'信息太多太快，人工筛选根本跟不上，导致判断质量下降。
 
 Latest Review: 未审核
 
 ---
 
-### 78. 合并建议
+### 93. 合并建议
 
-Candidate ID: merge_candidate_000078
+Candidate ID: merge_candidate_000093
+Cluster A: cluster_000017 / 投资人在人工智能产业跟踪中遇到的「信息分散、难验证、人工整理低效」问题
+Cluster B: cluster_000020 / 投资人在人工智能产业跟踪中遇到的「难验证、人工整理低效、耗时过多」问题
+Similarity Score: 74.03
+Strength: 中
+
+建议理由：
+这两个需求主题的核心痛点都涉及「人工整理低效、产业跟踪、人工整理、耗时过多」，且目标用户都有投资人，且相关领域都包含人工智能投资研究，且当前替代方案也较相似，综合相似度为74.0。建议人工检查是否可合并为同一类需求。
+
+风险提示：
+需要注意：代表性痛点相似度不高。
+
+相似诊断：
+- Title similarity: 85.71
+- Summary similarity: 92.66
+- Pain description similarity: 14.88
+- Workaround similarity: 100.00
+- Persona similarity: 100.00
+- Domain similarity: 100.00
+
+共享关键词：人工整理低效、产业跟踪、人工整理、耗时过多、难验证
+
+Cluster A 代表证据：
+- 投资人在未标注领域相关工作中遇到需要人工处理、容易遗漏重要更新、容易遗漏、耗时过多的问题，需要进一步人工复核。
+
+Cluster B 代表证据：
+- 基金做 人工智能 项目初筛时，团队要手动查官网、招聘、产品截图和融资新闻。不同来源口径不一致，很难验证真实进展，尽调前期特别费时间。
+
+Latest Review: 未审核
+
+---
+
+### 94. 合并建议
+
+Candidate ID: merge_candidate_000094
 Cluster A: cluster_000003 / 内容团队在人工智能产业跟踪中遇到的「信息分散、检索困难、耗时过多」问题
 Cluster B: cluster_000026 / 内容团队在内容选题生产中遇到的「信息分散、检索困难、耗时过多」问题
 Similarity Score: 73.84
@@ -2671,9 +3215,9 @@ Latest Review: 未审核
 
 ---
 
-### 79. 合并建议
+### 95. 合并建议
 
-Candidate ID: merge_candidate_000079
+Candidate ID: merge_candidate_000095
 Cluster A: cluster_000016 / 运营在企业知识工作流中遇到的「人工整理低效、检索困难、文档不完整」问题
 Cluster B: cluster_000082 / 运营在企业知识工作流中遇到的「人工整理低效」问题
 Similarity Score: 73.83
@@ -2705,9 +3249,77 @@ Latest Review: 未审核
 
 ---
 
-### 80. 合并建议
+### 96. 合并建议
 
-Candidate ID: merge_candidate_000080
+Candidate ID: merge_candidate_000096
+Cluster A: cluster_000083 / 相关用户在企业知识工作流中遇到的「信息分散、检索困难、文档不完整」问题
+Cluster B: cluster_000090 / 相关用户在企业知识工作流中遇到的「信息分散」问题
+Similarity Score: 73.65
+Strength: 中
+
+建议理由：
+这两个需求主题的核心痛点都涉及「知识工作流、信息分散、替代方案」，且相关领域都包含企业知识工作流，综合相似度为73.7。建议人工检查是否可合并为同一类需求。
+
+风险提示：
+需要注意：目标用户不完全一致。
+
+相似诊断：
+- Title similarity: 81.36
+- Summary similarity: 89.52
+- Pain description similarity: 100.00
+- Workaround similarity: 0.00
+- Persona similarity: 0.00
+- Domain similarity: 100.00
+
+共享关键词：知识工作流、信息分散、替代方案
+
+Cluster A 代表证据：
+- 未知用户在未标注领域相关工作中遇到信息分散的问题，需要进一步人工复核。
+
+Cluster B 代表证据：
+- 未知用户在未标注领域相关工作中遇到信息分散的问题，需要进一步人工复核。
+
+Latest Review: 未审核
+
+---
+
+### 97. 合并建议
+
+Candidate ID: merge_candidate_000097
+Cluster A: cluster_000020 / 投资人在人工智能产业跟踪中遇到的「难验证、人工整理低效、耗时过多」问题
+Cluster B: cluster_000101 / 投资人在人工智能产业跟踪中遇到的「人工整理低效」问题
+Similarity Score: 73.59
+Strength: 中
+
+建议理由：
+这两个需求主题的核心痛点都涉及「人工整理低效、产业跟踪、人工整理」，且目标用户都有投资人，且相关领域都包含人工智能投资研究，且当前替代方案也较相似，综合相似度为73.6。建议人工检查是否可合并为同一类需求。
+
+风险提示：
+需要注意：代表性痛点相似度不高。
+
+相似诊断：
+- Title similarity: 85.25
+- Summary similarity: 94.48
+- Pain description similarity: 11.67
+- Workaround similarity: 100.00
+- Persona similarity: 100.00
+- Domain similarity: 100.00
+
+共享关键词：人工整理低效、产业跟踪、人工整理
+
+Cluster A 代表证据：
+- 基金做 人工智能 项目初筛时，团队要手动查官网、招聘、产品截图和融资新闻。不同来源口径不一致，很难验证真实进展，尽调前期特别费时间。
+
+Cluster B 代表证据：
+- 信息来源包括：逐一打开各公司官网、LinkedIn页面、代码托管平台仓库、微信公众号文章，手动复制粘贴更新。
+
+Latest Review: 未审核
+
+---
+
+### 98. 合并建议
+
+Candidate ID: merge_candidate_000098
 Cluster A: cluster_000006 / 运营在企业知识工作流中遇到的「人工整理低效、噪音过多」问题
 Cluster B: cluster_000058 / 运营在企业知识工作流中遇到的「信息分散、人工整理低效、检索困难」问题
 Similarity Score: 73.20
@@ -2739,9 +3351,9 @@ Latest Review: 未审核
 
 ---
 
-### 81. 合并建议
+### 99. 合并建议
 
-Candidate ID: merge_candidate_000081
+Candidate ID: merge_candidate_000099
 Cluster A: cluster_000038 / 运营在人工智能智能体工作流中遇到的「人工整理低效」问题
 Cluster B: cluster_000039 / 运营在人工智能智能体工作流中遇到的「人工整理低效、流程不可靠、文档不完整」问题
 Similarity Score: 73.17
@@ -2773,9 +3385,9 @@ Latest Review: 未审核
 
 ---
 
-### 82. 合并建议
+### 100. 合并建议
 
-Candidate ID: merge_candidate_000082
+Candidate ID: merge_candidate_000100
 Cluster A: cluster_000072 / 内容团队在内容选题生产中遇到的「信息分散、人工整理低效、容易遗漏」问题
 Cluster B: cluster_000078 / 内容团队在内容选题生产中遇到的「信息分散、人工整理低效、检索困难」问题
 Similarity Score: 73.06
@@ -2807,9 +3419,77 @@ Latest Review: 未审核
 
 ---
 
-### 83. 合并建议
+### 101. 合并建议
 
-Candidate ID: merge_candidate_000083
+Candidate ID: merge_candidate_000101
+Cluster A: cluster_000020 / 投资人在人工智能产业跟踪中遇到的「难验证、人工整理低效、耗时过多」问题
+Cluster B: cluster_000098 / 投资人在人工智能产业跟踪中遇到的「人工整理低效」问题
+Similarity Score: 73.00
+Strength: 中
+
+建议理由：
+这两个需求主题的核心痛点都涉及「人工整理低效、产业跟踪、人工整理」，且目标用户都有投资人，且相关领域都包含人工智能投资研究，且当前替代方案也较相似，综合相似度为73.0。建议人工检查是否可合并为同一类需求。
+
+风险提示：
+需要注意：代表性痛点相似度不高。
+
+相似诊断：
+- Title similarity: 85.25
+- Summary similarity: 94.48
+- Pain description similarity: 9.30
+- Workaround similarity: 100.00
+- Persona similarity: 100.00
+- Domain similarity: 100.00
+
+共享关键词：人工整理低效、产业跟踪、人工整理
+
+Cluster A 代表证据：
+- 基金做 人工智能 项目初筛时，团队要手动查官网、招聘、产品截图和融资新闻。不同来源口径不一致，很难验证真实进展，尽调前期特别费时间。
+
+Cluster B 代表证据：
+- 这条材料没有呈现明确、可验证的需求痛点。
+
+Latest Review: 未审核
+
+---
+
+### 102. 合并建议
+
+Candidate ID: merge_candidate_000102
+Cluster A: cluster_000014 / 运营在企业知识工作流中遇到的「信息分散、人工整理低效、噪音过多」问题
+Cluster B: cluster_000094 / 运营在企业知识工作流中遇到的「人工整理低效、文档不完整」问题
+Similarity Score: 72.79
+Strength: 中
+
+建议理由：
+这两个需求主题的核心痛点都涉及「人工整理低效、文档不完整、知识工作流、人工整理」，且目标用户都有运营，且相关领域都包含企业知识工作流，且当前替代方案也较相似，综合相似度为72.8。建议人工检查是否可合并为同一类需求。
+
+风险提示：
+需要注意：代表性痛点相似度不高。
+
+相似诊断：
+- Title similarity: 78.12
+- Summary similarity: 94.12
+- Pain description similarity: 14.55
+- Workaround similarity: 100.00
+- Persona similarity: 100.00
+- Domain similarity: 100.00
+
+共享关键词：人工整理低效、文档不完整、知识工作流、人工整理
+
+Cluster A 代表证据：
+- 运营团队的 标准作业流程 更新散在文档、群消息和工单里，信息太乱，交接时经常要人工整理上下文。
+
+Cluster B 代表证据：
+- 这个Excel通常只有自己能看，离职时会导致知识断层。另一种常见方案是建立个人微信收藏夹或备忘录，把重要文档链接手动整理进去。
+
+Latest Review: 未审核
+
+---
+
+### 103. 合并建议
+
+Candidate ID: merge_candidate_000103
 Cluster A: cluster_000028 / 内容团队在内容选题生产中遇到的「信息分散、难验证、人工整理低效」问题
 Cluster B: cluster_000074 / 内容团队在内容选题生产中遇到的「信息分散、人工整理低效、容易遗漏」问题
 Similarity Score: 72.54
@@ -2841,43 +3521,9 @@ Latest Review: 未审核
 
 ---
 
-### 84. 合并建议
+### 104. 合并建议
 
-Candidate ID: merge_candidate_000084
-Cluster A: cluster_000014 / 运营在企业知识工作流中遇到的「信息分散、人工整理低效、噪音过多」问题
-Cluster B: cluster_000016 / 运营在企业知识工作流中遇到的「人工整理低效、检索困难、文档不完整」问题
-Similarity Score: 72.40
-Strength: 中
-
-建议理由：
-这两个需求主题的核心痛点都涉及「人工整理低效、文档不完整、知识工作流、人工整理」，且目标用户都有运营，且相关领域都包含企业知识工作流，且当前替代方案也较相似，综合相似度为72.4。建议人工检查是否可合并为同一类需求。
-
-风险提示：
-需要注意：代表性痛点相似度不高。
-
-相似诊断：
-- Title similarity: 72.46
-- Summary similarity: 92.57
-- Pain description similarity: 19.05
-- Workaround similarity: 100.00
-- Persona similarity: 100.00
-- Domain similarity: 100.00
-
-共享关键词：人工整理低效、文档不完整、知识工作流、人工整理
-
-Cluster A 代表证据：
-- 运营团队的 标准作业流程 更新散在文档、群消息和工单里，信息太乱，交接时经常要人工整理上下文。
-
-Cluster B 代表证据：
-- 企业知识库里历史工单、产品文档、常见问题 混在一起，客服 operator 很难筛选出最新答案，回复前还要人工确认。
-
-Latest Review: 未审核
-
----
-
-### 85. 合并建议
-
-Candidate ID: merge_candidate_000085
+Candidate ID: merge_candidate_000104
 Cluster A: cluster_000019 / 相关用户在相关工作流中遇到的「信息分散、人工整理低效」问题
 Cluster B: cluster_000023 / 研究员在相关工作流中遇到的「信息分散、人工整理低效、耗时过多」问题
 Similarity Score: 72.29
@@ -2909,9 +3555,9 @@ Latest Review: 未审核
 
 ---
 
-### 86. 合并建议
+### 105. 合并建议
 
-Candidate ID: merge_candidate_000086
+Candidate ID: merge_candidate_000105
 Cluster A: cluster_000008 / 战略与商务拓展团队在企业知识工作流中遇到的「人工整理低效、噪音过多、检索困难」问题
 Cluster B: cluster_000054 / 战略与商务拓展团队在相关工作流中遇到的「信息分散、难验证、人工整理低效」问题
 Similarity Score: 72.23
@@ -2943,9 +3589,9 @@ Latest Review: 未审核
 
 ---
 
-### 87. 合并建议
+### 106. 合并建议
 
-Candidate ID: merge_candidate_000087
+Candidate ID: merge_candidate_000106
 Cluster A: cluster_000004 / 开发者在开发者工具链中遇到的「检索困难、文档不完整」问题
 Cluster B: cluster_000046 / 开发者在开发者工具链中遇到的「难验证、人工整理低效」问题
 Similarity Score: 71.99
@@ -2977,9 +3623,9 @@ Latest Review: 未审核
 
 ---
 
-### 88. 合并建议
+### 107. 合并建议
 
-Candidate ID: merge_candidate_000088
+Candidate ID: merge_candidate_000107
 Cluster A: cluster_000032 / 内容团队在内容选题生产中遇到的「人工整理低效」问题
 Cluster B: cluster_000078 / 内容团队在内容选题生产中遇到的「信息分散、人工整理低效、检索困难」问题
 Similarity Score: 71.90
@@ -3011,9 +3657,9 @@ Latest Review: 未审核
 
 ---
 
-### 89. 合并建议
+### 108. 合并建议
 
-Candidate ID: merge_candidate_000089
+Candidate ID: merge_candidate_000108
 Cluster A: cluster_000019 / 相关用户在相关工作流中遇到的「信息分散、人工整理低效」问题
 Cluster B: cluster_000056 / 相关用户在相关工作流中遇到的「人工整理低效、检索困难」问题
 Similarity Score: 71.54
@@ -3045,9 +3691,9 @@ Latest Review: 未审核
 
 ---
 
-### 90. 合并建议
+### 109. 合并建议
 
-Candidate ID: merge_candidate_000090
+Candidate ID: merge_candidate_000109
 Cluster A: cluster_000059 / 运营在企业知识工作流中遇到的「人工整理低效、检索困难、文档不完整」问题
 Cluster B: cluster_000082 / 运营在企业知识工作流中遇到的「人工整理低效」问题
 Similarity Score: 71.46
@@ -3079,9 +3725,9 @@ Latest Review: 未审核
 
 ---
 
-### 91. 合并建议
+### 110. 合并建议
 
-Candidate ID: merge_candidate_000091
+Candidate ID: merge_candidate_000110
 Cluster A: cluster_000045 / 开发者在开发者工具链中遇到的「需求不清晰」问题
 Cluster B: cluster_000046 / 开发者在开发者工具链中遇到的「难验证、人工整理低效」问题
 Similarity Score: 70.93
@@ -3113,9 +3759,9 @@ Latest Review: 未审核
 
 ---
 
-### 92. 合并建议
+### 111. 合并建议
 
-Candidate ID: merge_candidate_000092
+Candidate ID: merge_candidate_000111
 Cluster A: cluster_000010 / 研究员在相关工作流中遇到的「难验证、人工整理低效、耗时过多」问题
 Cluster B: cluster_000023 / 研究员在相关工作流中遇到的「信息分散、人工整理低效、耗时过多」问题
 Similarity Score: 70.80
@@ -3147,9 +3793,9 @@ Latest Review: 未审核
 
 ---
 
-### 93. 合并建议
+### 112. 合并建议
 
-Candidate ID: merge_candidate_000093
+Candidate ID: merge_candidate_000112
 Cluster A: cluster_000013 / 开发者在开发者工具链中遇到的「信息分散、文档不完整」问题
 Cluster B: cluster_000044 / 开发者在开发者工具链中遇到的「文档不完整」问题
 Similarity Score: 70.53
@@ -3181,9 +3827,9 @@ Latest Review: 未审核
 
 ---
 
-### 94. 合并建议
+### 113. 合并建议
 
-Candidate ID: merge_candidate_000094
+Candidate ID: merge_candidate_000113
 Cluster A: cluster_000066 / 内容团队在内容选题生产中遇到的「信息分散」问题
 Cluster B: cluster_000076 / 内容团队在内容选题生产中遇到的「信息分散」问题
 Similarity Score: 70.48
@@ -3215,9 +3861,9 @@ Latest Review: 未审核
 
 ---
 
-### 95. 合并建议
+### 114. 合并建议
 
-Candidate ID: merge_candidate_000095
+Candidate ID: merge_candidate_000114
 Cluster A: cluster_000047 / 相关用户在相关工作流中遇到的「人工整理低效、流程不可靠」问题
 Cluster B: cluster_000056 / 相关用户在相关工作流中遇到的「人工整理低效、检索困难」问题
 Similarity Score: 70.04
@@ -3249,9 +3895,9 @@ Latest Review: 未审核
 
 ---
 
-### 96. 合并建议
+### 115. 合并建议
 
-Candidate ID: merge_candidate_000096
+Candidate ID: merge_candidate_000115
 Cluster A: cluster_000052 / 相关用户在企业知识工作流中遇到的「检索困难、流程不可靠」问题
 Cluster B: cluster_000083 / 相关用户在企业知识工作流中遇到的「信息分散、检索困难、文档不完整」问题
 Similarity Score: 69.90
@@ -3283,9 +3929,9 @@ Latest Review: 未审核
 
 ---
 
-### 97. 合并建议
+### 116. 合并建议
 
-Candidate ID: merge_candidate_000097
+Candidate ID: merge_candidate_000116
 Cluster A: cluster_000013 / 开发者在开发者工具链中遇到的「信息分散、文档不完整」问题
 Cluster B: cluster_000043 / 开发者在开发者工具链中遇到的「信息分散、文档不完整」问题
 Similarity Score: 69.64
@@ -3317,9 +3963,9 @@ Latest Review: 未审核
 
 ---
 
-### 98. 合并建议
+### 117. 合并建议
 
-Candidate ID: merge_candidate_000098
+Candidate ID: merge_candidate_000117
 Cluster A: cluster_000046 / 开发者在开发者工具链中遇到的「难验证、人工整理低效」问题
 Cluster B: cluster_000051 / 开发者在开发者工具链中遇到的「信息分散」问题
 Similarity Score: 69.36
@@ -3351,43 +3997,43 @@ Latest Review: 未审核
 
 ---
 
-### 99. 合并建议
+### 118. 合并建议
 
-Candidate ID: merge_candidate_000099
-Cluster A: cluster_000080 / 相关用户在企业知识工作流中遇到的「人工整理低效」问题
-Cluster B: cluster_000082 / 运营在企业知识工作流中遇到的「人工整理低效」问题
-Similarity Score: 68.63
+Candidate ID: merge_candidate_000118
+Cluster A: cluster_000060 / 运营在企业知识工作流中遇到的「需求不清晰」问题
+Cluster B: cluster_000093 / 相关用户在企业知识工作流中遇到的「检索困难」问题
+Similarity Score: 68.93
 Strength: 中
 
 建议理由：
-这两个需求主题的核心痛点都涉及「人工整理低效、知识工作流、人工整理」，且相关领域都包含企业知识工作流，且当前替代方案也较相似，综合相似度为68.6。建议人工检查是否可合并为同一类需求。
+这两个需求主题的核心痛点都涉及「知识工作流、替代方案」，且相关领域都包含企业知识工作流，综合相似度为68.9。建议人工检查是否可合并为同一类需求。
 
 风险提示：
-需要注意：目标用户不完全一致，代表性痛点相似度不高。
+需要注意：目标用户不完全一致。
 
 相似诊断：
-- Title similarity: 100.00
-- Summary similarity: 100.00
-- Pain description similarity: 17.84
-- Workaround similarity: 91.67
+- Title similarity: 68.09
+- Summary similarity: 81.25
+- Pain description similarity: 100.00
+- Workaround similarity: 0.00
 - Persona similarity: 0.00
 - Domain similarity: 100.00
 
-共享关键词：人工整理低效、知识工作流、人工整理
+共享关键词：知识工作流、替代方案
 
 Cluster A 代表证据：
-- V2EX 帖子《你们公司新人入职培训是怎么做的》下回复：'我们公司的做法是指定一个老员工 mentor，新人所有问题都问 mentor，但 mentor 自己也有正常工作，有时候新人问了半天才得到回复。更麻烦的是很多问题以前早就有人问过、答案也有，只是根本找不到。
+- 这条材料没有呈现明确、可验证的需求痛点。
 
 Cluster B 代表证据：
-- 知乎《企业内部知识管理有哪些好的实践》下高赞回答：'我们公司 500 人规模，现在维护一个 400 多行的 Excel 作为内部 常见问题，每季度由运营团队手动更新。
+- 这条材料没有呈现明确、可验证的需求痛点。
 
 Latest Review: 未审核
 
 ---
 
-### 100. 合并建议
+### 119. 合并建议
 
-Candidate ID: merge_candidate_000100
+Candidate ID: merge_candidate_000119
 Cluster A: cluster_000022 / 研究员在相关工作流中遇到的「信息分散、人工整理低效」问题
 Cluster B: cluster_000057 / 研究员在相关工作流中遇到的「信息分散、难验证、人工整理低效」问题
 Similarity Score: 68.14
@@ -3419,9 +4065,43 @@ Latest Review: 未审核
 
 ---
 
-### 101. 合并建议
+### 120. 合并建议
 
-Candidate ID: merge_candidate_000101
+Candidate ID: merge_candidate_000120
+Cluster A: cluster_000052 / 相关用户在企业知识工作流中遇到的「检索困难、流程不可靠」问题
+Cluster B: cluster_000090 / 相关用户在企业知识工作流中遇到的「信息分散」问题
+Similarity Score: 68.14
+Strength: 中
+
+建议理由：
+这两个需求主题的核心痛点都涉及「知识工作流、替代方案」，且相关领域都包含企业知识工作流，综合相似度为68.1。建议人工检查是否可合并为同一类需求。
+
+风险提示：
+需要注意：目标用户不完全一致。
+
+相似诊断：
+- Title similarity: 74.07
+- Summary similarity: 86.00
+- Pain description similarity: 87.32
+- Workaround similarity: 0.00
+- Persona similarity: 0.00
+- Domain similarity: 100.00
+
+共享关键词：知识工作流、替代方案
+
+Cluster A 代表证据：
+- 未知用户在未标注领域相关工作中遇到流程不可靠的问题，需要进一步人工复核。
+
+Cluster B 代表证据：
+- 未知用户在未标注领域相关工作中遇到信息分散的问题，需要进一步人工复核。
+
+Latest Review: 未审核
+
+---
+
+### 121. 合并建议
+
+Candidate ID: merge_candidate_000121
 Cluster A: cluster_000045 / 开发者在开发者工具链中遇到的「需求不清晰」问题
 Cluster B: cluster_000050 / 开发者在开发者工具链中遇到的「需求不清晰」问题
 Similarity Score: 67.97
@@ -3453,9 +4133,9 @@ Latest Review: 未审核
 
 ---
 
-### 102. 合并建议
+### 122. 合并建议
 
-Candidate ID: merge_candidate_000102
+Candidate ID: merge_candidate_000122
 Cluster A: cluster_000043 / 开发者在开发者工具链中遇到的「信息分散、文档不完整」问题
 Cluster B: cluster_000044 / 开发者在开发者工具链中遇到的「文档不完整」问题
 Similarity Score: 67.94
@@ -3487,9 +4167,43 @@ Latest Review: 未审核
 
 ---
 
-### 103. 合并建议
+### 123. 合并建议
 
-Candidate ID: merge_candidate_000103
+Candidate ID: merge_candidate_000123
+Cluster A: cluster_000056 / 相关用户在相关工作流中遇到的「人工整理低效、检索困难」问题
+Cluster B: cluster_000100 / 研究员在人工智能产业跟踪中遇到的「人工整理低效、检索困难」问题
+Similarity Score: 67.81
+Strength: 中
+
+建议理由：
+这两个需求主题的核心痛点都涉及「人工整理低效、人工整理、检索困难」，且当前替代方案也较相似，综合相似度为67.8。建议人工检查是否可合并为同一类需求。
+
+风险提示：
+需要注意：目标用户不完全一致，领域标签不完全一致。
+
+相似诊断：
+- Title similarity: 75.00
+- Summary similarity: 84.66
+- Pain description similarity: 90.41
+- Workaround similarity: 90.41
+- Persona similarity: 0.00
+- Domain similarity: 0.00
+
+共享关键词：人工整理低效、人工整理、检索困难
+
+Cluster A 代表证据：
+- 未知用户在未标注领域相关工作中遇到需要人工处理的问题，需要进一步人工复核。
+
+Cluster B 代表证据：
+- 研究员在未标注领域相关工作中遇到需要人工处理的问题，需要进一步人工复核。
+
+Latest Review: 未审核
+
+---
+
+### 124. 合并建议
+
+Candidate ID: merge_candidate_000124
 Cluster A: cluster_000060 / 运营在企业知识工作流中遇到的「需求不清晰」问题
 Cluster B: cluster_000062 / 运营在企业知识工作流中遇到的「需求不清晰」问题
 Similarity Score: 67.73
@@ -3521,9 +4235,9 @@ Latest Review: 未审核
 
 ---
 
-### 104. 合并建议
+### 125. 合并建议
 
-Candidate ID: merge_candidate_000104
+Candidate ID: merge_candidate_000125
 Cluster A: cluster_000077 / 相关用户在企业知识工作流中遇到的「信息分散、人工整理低效」问题
 Cluster B: cluster_000084 / 相关用户在企业知识工作流中遇到的「人工整理低效、检索困难」问题
 Similarity Score: 67.15
@@ -3555,43 +4269,9 @@ Latest Review: 未审核
 
 ---
 
-### 105. 合并建议
+### 126. 合并建议
 
-Candidate ID: merge_candidate_000105
-Cluster A: cluster_000053 / 运营在企业知识工作流中遇到的「信息分散、检索困难、文档不完整」问题
-Cluster B: cluster_000059 / 运营在企业知识工作流中遇到的「人工整理低效、检索困难、文档不完整」问题
-Similarity Score: 67.07
-Strength: 中
-
-建议理由：
-这两个需求主题的核心痛点都涉及「文档不完整、知识工作流、检索困难」，且目标用户都有运营，且相关领域都包含企业知识工作流，综合相似度为67.1。建议人工检查是否可合并为同一类需求。
-
-风险提示：
-需要注意：代表性痛点相似度不高。
-
-相似诊断：
-- Title similarity: 85.29
-- Summary similarity: 60.99
-- Pain description similarity: 59.05
-- Workaround similarity: 0.00
-- Persona similarity: 100.00
-- Domain similarity: 100.00
-
-共享关键词：文档不完整、知识工作流、检索困难
-
-Cluster A 代表证据：
-- 企业内部知识库资料太分散，标准作业流程、会议纪要和客户问题散在不同文档。员工搜索不到答案，只能反复问同事，效率低。
-
-Cluster B 代表证据：
-- 标准作业流程、会议纪要和政策更新散在不同文档里，员工很难搜索到最新答案，最后还是手动问同事确认。
-
-Latest Review: 未审核
-
----
-
-### 106. 合并建议
-
-Candidate ID: merge_candidate_000106
+Candidate ID: merge_candidate_000126
 Cluster A: cluster_000067 / 创始人在相关工作流中遇到的「人工整理低效、容易遗漏」问题
 Cluster B: cluster_000074 / 内容团队在内容选题生产中遇到的「信息分散、人工整理低效、容易遗漏」问题
 Similarity Score: 66.51
@@ -3623,9 +4303,9 @@ Latest Review: 未审核
 
 ---
 
-### 107. 合并建议
+### 127. 合并建议
 
-Candidate ID: merge_candidate_000107
+Candidate ID: merge_candidate_000127
 Cluster A: cluster_000054 / 战略与商务拓展团队在相关工作流中遇到的「信息分散、难验证、人工整理低效」问题
 Cluster B: cluster_000067 / 创始人在相关工作流中遇到的「人工整理低效、容易遗漏」问题
 Similarity Score: 66.43
@@ -3657,9 +4337,9 @@ Latest Review: 未审核
 
 ---
 
-### 108. 合并建议
+### 128. 合并建议
 
-Candidate ID: merge_candidate_000108
+Candidate ID: merge_candidate_000128
 Cluster A: cluster_000077 / 相关用户在企业知识工作流中遇到的「信息分散、人工整理低效」问题
 Cluster B: cluster_000080 / 相关用户在企业知识工作流中遇到的「人工整理低效」问题
 Similarity Score: 66.31
@@ -3691,9 +4371,9 @@ Latest Review: 未审核
 
 ---
 
-### 109. 合并建议
+### 129. 合并建议
 
-Candidate ID: merge_candidate_000109
+Candidate ID: merge_candidate_000129
 Cluster A: cluster_000019 / 相关用户在相关工作流中遇到的「信息分散、人工整理低效」问题
 Cluster B: cluster_000047 / 相关用户在相关工作流中遇到的「人工整理低效、流程不可靠」问题
 Similarity Score: 66.25
@@ -3725,9 +4405,9 @@ Latest Review: 未审核
 
 ---
 
-### 110. 合并建议
+### 130. 合并建议
 
-Candidate ID: merge_candidate_000110
+Candidate ID: merge_candidate_000130
 Cluster A: cluster_000003 / 内容团队在人工智能产业跟踪中遇到的「信息分散、检索困难、耗时过多」问题
 Cluster B: cluster_000030 / 内容团队在内容选题生产中遇到的「信息分散、流程不可靠、耗时过多」问题
 Similarity Score: 66.18
@@ -3759,9 +4439,9 @@ Latest Review: 未审核
 
 ---
 
-### 111. 合并建议
+### 131. 合并建议
 
-Candidate ID: merge_candidate_000111
+Candidate ID: merge_candidate_000131
 Cluster A: cluster_000013 / 开发者在开发者工具链中遇到的「信息分散、文档不完整」问题
 Cluster B: cluster_000051 / 开发者在开发者工具链中遇到的「信息分散」问题
 Similarity Score: 65.98
@@ -3793,9 +4473,9 @@ Latest Review: 未审核
 
 ---
 
-### 112. 合并建议
+### 132. 合并建议
 
-Candidate ID: merge_candidate_000112
+Candidate ID: merge_candidate_000132
 Cluster A: cluster_000026 / 内容团队在内容选题生产中遇到的「信息分散、检索困难、耗时过多」问题
 Cluster B: cluster_000075 / 内容团队在内容选题生产中遇到的「信息分散、耗时过多」问题
 Similarity Score: 65.79
@@ -3827,43 +4507,9 @@ Latest Review: 未审核
 
 ---
 
-### 113. 合并建议
+### 133. 合并建议
 
-Candidate ID: merge_candidate_000113
-Cluster A: cluster_000018 / 内容团队在人工智能产业跟踪中遇到的「信息分散、人工整理低效、容易遗漏」问题
-Cluster B: cluster_000057 / 研究员在相关工作流中遇到的「信息分散、难验证、人工整理低效」问题
-Similarity Score: 65.71
-Strength: 中
-
-建议理由：
-这两个需求主题的核心痛点都涉及「人工整理低效、人工整理、信息分散」，且当前替代方案也较相似，综合相似度为65.7。建议人工检查是否可合并为同一类需求。
-
-风险提示：
-需要注意：目标用户不完全一致，领域标签不完全一致。
-
-相似诊断：
-- Title similarity: 60.87
-- Summary similarity: 77.97
-- Pain description similarity: 100.00
-- Workaround similarity: 90.41
-- Persona similarity: 0.00
-- Domain similarity: 0.00
-
-共享关键词：人工整理低效、人工整理、信息分散
-
-Cluster A 代表证据：
-- 投研同事每天看公众号、融资新闻、代码托管平台 和产品更新，信息太分散，人工整理很耗时，还容易漏掉关键发布。
-
-Cluster B 代表证据：
-- 咨询团队写行业报告时，访谈纪要、PDF 和数据表分散在各处。研究员要人工整理证据，很难快速核对引用来源。
-
-Latest Review: 未审核
-
----
-
-### 114. 合并建议
-
-Candidate ID: merge_candidate_000114
+Candidate ID: merge_candidate_000133
 Cluster A: cluster_000004 / 开发者在开发者工具链中遇到的「检索困难、文档不完整」问题
 Cluster B: cluster_000044 / 开发者在开发者工具链中遇到的「文档不完整」问题
 Similarity Score: 65.60
@@ -3895,9 +4541,43 @@ Latest Review: 未审核
 
 ---
 
-### 115. 合并建议
+### 134. 合并建议
 
-Candidate ID: merge_candidate_000115
+Candidate ID: merge_candidate_000134
+Cluster A: cluster_000096 / 投资人在人工智能产业跟踪中遇到的「信息分散」问题
+Cluster B: cluster_000102 / 投资人在人工智能产业跟踪中遇到的「信息分散、容易遗漏」问题
+Similarity Score: 65.45
+Strength: 中
+
+建议理由：
+这两个需求主题的核心痛点都涉及「产业跟踪、信息分散、替代方案」，且目标用户都有投资人，且相关领域都包含人工智能投资研究，综合相似度为65.5。建议人工检查是否可合并为同一类需求。
+
+风险提示：
+需要注意：代表性痛点相似度不高。
+
+相似诊断：
+- Title similarity: 90.57
+- Summary similarity: 94.95
+- Pain description similarity: 14.41
+- Workaround similarity: 0.00
+- Persona similarity: 100.00
+- Domain similarity: 100.00
+
+共享关键词：产业跟踪、信息分散、替代方案
+
+Cluster A 代表证据：
+- 一位早期投资人在播客中描述：'我们错过了一个项目，因为在追踪这家公司的6个月里，信息来源太分散——有时从Twitter看到消息，有时从朋友圈，有时从行业报告。
+
+Cluster B 代表证据：
+- 投资人在未标注领域相关工作中遇到容易遗漏的问题，需要进一步人工复核。
+
+Latest Review: 未审核
+
+---
+
+### 135. 合并建议
+
+Candidate ID: merge_candidate_000135
 Cluster A: cluster_000054 / 战略与商务拓展团队在相关工作流中遇到的「信息分散、难验证、人工整理低效」问题
 Cluster B: cluster_000074 / 内容团队在内容选题生产中遇到的「信息分散、人工整理低效、容易遗漏」问题
 Similarity Score: 65.26
@@ -3929,9 +4609,9 @@ Latest Review: 未审核
 
 ---
 
-### 116. 合并建议
+### 136. 合并建议
 
-Candidate ID: merge_candidate_000116
+Candidate ID: merge_candidate_000136
 Cluster A: cluster_000010 / 研究员在相关工作流中遇到的「难验证、人工整理低效、耗时过多」问题
 Cluster B: cluster_000057 / 研究员在相关工作流中遇到的「信息分散、难验证、人工整理低效」问题
 Similarity Score: 64.83
@@ -3963,9 +4643,9 @@ Latest Review: 未审核
 
 ---
 
-### 117. 合并建议
+### 137. 合并建议
 
-Candidate ID: merge_candidate_000117
+Candidate ID: merge_candidate_000137
 Cluster A: cluster_000056 / 相关用户在相关工作流中遇到的「人工整理低效、检索困难」问题
 Cluster B: cluster_000067 / 创始人在相关工作流中遇到的「人工整理低效、容易遗漏」问题
 Similarity Score: 64.75
@@ -3997,9 +4677,9 @@ Latest Review: 未审核
 
 ---
 
-### 118. 合并建议
+### 138. 合并建议
 
-Candidate ID: merge_candidate_000118
+Candidate ID: merge_candidate_000138
 Cluster A: cluster_000030 / 内容团队在内容选题生产中遇到的「信息分散、流程不可靠、耗时过多」问题
 Cluster B: cluster_000075 / 内容团队在内容选题生产中遇到的「信息分散、耗时过多」问题
 Similarity Score: 64.45
@@ -4031,9 +4711,9 @@ Latest Review: 未审核
 
 ---
 
-### 119. 合并建议
+### 139. 合并建议
 
-Candidate ID: merge_candidate_000119
+Candidate ID: merge_candidate_000139
 Cluster A: cluster_000023 / 研究员在相关工作流中遇到的「信息分散、人工整理低效、耗时过多」问题
 Cluster B: cluster_000057 / 研究员在相关工作流中遇到的「信息分散、难验证、人工整理低效」问题
 Similarity Score: 64.28
@@ -4065,9 +4745,9 @@ Latest Review: 未审核
 
 ---
 
-### 120. 合并建议
+### 140. 合并建议
 
-Candidate ID: merge_candidate_000120
+Candidate ID: merge_candidate_000140
 Cluster A: cluster_000079 / 相关用户在企业知识工作流中遇到的「需求不清晰」问题
 Cluster B: cluster_000084 / 相关用户在企业知识工作流中遇到的「人工整理低效、检索困难」问题
 Similarity Score: 64.04
@@ -4099,9 +4779,9 @@ Latest Review: 未审核
 
 ---
 
-### 121. 合并建议
+### 141. 合并建议
 
-Candidate ID: merge_candidate_000121
+Candidate ID: merge_candidate_000141
 Cluster A: cluster_000040 / 开发者在人工智能智能体工作流中遇到的「需求不清晰」问题
 Cluster B: cluster_000049 / 开发者在开发者工具链中遇到的「检索困难」问题
 Similarity Score: 63.98
@@ -4133,9 +4813,9 @@ Latest Review: 未审核
 
 ---
 
-### 122. 合并建议
+### 142. 合并建议
 
-Candidate ID: merge_candidate_000122
+Candidate ID: merge_candidate_000142
 Cluster A: cluster_000010 / 研究员在相关工作流中遇到的「难验证、人工整理低效、耗时过多」问题
 Cluster B: cluster_000022 / 研究员在相关工作流中遇到的「信息分散、人工整理低效」问题
 Similarity Score: 63.91
@@ -4167,9 +4847,9 @@ Latest Review: 未审核
 
 ---
 
-### 123. 合并建议
+### 143. 合并建议
 
-Candidate ID: merge_candidate_000123
+Candidate ID: merge_candidate_000143
 Cluster A: cluster_000080 / 相关用户在企业知识工作流中遇到的「人工整理低效」问题
 Cluster B: cluster_000084 / 相关用户在企业知识工作流中遇到的「人工整理低效、检索困难」问题
 Similarity Score: 63.87
@@ -4201,9 +4881,9 @@ Latest Review: 未审核
 
 ---
 
-### 124. 合并建议
+### 144. 合并建议
 
-Candidate ID: merge_candidate_000124
+Candidate ID: merge_candidate_000144
 Cluster A: cluster_000066 / 内容团队在内容选题生产中遇到的「信息分散」问题
 Cluster B: cluster_000075 / 内容团队在内容选题生产中遇到的「信息分散、耗时过多」问题
 Similarity Score: 63.85
@@ -4235,9 +4915,9 @@ Latest Review: 未审核
 
 ---
 
-### 125. 合并建议
+### 145. 合并建议
 
-Candidate ID: merge_candidate_000125
+Candidate ID: merge_candidate_000145
 Cluster A: cluster_000005 / 研究员在相关工作流中遇到的「信息分散、难验证、检索困难」问题
 Cluster B: cluster_000022 / 研究员在相关工作流中遇到的「信息分散、人工整理低效」问题
 Similarity Score: 63.81
@@ -4269,9 +4949,43 @@ Latest Review: 未审核
 
 ---
 
-### 126. 合并建议
+### 146. 合并建议
 
-Candidate ID: merge_candidate_000126
+Candidate ID: merge_candidate_000146
+Cluster A: cluster_000003 / 内容团队在人工智能产业跟踪中遇到的「信息分散、检索困难、耗时过多」问题
+Cluster B: cluster_000102 / 投资人在人工智能产业跟踪中遇到的「信息分散、容易遗漏」问题
+Similarity Score: 63.77
+Strength: 中
+
+建议理由：
+这两个需求主题的核心痛点都涉及「产业跟踪、信息分散、替代方案」，且相关领域都包含人工智能投资研究，综合相似度为63.8。建议人工检查是否可合并为同一类需求。
+
+风险提示：
+需要注意：目标用户不完全一致。
+
+相似诊断：
+- Title similarity: 68.75
+- Summary similarity: 81.82
+- Pain description similarity: 78.26
+- Workaround similarity: 0.00
+- Persona similarity: 0.00
+- Domain similarity: 100.00
+
+共享关键词：产业跟踪、信息分散、替代方案
+
+Cluster A 代表证据：
+- 内容团队在未标注领域相关工作中遇到耗时过多的问题，需要进一步人工复核。
+
+Cluster B 代表证据：
+- 投资人在未标注领域相关工作中遇到容易遗漏的问题，需要进一步人工复核。
+
+Latest Review: 未审核
+
+---
+
+### 147. 合并建议
+
+Candidate ID: merge_candidate_000147
 Cluster A: cluster_000002 / 研究员、运营在人工智能智能体工作流中遇到的「人工整理低效、检索困难、流程不可靠」问题
 Cluster B: cluster_000035 / 运营在人工智能智能体工作流中遇到的「人工整理低效、流程不可靠」问题
 Similarity Score: 63.69
@@ -4304,9 +5018,43 @@ Latest Review: 未审核
 
 ---
 
-### 127. 合并建议
+### 148. 合并建议
 
-Candidate ID: merge_candidate_000127
+Candidate ID: merge_candidate_000148
+Cluster A: cluster_000062 / 运营在企业知识工作流中遇到的「需求不清晰」问题
+Cluster B: cluster_000090 / 相关用户在企业知识工作流中遇到的「信息分散」问题
+Similarity Score: 63.22
+Strength: 中
+
+建议理由：
+这两个需求主题的核心痛点都涉及「知识工作流、替代方案」，且相关领域都包含企业知识工作流，综合相似度为63.2。建议人工检查是否可合并为同一类需求。
+
+风险提示：
+需要注意：目标用户不完全一致。
+
+相似诊断：
+- Title similarity: 68.09
+- Summary similarity: 81.25
+- Pain description similarity: 77.14
+- Workaround similarity: 0.00
+- Persona similarity: 0.00
+- Domain similarity: 100.00
+
+共享关键词：知识工作流、替代方案
+
+Cluster A 代表证据：
+- 运营在未标注领域相关工作中遇到依赖临时方案的问题，需要进一步人工复核。
+
+Cluster B 代表证据：
+- 未知用户在未标注领域相关工作中遇到信息分散的问题，需要进一步人工复核。
+
+Latest Review: 未审核
+
+---
+
+### 149. 合并建议
+
+Candidate ID: merge_candidate_000149
 Cluster A: cluster_000005 / 研究员在相关工作流中遇到的「信息分散、难验证、检索困难」问题
 Cluster B: cluster_000023 / 研究员在相关工作流中遇到的「信息分散、人工整理低效、耗时过多」问题
 Similarity Score: 63.11
@@ -4338,9 +5086,9 @@ Latest Review: 未审核
 
 ---
 
-### 128. 合并建议
+### 150. 合并建议
 
-Candidate ID: merge_candidate_000128
+Candidate ID: merge_candidate_000150
 Cluster A: cluster_000012 / 创始人在人工智能智能体工作流中遇到的「人工整理低效、容易遗漏、总结困难」问题
 Cluster B: cluster_000035 / 运营在人工智能智能体工作流中遇到的「人工整理低效、流程不可靠」问题
 Similarity Score: 63.05
@@ -4372,9 +5120,9 @@ Latest Review: 未审核
 
 ---
 
-### 129. 合并建议
+### 151. 合并建议
 
-Candidate ID: merge_candidate_000129
+Candidate ID: merge_candidate_000151
 Cluster A: cluster_000026 / 内容团队在内容选题生产中遇到的「信息分散、检索困难、耗时过多」问题
 Cluster B: cluster_000066 / 内容团队在内容选题生产中遇到的「信息分散」问题
 Similarity Score: 62.96
@@ -4406,9 +5154,9 @@ Latest Review: 未审核
 
 ---
 
-### 130. 合并建议
+### 152. 合并建议
 
-Candidate ID: merge_candidate_000130
+Candidate ID: merge_candidate_000152
 Cluster A: cluster_000065 / 相关用户在相关工作流中遇到的「需求不清晰」问题
 Cluster B: cluster_000069 / 相关用户在相关工作流中遇到的「耗时过多」问题
 Similarity Score: 62.81
@@ -4440,9 +5188,9 @@ Latest Review: 未审核
 
 ---
 
-### 131. 合并建议
+### 153. 合并建议
 
-Candidate ID: merge_candidate_000131
+Candidate ID: merge_candidate_000153
 Cluster A: cluster_000075 / 内容团队在内容选题生产中遇到的「信息分散、耗时过多」问题
 Cluster B: cluster_000076 / 内容团队在内容选题生产中遇到的「信息分散」问题
 Similarity Score: 62.66
