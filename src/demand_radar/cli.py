@@ -85,6 +85,13 @@ from demand_radar.targeted_expansion.expansion_report import (
 from demand_radar.targeted_expansion.expansion_store import (
     load_expansion_summary, load_truth_score_deltas, write_expansion_summary,
 )
+from demand_radar.mvp_d.evidence_consolidator import consolidate_evidence
+from demand_radar.mvp_d.expansion_extraction import run_expansion_extraction
+from demand_radar.mvp_d.mvp_d_pipeline import run_mvp_d
+from demand_radar.mvp_d.query_generator import generate_queries
+from demand_radar.mvp_d.seed_selector import select_seeds
+from demand_radar.mvp_d.seeded_acquisition import run_seeded_acquisition
+from demand_radar.mvp_d.theme_grouping import build_demand_themes
 app = typer.Typer(help="Domain-Bounded Demand Radar Stage 1 CLI.")
 calibration_review_app = typer.Typer(help="Human calibration review commands.")
 app.add_typer(calibration_review_app, name="calibration-review")
@@ -622,6 +629,140 @@ def run_stage28(
     typer.echo(
         f"Stage 2.8 complete — AI 主流程已处理 {auto_confirmed} 条自动确认、"
         f"{auto_rejected} 条自动拒绝，{human_exceptions} 条进入人工异常队列。"
+    )
+
+
+@app.command("select-expansion-seeds")
+def select_expansion_seeds_command(
+    domain: Annotated[str, typer.Option("--domain")] = "ai_investment_tracking",
+    max_seeds: Annotated[int | None, typer.Option("--max-seeds")] = None,
+    max_queries: Annotated[int | None, typer.Option("--max-queries")] = None,
+    max_results: Annotated[int | None, typer.Option("--max-results")] = None,
+    use_cache: Annotated[bool, typer.Option("--use-cache/--no-cache")] = True,
+) -> None:
+    """Select reviewed pain seeds for MVP-D expansion."""
+    seeds, summary = select_seeds(max_seeds_override=max_seeds)
+    typer.echo(
+        "Built MVP-D seed profiles -> data/processed/mvp_d/seed_profiles.jsonl "
+        f"(seeds={len(seeds)}, eligible={summary.eligible_seeds}, optional={summary.optional_seeds})"
+    )
+
+
+@app.command("build-seeded-query-plan")
+def build_seeded_query_plan_command(
+    domain: Annotated[str, typer.Option("--domain")] = "ai_investment_tracking",
+    max_seeds: Annotated[int | None, typer.Option("--max-seeds")] = None,
+    max_queries: Annotated[int | None, typer.Option("--max-queries")] = None,
+    max_results: Annotated[int | None, typer.Option("--max-results")] = None,
+    use_cache: Annotated[bool, typer.Option("--use-cache/--no-cache")] = True,
+) -> None:
+    """Build targeted query plan from MVP-D seeds."""
+    from demand_radar.mvp_d.seed_selector import select_seeds
+    seeds, _ = select_seeds(max_seeds_override=max_seeds)
+    queries = generate_queries(seeds, max_queries_total=max_queries)
+    typer.echo(
+        "Built MVP-D query plan -> data/processed/mvp_d/seeded_query_plan.jsonl "
+        f"(queries={len(queries)})"
+    )
+
+
+@app.command("run-seeded-acquisition")
+def run_seeded_acquisition_command(
+    domain: Annotated[str, typer.Option("--domain")] = "ai_investment_tracking",
+    max_seeds: Annotated[int | None, typer.Option("--max-seeds")] = None,
+    max_queries: Annotated[int | None, typer.Option("--max-queries")] = None,
+    max_results: Annotated[int | None, typer.Option("--max-results")] = None,
+    use_cache: Annotated[bool, typer.Option("--use-cache/--no-cache")] = True,
+) -> None:
+    """Run MVP-D seeded acquisition with existing connectors."""
+    candidates, summary = run_seeded_acquisition(max_queries=max_queries, max_results=max_results)
+    typer.echo(
+        "Built MVP-D acquisition candidates -> data/processed/mvp_d/expansion_evidence_candidates.jsonl "
+        f"(candidates={len(candidates)}, allowed={summary['allowed_by_gate']}, blocked={summary['blocked_by_gate']})"
+    )
+
+
+@app.command("run-expansion-extraction")
+def run_expansion_extraction_command(
+    domain: Annotated[str, typer.Option("--domain")] = "ai_investment_tracking",
+    max_seeds: Annotated[int | None, typer.Option("--max-seeds")] = None,
+    max_queries: Annotated[int | None, typer.Option("--max-queries")] = None,
+    max_results: Annotated[int | None, typer.Option("--max-results")] = None,
+    use_cache: Annotated[bool, typer.Option("--use-cache/--no-cache")] = True,
+) -> None:
+    """Run MVP-D domain relevance + pain extraction on expansion candidates."""
+    relevance_rows, pain_rows, summary = run_expansion_extraction(max_items=max_results, use_cache=use_cache)
+    typer.echo(
+        "Built MVP-D extraction outputs -> data/processed/mvp_d/expansion_pain_items.jsonl "
+        f"(selected={summary['selected_for_llm']}, should_extract_true={summary['should_extract_true']})"
+    )
+
+
+@app.command("build-demand-themes")
+def build_demand_themes_command(
+    domain: Annotated[str, typer.Option("--domain")] = "ai_investment_tracking",
+    max_seeds: Annotated[int | None, typer.Option("--max-seeds")] = None,
+    max_queries: Annotated[int | None, typer.Option("--max-queries")] = None,
+    max_results: Annotated[int | None, typer.Option("--max-results")] = None,
+    use_cache: Annotated[bool, typer.Option("--use-cache/--no-cache")] = True,
+) -> None:
+    """Build lightweight demand themes from MVP-D evidence consolidation."""
+    consolidate_evidence()
+    themes = build_demand_themes(
+        Path("data/processed/mvp_d/seed_profiles.jsonl"),
+        Path("data/processed/mvp_d/seed_evidence_consolidation.jsonl"),
+        Path("data/processed/mvp_d/consolidated_evidence_themes.jsonl"),
+        Path("outputs/mvp_d/demand_theme_grouping_report.md"),
+    )
+    typer.echo(
+        "Built MVP-D demand themes -> data/processed/mvp_d/consolidated_evidence_themes.jsonl "
+        f"(themes={len(themes)})"
+    )
+
+
+@app.command("build-mvp-d-report")
+def build_mvp_d_report_command(
+    domain: Annotated[str, typer.Option("--domain")] = "ai_investment_tracking",
+    max_seeds: Annotated[int | None, typer.Option("--max-seeds")] = None,
+    max_queries: Annotated[int | None, typer.Option("--max-queries")] = None,
+    max_results: Annotated[int | None, typer.Option("--max-results")] = None,
+    use_cache: Annotated[bool, typer.Option("--use-cache/--no-cache")] = True,
+) -> None:
+    """Build the MVP-D summary report from stored outputs."""
+    summary = run_mvp_d(
+        domain_id=domain,
+        use_cache=use_cache,
+        max_seeds=max_seeds,
+        max_queries=max_queries,
+        max_results=max_results,
+    )
+    typer.echo(
+        "Built MVP-D summary -> outputs/mvp_d/mvp_d_summary_report.md "
+        f"(engineering={summary.engineering_acceptance}, product={summary.product_acceptance})"
+    )
+
+
+@app.command("run-mvp-d")
+def run_mvp_d_command(
+    domain: Annotated[str, typer.Option("--domain")] = "ai_investment_tracking",
+    max_seeds: Annotated[int | None, typer.Option("--max-seeds")] = None,
+    max_queries: Annotated[int | None, typer.Option("--max-queries")] = None,
+    max_results: Annotated[int | None, typer.Option("--max-results")] = None,
+    use_cache: Annotated[bool, typer.Option("--use-cache/--no-cache")] = True,
+) -> None:
+    """Run MVP-D seeded evidence expansion end-to-end."""
+    summary = run_mvp_d(
+        domain_id=domain,
+        use_cache=use_cache,
+        max_seeds=max_seeds,
+        max_queries=max_queries,
+        max_results=max_results,
+    )
+    typer.echo(
+        "MVP-D complete -> outputs/mvp_d/mvp_d_summary_report.md "
+        f"(seeds={summary.eligible_seeds}, queries={summary.total_queries}, "
+        f"candidates={summary.unique_new_signals}, themes={summary.themes}, "
+        f"engineering={summary.engineering_acceptance}, product={summary.product_acceptance})"
     )
 
 

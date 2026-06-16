@@ -1,0 +1,79 @@
+﻿seeded_expansion:
+  domain_id: ai_investment_tracking
+  domain_title_zh: "投资人 / 研究员 AI 产业跟踪与项目初筛"
+
+  input:
+    extracted_pain_items_path: data/processed/mvp_b/extracted_pain_items.jsonl
+    reviews_path: data/processed/mvp_c/pain_signal_reviews.jsonl
+    domain_relevance_scores_path: data/processed/mvp_b/domain_relevance_scores.jsonl
+    existing_candidates_path: data/processed/acquisition/evidence_candidates.jsonl
+
+  output:
+    seed_profiles_path: data/processed/mvp_d/seed_profiles.jsonl
+    query_plan_path: data/processed/mvp_d/seeded_query_plan.jsonl
+    expansion_evidence_candidates_path: data/processed/mvp_d/expansion_evidence_candidates.jsonl
+    expansion_domain_relevance_path: data/processed/mvp_d/expansion_domain_relevance_scores.jsonl
+    expansion_pain_items_path: data/processed/mvp_d/expansion_pain_items.jsonl
+    seed_consolidation_path: data/processed/mvp_d/seed_evidence_consolidation.jsonl
+    consolidated_evidence_path: data/processed/mvp_d/consolidated_evidence_themes.jsonl
+
+  seed_selection:
+    include_true_pain: true
+    include_uncertain_pain: false
+    allowed_actions:
+      - needs_more_evidence
+      - watch
+    min_evidence_quality:
+      - medium
+      - strong
+    max_seeds: 5
+
+  query_generation:
+    max_queries_per_seed: 8
+    include_persona_terms: true
+    include_workflow_terms: true
+    include_pain_terms: true
+    include_competitor_terms: true
+    include_problem_terms: true
+    language:
+      - en
+
+  acquisition:
+    use_existing_connectors_only: true
+    connectors:
+      - hacker_news
+      - github_issues
+      - rss
+    max_results_per_query: 20
+    max_total_new_signals: 120
+    dedupe_against_existing: true
+
+  gates:
+    block_example_domains: true
+    block_placeholder: true
+    block_synthetic: true
+    require_source_url: true
+    require_raw_text_min_chars: 120
+    allow_source_types:
+      - hacker_news
+      - github_issue
+      - rss
+      - web_page
+      - community_discussion
+
+  llm:
+    enabled: true
+    provider_env: LLM_PROVIDER
+    model_env: LLM_MODEL
+    default_provider: responses_compatible
+    default_model: claude-sonnet-4-6
+    temperature: 0
+    max_tokens: 4000
+    cache_enabled: true
+    run_scope: demand_radar_mvp_d_seeded_expansion
+    prompt_version: acquired_signal_pain_extraction_v1
+
+  theme_grouping:
+    enabled: true
+    method: lightweight_rules
+    min_evidence_per_theme: 2

@@ -124,7 +124,7 @@ def run_mvp_b(
 
     inc = sum(1 for r in rel_dicts if r.get("relevance_decision") == "include")
     unc = sum(1 for r in rel_dicts if r.get("relevance_decision") == "uncertain")
-    exc = sum(1 for r in rel_dicts if r.get("relevance_decision") == "exclude")
+    exclude_n = sum(1 for r in rel_dicts if r.get("relevance_decision") == "exclude")
 
     # Step 3: Pain extraction
     pain_out = pain_output or _PAIN_OUT
@@ -150,8 +150,8 @@ def run_mvp_b(
                 "warning": sum(1 for v in vals_b if v.status == "warning"),
                 "invalid": sum(1 for v in vals_b if v.status == "invalid"),
             }
-    except Exception as exc:
-        errors.append(f"R1 before validation error: {exc}")
+    except Exception as err:
+        errors.append(f"R1 before validation error: {err}")
 
     # Step 5: Fill evidence pack
     filled = filled_csv_output or _FILLED_CSV
@@ -176,8 +176,8 @@ def run_mvp_b(
             "warning": sum(1 for v in vals_a if v.status == "warning"),
             "invalid": sum(1 for v in vals_a if v.status == "invalid"),
         }
-    except Exception as exc:
-        errors.append(f"R1 after validation error: {exc}")
+    except Exception as err:
+        errors.append(f"R1 after validation error: {err}")
 
     # Step 7: Reports
     build_domain_relevance_report(rel_dicts)
@@ -196,7 +196,7 @@ def run_mvp_b(
         candidates_processed=len(candidates),
         include_count=inc,
         uncertain_count=unc,
-        exclude_count=exc,
+        exclude_count=exclude_n,
         pain_processed=len(pain_items),
         should_extract_count=should_n,
         strong_count=strong_n,

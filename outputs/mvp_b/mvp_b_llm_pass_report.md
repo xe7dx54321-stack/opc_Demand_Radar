@@ -2,10 +2,10 @@
 
 ## Run Metadata
 
-- generated_at: 2026-06-16T02:24:09Z
-- radar_commit: 4f9ba3f
+- generated_at: 2026-06-16T14:33:39Z
+- radar_commit: c3a06e7
 - foundation_commit: b6d23bc
-- provider: fake
+- provider: none
 - model: none
 - real_llm_run: False
 - prompt_version: acquired_signal_pain_extraction_v1
@@ -14,29 +14,29 @@
 ## Input Summary
 
 - total_candidates: 5
-- include: 0
+- include: 5
 - uncertain: 0
-- selected_for_llm: 0
+- selected_for_llm: 5
 
 ## LLM Extraction Summary
 
-- processed: 0
+- processed: 5
 - should_extract_true: 0
-- rejected: 0
+- rejected: 5
 - strong: 0
 - medium: 0
 - weak: 0
-- reject_strength: 0
+- reject_strength: 5
 - failures: 0
 - cache_hits: 0
 
 ## Quality Checks
 
-- evidence_quote_present: 0/0
+- evidence_quote_present: 0/5
 - evidence_quote_matched_raw_text: 0/1
-- persona_populated: 0/0
-- workflow_stage_populated: 0/0
-- pain_type_populated: 0/0
+- persona_populated: 0/5
+- workflow_stage_populated: 0/5
+- pain_type_populated: 0/5
 - commercial_signal_count: 0
 
 ## Top Extracted Pain Items

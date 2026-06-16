@@ -1,11 +1,11 @@
 # MVP-B Summary Report
 
-- Generated at: 2026-06-16T02:24:09Z
+- Generated at: 2026-06-16T14:33:39Z
 
 ## Domain Relevance
 
-- Total candidates: 144
-- Include: 6 | Exclude: 136
+- Total candidates: 5
+- Include: 5 | Exclude: 0
 
 ## Pain Extraction
 
@@ -15,8 +15,8 @@
 
 ## R1 Validation Comparison
 
-- Before (draft): valid=0 warning=0 invalid=0
-- After (filled): valid=0 warning=0 invalid=0
+- Before (draft): valid=0 warning=136 invalid=0
+- After (filled): valid=0 warning=136 invalid=0
 
 ## Product Acceptance
 

@@ -126,6 +126,8 @@ Stage 2.8 activates AI semantic merge as the main pipeline. AI automatically pro
 
 Stage 2.9 runs a real LLM semantic merge pilot. The system calls an OpenAI-compatible or Anthropic-compatible API to judge merge candidates with structured JSON output, strict schema and confidence gates, and a separate cache. Results are stored in llm_* paths so rule_based outputs are never overwritten. A comparison report shows decision shifts, exception rate changes, and new LLM reviewed groups.
 
+MVP-D adds seeded evidence expansion from human-reviewed pain signals. It reads MVP-C reviews, selects true pains that need more evidence, generates targeted acquisition queries, runs existing HN/GitHub/RSS connectors, gates out placeholder/example/synthetic signals, reuses MVP-B relevance and extraction, and groups consolidated evidence into lightweight demand themes.
+
 ## Stage 1 Scope
 
 The current pipeline is intentionally narrow:
@@ -1503,6 +1505,78 @@ With test fake LLM (no API key needed):
 ```bash
 demand-radar run-mvp-b --domain ai_investment_tracking --fake-llm --max-items 20
 ```
+
+## MVP-D: Seeded Evidence Expansion
+
+MVP-D answers the question after MVP-C review: "these pain signals look real, but can the radar find more supporting evidence around them?"
+
+It does not modify `opc-foundation`, does not add new connectors, does not introduce vector databases or complex clustering, and does not turn weak evidence into product decisions. It only expands from reviewed seeds into more evidence.
+
+Pipeline:
+
+```text
+MVP-C pain_signal_reviews
+  -> seed_profiles
+  -> seeded_query_plan
+  -> seeded acquisition with existing connectors
+  -> real signal gate
+  -> MVP-B domain relevance + pain extraction
+  -> seed evidence consolidation
+  -> lightweight demand themes
+  -> MVP-D reports
+```
+
+Run end to end:
+
+```bash
+demand-radar run-mvp-d --domain ai_investment_tracking
+```
+
+Useful limits for local iteration:
+
+```bash
+demand-radar run-mvp-d --domain ai_investment_tracking --max-seeds 5 --max-queries 20 --max-results 10
+```
+
+Step-by-step commands:
+
+```bash
+demand-radar select-expansion-seeds --domain ai_investment_tracking
+demand-radar build-seeded-query-plan --domain ai_investment_tracking
+demand-radar run-seeded-acquisition --domain ai_investment_tracking
+demand-radar run-expansion-extraction --domain ai_investment_tracking
+demand-radar build-demand-themes --domain ai_investment_tracking
+demand-radar build-mvp-d-report --domain ai_investment_tracking
+```
+
+Outputs:
+
+```text
+configs/seeded_expansion_config.yaml
+data/processed/mvp_d/seed_profiles.jsonl
+data/processed/mvp_d/seeded_query_plan.jsonl
+data/processed/mvp_d/expansion_evidence_candidates.jsonl
+data/processed/mvp_d/expansion_domain_relevance_scores.jsonl
+data/processed/mvp_d/expansion_pain_items.jsonl
+data/processed/mvp_d/seed_evidence_consolidation.jsonl
+data/processed/mvp_d/consolidated_evidence_themes.jsonl
+outputs/mvp_d/seed_selection_report.md
+outputs/mvp_d/seeded_query_plan_report.md
+outputs/mvp_d/seeded_acquisition_report.md
+outputs/mvp_d/real_signal_gate_report.md
+outputs/mvp_d/expansion_pain_extraction_report.md
+outputs/mvp_d/seed_evidence_consolidation_report.md
+outputs/mvp_d/demand_theme_grouping_report.md
+outputs/mvp_d/mvp_d_summary_report.md
+```
+
+The Review UI includes a read-only `MVP-D 证据扩展` tab showing seeds, query plan, acquisition counts, consolidation status, and lightweight themes:
+
+```bash
+demand-radar review-ui --port 8502
+```
+
+Without an LLM client, MVP-D still runs and clearly reports `real_llm_run: false`; extraction items become rejects rather than fake production positives.
 
 ### Domain Relevance Filter
 

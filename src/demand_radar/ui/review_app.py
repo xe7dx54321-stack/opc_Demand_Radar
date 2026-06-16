@@ -532,9 +532,9 @@ def main() -> None:
 
 
 
-    pain_tab, cluster_tab, merge_tab, ai_judge_tab, exception_tab, llm_tab, truth_tab, gap_tab, expansion_tab, lineage_tab, stage35_tab, real_evidence_tab, acquisition_tab, mvp_b_tab, mvp_c_tab, batch_tab = st.tabs(
+    pain_tab, cluster_tab, merge_tab, ai_judge_tab, exception_tab, llm_tab, truth_tab, gap_tab, expansion_tab, lineage_tab, stage35_tab, real_evidence_tab, acquisition_tab, mvp_b_tab, mvp_c_tab, mvp_d_tab, batch_tab = st.tabs(
         ["痛点校准", "需求主题候选", "合并建议审核", "AI合并判断", "人工异常队列", "LLM合并对比", "真实需求评分", "证据缺口分析", "定向证据扩展", "候选谱系追踪",
-        "Stage 3.5 定向验证", "真实证据校准", "自动采集", "MVP-B 痛点抽取", "MVP-C 人工校准", "批次总览"]
+        "Stage 3.5 定向验证", "真实证据校准", "自动采集", "MVP-B 痛点抽取", "MVP-C 人工校准", "MVP-D 证据扩展", "批次总览"]
     )
 
     with pain_tab:
@@ -591,6 +591,9 @@ def main() -> None:
 
     with mvp_c_tab:
         _render_mvp_c_page()
+
+    with mvp_d_tab:
+        _render_mvp_d_page()
 
     with batch_tab:
 
@@ -3502,6 +3505,110 @@ def _render_mvp_c_page() -> None:
                 st.error("\u4fdd\u5b58\u5931\u8d25: " + st.session_state[err_key])
 
 
+
+
+def _render_mvp_d_page() -> None:
+    import streamlit as st
+    from demand_radar.ui.mvp_d_service import (
+        get_demand_themes,
+        get_expansion_candidates,
+        get_expansion_pain_items,
+        get_mvp_d_overview,
+        get_seed_consolidations,
+        get_seed_profiles,
+        get_seeded_query_plan,
+    )
+
+    st.subheader("MVP-D 证据扩展")
+    st.caption("围绕人工确认的 pain seeds 生成定向查询、采集新证据，并做轻量需求主题归组。")
+
+    try:
+        overview = get_mvp_d_overview()
+        seeds = get_seed_profiles()
+        queries = get_seeded_query_plan()
+        candidates = get_expansion_candidates()
+        pain_items = get_expansion_pain_items()
+        consolidations = get_seed_consolidations()
+        themes = get_demand_themes()
+    except Exception as exc:
+        st.warning(f"MVP-D 数据加载失败: {exc}")
+        return
+
+    if not seeds and not queries and not candidates and not themes:
+        st.info("尚未运行 MVP-D。请先执行: demand-radar run-mvp-d --domain ai_investment_tracking")
+        return
+
+    c1, c2, c3, c4, c5 = st.columns(5)
+    c1.metric("Eligible Seeds", overview["eligible_seeds"])
+    c2.metric("Queries", overview["total_queries"])
+    c3.metric("Candidates", overview["expansion_candidates"])
+    c4.metric("New Pain", overview["new_extracted_pain"])
+    c5.metric("Themes", overview["themes"])
+
+    status_cols = st.columns(4)
+    status_cols[0].metric("Engineering", overview.get("engineering_acceptance") or "n/a")
+    status_cols[1].metric("Product", overview.get("product_acceptance") or "n/a")
+    status_cols[2].metric("Second Review", "yes" if overview.get("can_enter_second_review") else "no")
+    status_cols[3].metric("Discovery", "yes" if overview.get("can_enter_product_discovery") else "no")
+    if overview.get("reason"):
+        st.info(str(overview["reason"]))
+
+    st.divider()
+    st.markdown("**Seed Profiles**")
+    for seed in seeds[:10]:
+        title = seed.get("title") or seed.get("pain_item_id") or seed.get("seed_id") or "seed"
+        with st.expander(str(title)[:100]):
+            st.write("Seed ID: " + str(seed.get("seed_id", "-")))
+            st.write("Pain Item: " + str(seed.get("pain_item_id", "-")))
+            st.write("Persona: " + str(seed.get("persona", "-")))
+            st.write("Workflow: " + str(seed.get("workflow_stage", "-")))
+            st.write("Pain Type: " + str(seed.get("pain_type", "-")))
+            st.write("Priority: " + str(seed.get("expansion_priority", "-")))
+            if seed.get("source_url"):
+                st.write("URL: " + str(seed["source_url"]))
+            if seed.get("pain_description_zh"):
+                st.caption(str(seed["pain_description_zh"])[:300])
+
+    st.markdown("**Query Plan**")
+    by_connector: dict[str, int] = {}
+    for query in queries:
+        connector = query.get("connector", "unknown")
+        by_connector[connector] = by_connector.get(connector, 0) + 1
+    if by_connector:
+        st.write("By connector: " + ", ".join(f"{k}: {v}" for k, v in sorted(by_connector.items())))
+    for query in queries[:20]:
+        st.caption(
+            f"{query.get('query_id')} | {query.get('connector')} | "
+            f"{query.get('query_type')} | {query.get('query')}"
+        )
+
+    st.markdown("**Seeded Acquisition**")
+    st.write(f"Raw candidates: {len(candidates)}")
+    st.write(f"Expanded pain items: {sum(1 for item in pain_items if item.get('should_extract'))}")
+
+    st.markdown("**Evidence Consolidation**")
+    if not consolidations:
+        st.info("尚无 consolidation 结果。")
+    for item in consolidations:
+        st.write(
+            f"{item.get('seed_id')} -> {item.get('recommendation')} | "
+            f"new_candidates={item.get('new_related_candidates_count')} | "
+            f"new_pain={item.get('new_extracted_pain_count')}"
+        )
+
+    st.markdown("**Demand Themes**")
+    if not themes:
+        st.info("尚无轻量需求主题。")
+    for theme in themes:
+        with st.expander(str(theme.get("theme_title_zh") or theme.get("theme_id"))):
+            st.write("Recommendation: " + str(theme.get("action_recommendation", "-")))
+            st.write("Evidence count: " + str(theme.get("evidence_count", 0)))
+            st.write("Reviewed seeds: " + str(theme.get("reviewed_seed_count", 0)))
+            st.write("New evidence: " + str(theme.get("new_evidence_count", 0)))
+            st.write("Commercial: " + str(theme.get("commercial_potential", "-")))
+            st.write("Confidence: " + str(theme.get("confidence", "-")))
+            if theme.get("theme_summary_zh"):
+                st.caption(str(theme["theme_summary_zh"])[:500])
 
 
 def _render_stage35_page() -> None:
