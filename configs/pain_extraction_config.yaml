@@ -1,0 +1,28 @@
+﻿pain_extraction:
+  enabled: true
+  provider_env: DEMAND_RADAR_LLM_PROVIDER
+  model_env: DEMAND_RADAR_LLM_MODEL
+  default_provider: openai_compatible
+  default_model: claude-sonnet-4-6
+
+  input:
+    evidence_candidates_path: data/processed/acquisition/evidence_candidates.jsonl
+    draft_csv_path: examples/real_evidence_pack_ai_investment_tracking_draft.csv
+
+  output:
+    domain_relevance_scores_path: data/processed/mvp_b/domain_relevance_scores.jsonl
+    extracted_pain_items_path: data/processed/mvp_b/extracted_pain_items.jsonl
+    filled_evidence_pack_path: examples/real_evidence_pack_ai_investment_tracking_filled.csv
+    r1_validation_after_extraction_path: outputs/mvp_b/r1_validation_after_extraction_report.md
+    top_pain_signals_report_path: outputs/mvp_b/top_pain_signals_report.md
+
+  limits:
+    max_items: 150
+    max_raw_text_chars: 6000
+    min_relevance_score_for_extraction: 0.45
+
+  cache:
+    enabled: true
+    prompt_version: pain_extraction_v1
+    run_scope: demand_radar_mvp_b
+    cache_dir: .llm_cache/mvp_b

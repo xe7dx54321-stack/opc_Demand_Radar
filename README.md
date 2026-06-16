@@ -1452,3 +1452,153 @@ outputs/acquisition/acquisition_report.md
 outputs/acquisition/evidence_pack_draft_report.md
 outputs/radar/radar_report.md
 ```
+## MVP-B: Domain Relevance Filtering & Pain Extraction
+
+### Overview
+
+MVP-B upgrades the system from "can acquire signals" to "can understand signals."
+After MVP-A collects raw evidence candidates via automated acquisition, MVP-B applies:
+
+1. **Domain Relevance Filter** — Filters out off-domain content (e.g. recipe apps, unrelated GitHub repos) using rule-based keyword scoring with optional LLM fallback for uncertain cases.
+2. **Pain Extraction** — Uses an LLM to extract structured pain signals from domain-relevant candidates: persona, workflow, pain type, evidence quote, workaround, and commercial signals.
+3. **Evidence Pack Filling** — Fills the draft CSV from MVP-A with extracted business fields, making it R1-validator-compatible.
+4. **Reports** — Generates domain relevance, pain extraction, top pain signals, and summary reports.
+
+```
+evidence_candidates.jsonl (from MVP-A)
+        |
+        v
+Domain Relevance Filter (rule + optional LLM)
+        |
+        +-- include / uncertain --> Pain Extraction (LLM)
+        |                               |
+        |                               v
+        |                        ExtractedPainItem
+        |                               |
+        +-- exclude                     |
+        |                               v
+        +-----> Evidence Pack Filler (fills draft CSV)
+                        |
+                        v
+        R1 Validation (before vs. after comparison)
+                        |
+                        v
+                   Reports
+```
+
+### Running MVP-B
+
+```bash
+# Full MVP-B pipeline (domain relevance + pain extraction + fill + reports)
+demand-radar run-mvp-b --domain ai_investment_tracking
+
+# Or step by step:
+demand-radar run-domain-relevance --domain ai_investment_tracking
+demand-radar run-pain-extraction --domain ai_investment_tracking
+demand-radar fill-evidence-pack --domain ai_investment_tracking
+demand-radar build-mvp-b-report --domain ai_investment_tracking
+```
+
+With test fake LLM (no API key needed):
+```bash
+demand-radar run-mvp-b --domain ai_investment_tracking --fake-llm --max-items 20
+```
+
+### Domain Relevance Filter
+
+Configured in `configs/domain_relevance_config.yaml`.
+
+**Rule scoring:**
+- Strong positive keywords (investment research, VC, deal sourcing, etc.): +0.25 each
+- Weak positive keywords (research automation, company data, etc.): +0.10 each
+- Target workflow keywords (investment research, deal sourcing, etc.): +0.20
+- Target persona keywords (investor, vc analyst, etc.): +0.20
+- Negative keywords (recipe, meal plan, fitness, game, etc.): -0.40 each
+- High-trust source types (community_discussion, github_issue): +0.05
+
+**Thresholds:**
+- `>= 0.65` → `include`
+- `0.45-0.64` → `uncertain` (LLM called if client configured)
+- `< 0.45` → `exclude`
+
+### Pain Extraction
+
+Configured in `configs/pain_extraction_config.yaml`.
+
+For each `include` or `uncertain` candidate with `relevance_score >= 0.45`, the LLM prompt extracts:
+- `persona` + `persona_confidence`
+- `workflow_stage`
+- `job_to_be_done`
+- `pain_type`
+- `pain_description_zh`
+- `evidence_quote` (required — must come from raw_text)
+- `current_solution`, `paid_alternative`, `business_impact`
+- `time_cost_signal`, `budget_signal`
+- `commercial_signal_type`
+- `evidence_strength` (strong / medium / weak / reject)
+- `confidence`
+
+**Hard rules:**
+- `should_extract=True` without `evidence_quote` → auto-reject
+- `evidence_strength=strong` requires `persona + workflow_stage + pain_description_zh + evidence_quote`
+- LLM failure after 1 retry → reject (pipeline continues)
+- Results are cached in `.llm_cache/mvp_b/` — reruns are fast
+
+### Evidence Pack Filling
+
+The filler merges relevance and pain results back into the draft CSV:
+- Fills `persona`, `workflow_stage`, `pain_type`, `evidence_quote`, `current_solution`, etc.
+- Sets `evidence_type` based on extracted signals
+- Sets `exclude_from_scoring=true` for: excluded by domain filter, rejected by pain extraction, synthetic items
+
+### LLM Configuration
+
+MVP-B uses the same LLM client as the rest of Demand Radar:
+```bash
+DEMAND_RADAR_LLM_BASE_URL=http://127.0.0.1:8787/v1
+DEMAND_RADAR_LLM_MODEL=claude-sonnet-4-6
+DEMAND_RADAR_LLM_API_KEY=your_key
+```
+
+Without LLM configured, the pipeline still runs rule-based domain filtering but produces 0 extracted pain items (all `should_extract=False` with reason "no LLM client configured").
+
+### Output Files
+
+```
+data/processed/mvp_b/
+  domain_relevance_scores.jsonl    # DomainRelevanceResult for all candidates
+  extracted_pain_items.jsonl       # ExtractedPainItem for all candidates
+  r1_items.jsonl, r1_validation.jsonl      # R1 validation before
+  r1_items_after.jsonl, r1_val_after.jsonl # R1 validation after filling
+
+examples/
+  real_evidence_pack_ai_investment_tracking_filled.csv  # MVP-B output
+
+outputs/mvp_b/
+  domain_relevance_report.md
+  pain_extraction_report.md
+  top_pain_signals_report.md
+  mvp_b_summary_report.md
+```
+
+### MVP-B Acceptance Criteria
+
+| Criterion | Threshold |
+|---|---|
+| Domain relevance filter runs | required |
+| Pain extraction runs | required (LLM or graceful fallback) |
+| should_extract_true | >= 10 (with LLM) |
+| evidence_strength strong + medium | >= 5 (with LLM) |
+| Top pain signals have persona + workflow | required |
+| All pipeline errors non-fatal | required |
+
+### UI Tab: MVP-B 痛点抽取
+
+The Streamlit UI includes a read-only MVP-B tab showing:
+- Domain relevance include/uncertain/exclude counts
+- Pain extraction strong/medium/reject counts
+- Top 20 pain signals with expandable detail cards
+
+```bash
+demand-radar review-ui --port 8502
+```

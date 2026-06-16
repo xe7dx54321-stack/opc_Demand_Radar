@@ -1,0 +1,79 @@
+﻿domain_relevance:
+  domain_id: ai_investment_tracking
+  domain_title_zh: "投资人 / 研究员 AI 产业跟踪与项目初筛"
+
+  target_personas:
+    - investor
+    - venture capitalist
+    - vc analyst
+    - pe analyst
+    - investment researcher
+    - market researcher
+    - financial analyst
+    - startup scout
+    - founder researching market
+    - ai industry analyst
+
+  target_workflows:
+    - investment research
+    - deal sourcing
+    - startup screening
+    - company tracking
+    - market monitoring
+    - due diligence
+    - memo preparation
+    - portfolio tracking
+    - competitor tracking
+    - industry research
+
+  strong_positive_keywords:
+    - investment research
+    - venture capital
+    - " VC "
+    - " PE "
+    - deal sourcing
+    - due diligence
+    - startup tracking
+    - company tracking
+    - market intelligence
+    - financial research
+    - equity research
+    - stock research
+    - analyst workflow
+    - portfolio monitoring
+    - business research
+    - thesisboard
+    - meticulate
+    - investment thesis
+    - fund research
+    - startup scout
+
+  weak_positive_keywords:
+    - research automation
+    - deep research
+    - company data
+    - startup data
+    - market map
+    - competitive intelligence
+    - industry monitoring
+    - lead sourcing
+
+  negative_keywords:
+    - recipe
+    - meal plan
+    - food tracking
+    - diet
+    - fitness app
+    - meal planner
+    - PlanEat
+    - dating app
+    - ecommerce product listing
+    - personal calendar
+    - general chatbot demo
+
+  thresholds:
+    include: 0.65
+    uncertain: 0.45
+    exclude: 0.44
+
+  max_items_for_llm: 150

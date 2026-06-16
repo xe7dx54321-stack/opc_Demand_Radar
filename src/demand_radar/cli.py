@@ -1959,3 +1959,161 @@ def build_acquisition_report_command(
     summary = AcquisitionRunSummary(**run_logs[-1])
     out = build_acquisition_report(summary, candidates)
     typer.echo(f"Report: {out}")
+
+@app.command("run-mvp-b")
+def run_mvp_b_command(
+    domain: Annotated[str, typer.Option("--domain")] = "ai_investment_tracking",
+    max_items: Annotated[int | None, typer.Option("--max-items")] = None,
+    fake_llm: Annotated[bool, typer.Option("--fake-llm/--no-fake-llm")] = False,
+    no_cache: Annotated[bool, typer.Option("--no-cache")] = False,
+) -> None:
+    """Run MVP-B: domain relevance filter + pain extraction on acquired candidates."""
+    from demand_radar.mvp_b.mvp_b_pipeline import run_mvp_b
+    from demand_radar.semantic_merge.llm_client import make_llm_client, FakeLLMClient
+    import yaml, os
+    typer.echo(f"[run-mvp-b] domain={domain} max_items={max_items} fake_llm={fake_llm}")
+    llm_client = None
+    if fake_llm:
+        import json
+        fake_response = json.dumps({
+            "candidate_id": "cand_fake",
+            "should_extract": True,
+            "reject_reason": None,
+            "persona": "investment researcher",
+            "persona_confidence": 0.8,
+            "workflow_stage": "company_tracking",
+            "job_to_be_done": "Track AI startups efficiently",
+            "pain_type": "manual_workflow",
+            "pain_description_zh": "手动追踪 AI 创业公司耗时低效",
+            "evidence_quote": "We spend hours manually tracking AI startups",
+            "current_solution": "spreadsheet",
+            "paid_alternative": None,
+            "business_impact": "3 hours per week wasted",
+            "time_cost_signal": "3 hours per week",
+            "budget_signal": None,
+            "commercial_signal_type": "manual_labor_cost",
+            "evidence_strength": "medium",
+            "confidence": 0.75,
+            "reasoning_summary_zh": "Fake extraction for testing"
+        })
+        llm_client = FakeLLMClient(default=fake_response)
+    else:
+        provider = os.environ.get("DEMAND_RADAR_LLM_PROVIDER", "openai_compatible")
+        llm_conf = {"llm": {
+            "base_url_env": "DEMAND_RADAR_LLM_BASE_URL",
+            "api_key_env": "DEMAND_RADAR_LLM_API_KEY",
+            "model": os.environ.get("DEMAND_RADAR_LLM_MODEL", "claude-sonnet-4-6"),
+        }}
+        try:
+            llm_client = make_llm_client(provider, llm_conf)
+        except Exception as exc:
+            typer.echo(f"LLM client init failed: {exc}. Running without LLM (rule-only).", err=True)
+    try:
+        result = run_mvp_b(domain_id=domain, max_items=max_items, llm_client=llm_client)
+        typer.echo(
+            f"MVP-B complete: candidates={result.candidates_processed} "
+            f"include={result.include_count} exclude={result.exclude_count} "
+            f"extracted={result.should_extract_count} strong={result.strong_count}"
+        )
+        typer.echo(f"R1 before: {result.r1_before}")
+        typer.echo(f"R1 after: {result.r1_after}")
+        if result.filled_csv:
+            typer.echo(f"Filled CSV: {result.filled_csv}")
+        if result.errors:
+            typer.echo(f"Errors: {result.errors[:3]}", err=True)
+    except Exception as exc:
+        typer.echo(f"[run-mvp-b] Error: {exc}", err=True)
+        raise typer.Exit(code=1)
+
+
+@app.command("run-domain-relevance")
+def run_domain_relevance_command(
+    domain: Annotated[str, typer.Option("--domain")] = "ai_investment_tracking",
+    max_items: Annotated[int | None, typer.Option("--max-items")] = None,
+) -> None:
+    """Run domain relevance filter (rule-based) on evidence candidates."""
+    import json
+    from pathlib import Path as _Path2
+    from demand_radar.mvp_b.domain_relevance_filter import run_domain_relevance_filter
+    from demand_radar.mvp_b.mvp_b_store import write_relevance_results
+    _cands_p = _Path2("data/processed/acquisition/evidence_candidates.jsonl")
+    cands = []
+    if _cands_p.exists():
+        for line in _cands_p.read_text(encoding="utf-8").splitlines():
+            if line.strip():
+                try:
+                    cands.append(json.loads(line))
+                except Exception:
+                    pass
+    if max_items:
+        cands = cands[:max_items]
+    results = run_domain_relevance_filter(cands)
+    write_relevance_results(results)
+    inc = sum(1 for r in results if r.relevance_decision == "include")
+    exc = sum(1 for r in results if r.relevance_decision == "exclude")
+    unc = sum(1 for r in results if r.relevance_decision == "uncertain")
+    typer.echo(f"Domain relevance: {len(results)} candidates | include={inc} uncertain={unc} exclude={exc}")
+
+
+@app.command("run-pain-extraction")
+def run_pain_extraction_command(
+    domain: Annotated[str, typer.Option("--domain")] = "ai_investment_tracking",
+    max_items: Annotated[int | None, typer.Option("--max-items")] = None,
+    fake_llm: Annotated[bool, typer.Option("--fake-llm/--no-fake-llm")] = False,
+) -> None:
+    """Run pain extraction LLM on domain-relevant candidates."""
+    import os
+    from demand_radar.mvp_b.mvp_b_store import load_relevance_dicts, load_pain_dicts, write_pain_items
+    from demand_radar.mvp_b.pain_extraction_runner import run_pain_extraction
+    from demand_radar.acquisition.acquisition_store import load_evidence_candidates
+    from demand_radar.semantic_merge.llm_client import make_llm_client, FakeLLMClient
+    candidates = [c.model_dump() for c in load_evidence_candidates()]
+    rel_dicts = load_relevance_dicts()
+    if max_items:
+        candidates = candidates[:max_items]
+    llm_client = None
+    if fake_llm:
+        llm_client = FakeLLMClient(default='{"candidate_id":"x","should_extract":false,"reject_reason":"fake","evidence_strength":"reject","confidence":0.0}')
+    else:
+        provider = os.environ.get("DEMAND_RADAR_LLM_PROVIDER", "openai_compatible")
+        llm_conf = {"llm": {"base_url_env": "DEMAND_RADAR_LLM_BASE_URL", "api_key_env": "DEMAND_RADAR_LLM_API_KEY", "model": os.environ.get("DEMAND_RADAR_LLM_MODEL", "claude-sonnet-4-6")}}
+        try:
+            llm_client = make_llm_client(provider, llm_conf)
+        except Exception as exc:
+            typer.echo(f"LLM init error: {exc}", err=True)
+    items = run_pain_extraction(candidates, rel_dicts, llm_client=llm_client, max_items=max_items)
+    write_pain_items(items)
+    extracted_n = sum(1 for p in items if p.should_extract)
+    typer.echo(f"Pain extraction: {len(items)} items | extracted={extracted_n}")
+
+
+@app.command("fill-evidence-pack")
+def fill_evidence_pack_command(
+    domain: Annotated[str, typer.Option("--domain")] = "ai_investment_tracking",
+) -> None:
+    """Fill evidence pack draft CSV with extracted pain fields."""
+    from demand_radar.mvp_b.evidence_pack_filler import fill_evidence_pack
+    from demand_radar.mvp_b.mvp_b_store import load_relevance_dicts, load_pain_dicts
+    rel_dicts = load_relevance_dicts()
+    pain_dicts = load_pain_dicts()
+    out = fill_evidence_pack(relevance_dicts=rel_dicts, pain_dicts=pain_dicts)
+    typer.echo(f"Filled evidence pack: {out}")
+
+
+@app.command("build-mvp-b-report")
+def build_mvp_b_report_command(
+    domain: Annotated[str, typer.Option("--domain")] = "ai_investment_tracking",
+) -> None:
+    """Build all MVP-B reports from stored data."""
+    from demand_radar.mvp_b.mvp_b_store import load_relevance_dicts, load_pain_dicts
+    from demand_radar.mvp_b.mvp_b_report import (
+        build_domain_relevance_report, build_pain_extraction_report,
+        build_top_pain_signals_report, build_mvp_b_summary_report,
+    )
+    rel = load_relevance_dicts()
+    pain = load_pain_dicts()
+    r1 = build_domain_relevance_report(rel)
+    r2 = build_pain_extraction_report(pain)
+    r3 = build_top_pain_signals_report(pain)
+    r4 = build_mvp_b_summary_report(rel, pain, {}, {})
+    typer.echo(f"Reports: {r1} | {r2} | {r3} | {r4}")
