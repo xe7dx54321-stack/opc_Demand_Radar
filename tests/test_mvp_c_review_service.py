@@ -25,7 +25,7 @@ def _pain_dict(pid, should_extract=True, strength="medium"):
         "confidence": 0.75,
         "created_at": "2026-01-01T00:00:00Z",
         "title": f"Test Signal {pid}",
-        "source_url": f"https://example.com/{pid}",
+        "source_url": f"https://news.ycombinator.com/item?id={pid}",
         "source_type": "community_discussion",
         "persona": "VC analyst",
         "workflow_stage": "deal_sourcing",

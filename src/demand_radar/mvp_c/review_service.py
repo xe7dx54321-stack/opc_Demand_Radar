@@ -1,12 +1,12 @@
-﻿"""MVP-C: Review service - loads pain items + reviews for UI."""
+﻿"""MVP-C: Review service - loads pain items + reviews for UI, with real signal gate."""
 from __future__ import annotations
 import json
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from pathlib import Path
-from typing import Any
 
 from demand_radar.mvp_c.review_schema import PainSignalReview, PainSignalReviewSummary
 from demand_radar.mvp_c.review_store import PainSignalReviewStore
+from demand_radar.mvp_c.real_pain_signal_gate import run_gate, GateResult
 
 _PAIN_ITEMS_PATH = Path("data/processed/mvp_b/extracted_pain_items.jsonl")
 
@@ -15,7 +15,7 @@ def _load_jsonl(path: Path) -> list[dict]:
     if not path.exists():
         return []
     out = []
-    for line in path.read_text(encoding="utf-8").splitlines():
+    for line in path.read_text(encoding="utf-8", errors="replace").splitlines():
         if line.strip():
             try:
                 out.append(json.loads(line))
@@ -44,6 +44,14 @@ class PainSignalCard:
     existing_review: PainSignalReview | None = None
 
 
+@dataclass
+class GateSummary:
+    total_items: int
+    reviewable_count: int
+    blocked_count: int
+    blocked_reasons: dict[str, int]
+
+
 class ReviewService:
     def __init__(
         self,
@@ -53,6 +61,31 @@ class ReviewService:
         self._pain_path = pain_items_path or _PAIN_ITEMS_PATH
         self._store = store or PainSignalReviewStore()
 
+    def _load_all_items(self) -> list[dict]:
+        return _load_jsonl(self._pain_path)
+
+    def _get_gated_items(self) -> tuple[list[dict], list[GateResult]]:
+        """Return (allowed_items_dicts, blocked_results)."""
+        all_items = self._load_all_items()
+        extracted = [p for p in all_items if p.get("should_extract")]
+        allowed_results, blocked_results = run_gate(extracted)
+        allowed_ids = {r.pain_item_id for r in allowed_results}
+        allowed_items = [p for p in extracted if p.get("pain_item_id") in allowed_ids]
+        return allowed_items, blocked_results
+
+    def get_gate_summary(self) -> GateSummary:
+        from collections import Counter
+        all_items = self._load_all_items()
+        extracted = [p for p in all_items if p.get("should_extract")]
+        allowed_results, blocked_results = run_gate(extracted)
+        reasons = Counter(r.block_reason for r in blocked_results if r.block_reason)
+        return GateSummary(
+            total_items=len(extracted),
+            reviewable_count=len(allowed_results),
+            blocked_count=len(blocked_results),
+            blocked_reasons=dict(reasons),
+        )
+
     def load_pain_signal_cards(
         self,
         only_extracted: bool = True,
@@ -60,13 +93,11 @@ class ReviewService:
         filter_action: str | None = None,
         reviewed_only: bool | None = None,
     ) -> list[PainSignalCard]:
-        items = _load_jsonl(self._pain_path)
-        if only_extracted:
-            items = [p for p in items if p.get("should_extract")]
-
+        allowed_items, _ = self._get_gated_items()
         reviews = {r.pain_item_id: r for r in self._store.load_reviews()}
         cards: list[PainSignalCard] = []
-        for p in items:
+
+        for p in allowed_items:
             pid = p.get("pain_item_id", "")
             rev = reviews.get(pid)
 
@@ -104,11 +135,26 @@ class ReviewService:
 
     def get_summary(self) -> PainSignalReviewSummary:
         from demand_radar.mvp_b.pain_extraction_schema import ExtractedPainItem
-        raw_items = _load_jsonl(self._pain_path)
+        # Only count gated (allowed) items in summary
+        # Use model_construct to bypass strict validation for incomplete dicts
+        allowed_items, _ = self._get_gated_items()
         pain_items = []
-        for d in raw_items:
+        for d in allowed_items:
             try:
-                pain_items.append(ExtractedPainItem(**d))
+                item = ExtractedPainItem.model_construct(
+                    pain_item_id=d.get("pain_item_id", ""),
+                    candidate_id=d.get("candidate_id", ""),
+                    should_extract=bool(d.get("should_extract", False)),
+                    evidence_strength=d.get("evidence_strength", "reject"),
+                    confidence=float(d.get("confidence", 0.0)),
+                    prompt_version=d.get("prompt_version", "unknown"),
+                    created_at=d.get("created_at", ""),
+                    **{k: v for k, v in d.items() if k not in (
+                        "pain_item_id", "candidate_id", "should_extract",
+                        "evidence_strength", "confidence", "prompt_version", "created_at"
+                    )},
+                )
+                pain_items.append(item)
             except Exception:
                 pass
         return self._store.build_summary(pain_items)

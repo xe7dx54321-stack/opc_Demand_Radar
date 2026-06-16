@@ -3272,74 +3272,121 @@ def _render_mvp_c_page() -> None:
     from demand_radar.mvp_c.review_service import ReviewService
     from demand_radar.mvp_c.review_store import PainSignalReviewStore
     from demand_radar.mvp_c.review_schema import PainSignalReview
+    from demand_radar.mvp_c.real_pain_signal_gate import run_gate, build_gate_report, quarantine_stale_reviews
     from demand_radar.state.raw_store import next_ids, utc_now_iso
+    from pathlib import Path
 
-    st.subheader("MVP-C 人工校准 (Pain Signal Review Workbench)")
+    st.subheader("MVP-C \u4eba\u5de5\u6821\u51c6 (Pain Signal Review Workbench)")
 
     store = PainSignalReviewStore()
     svc = ReviewService(store=store)
+
+    # --- Gate Summary ---
+    try:
+        gate_summary = svc.get_gate_summary()
+    except Exception as exc:
+        st.error("\u65e0\u6cd5\u52a0\u8f7d gate: " + str(exc))
+        return
+
+    with st.expander("\u4fe1\u53f7\u95f8\u9053\u72b6\u6001 (Source Gate)", expanded=True):
+        gc1, gc2, gc3 = st.columns(3)
+        gc1.metric("\u62bd\u53d6\u603b\u6570", gate_summary.total_items)
+        gc2.metric("\u53ef\u5ba1\u6838 (Reviewable)", gate_summary.reviewable_count)
+        gc3.metric("\u88ab\u62e6\u622a (Blocked)", gate_summary.blocked_count, delta=None)
+        if gate_summary.blocked_count > 0:
+            st.warning("\u4ee5\u4e0b\u9879\u76ee\u5df2\u88ab\u62e6\u622a\uff0c\u4e0d\u8fdb\u5165 review\uff1a")
+            for reason, count in gate_summary.blocked_reasons.items():
+                st.write("- " + str(count) + "\u6761: " + str(reason))
+        else:
+            st.success("\u6240\u6709\u4fe1\u53f7\u5747\u6765\u81ea\u771f\u5b9e\u91c7\u96c6\uff0c\u65e0\u62e6\u622a\u9879\u76ee\u3002")
+
+    if gate_summary.reviewable_count == 0:
+        st.error("\u9519\u8bef\uff1a\u6ca1\u6709\u53ef\u5ba1\u6838\u7684\u771f\u5b9e pain signals\u3002\u8bf7\u786e\u8ba4\u5df2\u8fd0\u884c MVP-B LLM pass: demand-radar run-mvp-b --domain ai_investment_tracking")
+        return
+
+    # Quarantine stale reviews for blocked items
+    reviews_path = Path("data/processed/mvp_c/pain_signal_reviews.jsonl")
+    if reviews_path.exists() and gate_summary.blocked_count > 0:
+        try:
+            from demand_radar.mvp_c.real_pain_signal_gate import run_gate, _load_jsonl
+            all_items = _load_jsonl(Path("data/processed/mvp_b/extracted_pain_items.jsonl"))
+            extracted = [p for p in all_items if p.get("should_extract")]
+            allowed_results, _ = run_gate(extracted)
+            allowed_ids = {r.pain_item_id for r in allowed_results}
+            kept, quarantined = quarantine_stale_reviews(reviews_path, allowed_ids)
+            if quarantined > 0:
+                st.info(str(quarantined) + " \u4e2a\u65e7 review \u5df2\u79fb\u5165\u9694\u79bb\u533a (quarantined_reviews.jsonl)\uff0c\u4e0d\u8ba1\u5165\u5f53\u524d\u6c47\u603b\u3002")
+        except Exception as exc:
+            st.warning("\u9694\u79bb\u65e7 review \u5931\u8d25: " + str(exc))
 
     # --- Summary ---
     try:
         summary = svc.get_summary()
     except Exception as exc:
-        st.error("无法加载 pain signals: " + str(exc))
-        return
-
-    if summary.total_pain_items == 0:
-        st.info("未找到已抽取的 pain signals。请先运行: demand-radar run-mvp-b --domain ai_investment_tracking")
+        st.error("\u65e0\u6cd5\u52a0\u8f7d\u6c47\u603b: " + str(exc))
         return
 
     c1, c2, c3, c4 = st.columns(4)
     c1.metric("Pain Signals", summary.total_pain_items)
-    c2.metric("已审核", summary.reviewed_count)
-    c3.metric("待审核", summary.unreviewed_count)
+    c2.metric("\u5df2\u5ba1\u6838", summary.reviewed_count)
+    c3.metric("\u5f85\u5ba1\u6838", summary.unreviewed_count)
     c4.metric("True Pain", summary.true_pain_count)
 
     c5, c6, c7, c8 = st.columns(4)
     c5.metric("Pursue", summary.pursue_count)
     c6.metric("Watch", summary.watch_count)
     c7.metric("Reject", summary.reject_count)
-    c8.metric("需要更多证据", summary.needs_more_evidence_count)
+    c8.metric("\u9700\u8981\u66f4\u591a\u8bc1\u636e", summary.needs_more_evidence_count)
 
     st.divider()
 
     # --- Filters ---
     col_f1, col_f2, col_f3 = st.columns(3)
     with col_f1:
-        show_filter = st.selectbox("显示", ["全部", "待审核", "已审核"], key="mvpc_show_filter")
+        show_filter = st.selectbox("\u663e\u793a", ["\u5168\u90e8", "\u5f85\u5ba1\u6838", "\u5df2\u5ba1\u6838"], key="mvpc_show_filter")
     with col_f2:
-        strength_filter = st.selectbox("强度筛选", ["全部", "strong", "medium", "weak"], key="mvpc_strength")
+        strength_filter = st.selectbox("\u5f3a\u5ea6\u7b5b\u9009", ["\u5168\u90e8", "strong", "medium", "weak"], key="mvpc_strength")
     with col_f3:
-        action_filter = st.selectbox("决策筛选", ["全部", "pursue", "watch", "reject", "needs_more_evidence"], key="mvpc_action")
+        action_filter = st.selectbox("\u51b3\u7b56\u7b5b\u9009", ["\u5168\u90e8", "pursue", "watch", "reject", "needs_more_evidence"], key="mvpc_action")
 
     reviewed_only = None
-    if show_filter == "待审核":
+    if show_filter == "\u5f85\u5ba1\u6838":
         reviewed_only = False
-    elif show_filter == "已审核":
+    elif show_filter == "\u5df2\u5ba1\u6838":
         reviewed_only = True
 
     cards = svc.load_pain_signal_cards(
-        filter_strength=strength_filter if strength_filter != "全部" else None,
-        filter_action=action_filter if action_filter != "全部" else None,
+        filter_strength=strength_filter if strength_filter != "\u5168\u90e8" else None,
+        filter_action=action_filter if action_filter != "\u5168\u90e8" else None,
         reviewed_only=reviewed_only,
     )
 
     if not cards:
-        st.info("当前筛选条件下没有 pain signals。")
+        st.info("\u5f53\u524d\u7b5b\u9009\u6761\u4ef6\u4e0b\u6ca1\u6709 pain signals\u3002")
         return
 
-    st.markdown(f"**显示 {len(cards)} 条 pain signals**")
+    st.markdown("**\u663e\u793a " + str(len(cards)) + " \u6761\u771f\u5b9e pain signals**")
 
-    # --- Pain Signal Cards ---
+    TP_OPTIONS = ["\u4e0d\u786e\u5b9a", "\u662f", "\u5426"]
+    COMM_OPTIONS = ["unclear", "high", "medium", "low"]
+    EXTRACT_OPTIONS = ["good", "partial", "bad"]
+    DOMAIN_OPTIONS = ["good", "too_loose", "too_strict", "wrong_domain"]
+    EVIDENCE_OPTIONS = ["strong", "medium", "weak", "fake_or_insufficient"]
+    ACTION_OPTIONS = ["needs_more_evidence", "pursue", "watch", "reject"]
+    ERROR_OPTIONS = [
+        "bad_persona", "bad_workflow", "bad_pain_type", "bad_quote",
+        "hallucinated_field", "missed_commercial_signal", "domain_out",
+        "duplicate", "too_generic", "source_too_weak",
+    ]
+
     for card in cards:
         reviewed = card.existing_review is not None
-        badge = "✅" if reviewed else "⬜"
+        badge = "\u2705" if reviewed else "\u2b1c"
         label = badge + " " + (card.title or card.pain_item_id)[:80]
         with st.expander(label, expanded=not reviewed):
             col_a, col_b = st.columns(2)
             with col_a:
-                st.markdown("**基本信息**")
+                st.markdown("**\u57fa\u672c\u4fe1\u606f**")
                 st.write("Persona: " + str(card.persona or "-"))
                 st.write("Workflow: " + str(card.workflow_stage or "-"))
                 st.write("Pain Type: " + str(card.pain_type or "-"))
@@ -3348,24 +3395,23 @@ def _render_mvp_c_page() -> None:
                 if card.source_url:
                     st.write("URL: " + card.source_url)
             with col_b:
-                st.markdown("**痛点内容**")
+                st.markdown("**\u75db\u70b9\u5185\u5bb9**")
                 if card.pain_description_zh:
-                    st.caption("痛点: " + card.pain_description_zh[:300])
+                    st.caption("\u75db\u70b9: " + card.pain_description_zh[:300])
                 if card.evidence_quote:
-                    st.caption("原文证据: " + card.evidence_quote[:250])
+                    st.caption("\u539f\u6587\u8bc1\u636e: " + card.evidence_quote[:250])
                 if card.current_solution:
-                    st.write("当前方案: " + card.current_solution[:100])
+                    st.write("\u5f53\u524d\u65b9\u6848: " + card.current_solution[:100])
                 if card.commercial_signal_type:
-                    st.write("商业信号: " + card.commercial_signal_type)
+                    st.write("\u5546\u4e1a\u4fe1\u53f7: " + card.commercial_signal_type)
 
             st.divider()
-            st.markdown("**人工审核**")
+            st.markdown("**\u4eba\u5de5\u5ba1\u6838**")
 
             pid = card.pain_item_id
             existing = card.existing_review
-            key_prefix = "mvpc_" + pid.replace("_", "").replace(".", "")
+            key_prefix = "mvpc_" + pid.replace("_", "").replace(".", "")[:20]
 
-            # Pre-fill from existing review
             default_true_pain_idx = 0
             default_commercial_idx = 0
             default_extraction_idx = 0
@@ -3373,22 +3419,7 @@ def _render_mvp_c_page() -> None:
             default_evidence_idx = 0
             default_action_idx = 0
             default_note = ""
-            default_prompt_fix = ""
-            default_rule_fix = ""
-            default_sw_fix = ""
             default_error_labels = []
-
-            TP_OPTIONS = ["不确定", "是", "否"]
-            COMM_OPTIONS = ["unclear", "high", "medium", "low"]
-            EXTRACT_OPTIONS = ["good", "partial", "bad"]
-            DOMAIN_OPTIONS = ["good", "too_loose", "too_strict", "wrong_domain"]
-            EVIDENCE_OPTIONS = ["strong", "medium", "weak", "fake_or_insufficient"]
-            ACTION_OPTIONS = ["needs_more_evidence", "pursue", "watch", "reject"]
-            ERROR_OPTIONS = [
-                "bad_persona", "bad_workflow", "bad_pain_type", "bad_quote",
-                "hallucinated_field", "missed_commercial_signal", "domain_out",
-                "duplicate", "too_generic", "source_too_weak",
-            ]
 
             if existing:
                 tp_val = existing.true_pain
@@ -3407,31 +3438,26 @@ def _render_mvp_c_page() -> None:
                 if existing.action_decision and existing.action_decision in ACTION_OPTIONS:
                     default_action_idx = ACTION_OPTIONS.index(existing.action_decision)
                 default_note = existing.reviewer_note_zh or ""
-                default_prompt_fix = existing.suggested_prompt_fix_zh or ""
-                default_rule_fix = existing.suggested_rule_fix_zh or ""
-                default_sw_fix = existing.suggested_source_weight_fix_zh or ""
                 default_error_labels = existing.error_labels or []
 
             r1, r2 = st.columns(2)
             with r1:
-                true_pain_str = st.radio("真痛点?", TP_OPTIONS, index=default_true_pain_idx, key=key_prefix + "_tp", horizontal=True)
-                commercial = st.selectbox("商业化潜力", COMM_OPTIONS, index=default_commercial_idx, key=key_prefix + "_comm")
-                extraction = st.selectbox("抽取质量", EXTRACT_OPTIONS, index=default_extraction_idx, key=key_prefix + "_ext")
+                true_pain_str = st.radio("\u771f\u75db\u70b9?", TP_OPTIONS, index=default_true_pain_idx, key=key_prefix + "_tp", horizontal=True)
+                commercial = st.selectbox("\u5546\u4e1a\u5316\u6f5c\u529b", COMM_OPTIONS, index=default_commercial_idx, key=key_prefix + "_comm")
+                extraction = st.selectbox("\u629b\u53d6\u8d28\u91cf", EXTRACT_OPTIONS, index=default_extraction_idx, key=key_prefix + "_ext")
             with r2:
-                domain_rel = st.selectbox("领域相关性质量", DOMAIN_OPTIONS, index=default_domain_idx, key=key_prefix + "_dom")
-                evidence_q = st.selectbox("证据质量", EVIDENCE_OPTIONS, index=default_evidence_idx, key=key_prefix + "_evq")
-                action = st.selectbox("处置决策", ACTION_OPTIONS, index=default_action_idx, key=key_prefix + "_act")
+                domain_rel = st.selectbox("\u9886\u57df\u76f8\u5173\u6027\u8d28\u91cf", DOMAIN_OPTIONS, index=default_domain_idx, key=key_prefix + "_dom")
+                evidence_q = st.selectbox("\u8bc1\u636e\u8d28\u91cf", EVIDENCE_OPTIONS, index=default_evidence_idx, key=key_prefix + "_evq")
+                action = st.selectbox("\u5904\u7f6e\u51b3\u7b56", ACTION_OPTIONS, index=default_action_idx, key=key_prefix + "_act")
 
-            error_labels = st.multiselect("错误标签 (可多选)", ERROR_OPTIONS, default=default_error_labels, key=key_prefix + "_err")
-            note = st.text_area("审核备注 (中文)", value=default_note, key=key_prefix + "_note", height=60)
-            prompt_fix = st.text_input("建议 prompt 修改", value=default_prompt_fix, key=key_prefix + "_pfix")
-            rule_fix = st.text_input("建议规则修改", value=default_rule_fix, key=key_prefix + "_rfix")
+            error_labels = st.multiselect("\u9519\u8bef\u6807\u7b7e (\u53ef\u591a\u9009)", ERROR_OPTIONS, default=default_error_labels, key=key_prefix + "_err")
+            note = st.text_area("\u5ba1\u6838\u5907\u6ce8 (\u4e2d\u6587)", value=default_note, key=key_prefix + "_note", height=60)
 
-            if st.button("💾 保存审核", key=key_prefix + "_save"):
+            if st.button("\ud83d\udcbe \u4fdd\u5b58\u5ba1\u6838", key=key_prefix + "_save"):
                 true_pain_val = None
-                if true_pain_str == "是":
+                if true_pain_str == "\u662f":
                     true_pain_val = True
-                elif true_pain_str == "否":
+                elif true_pain_str == "\u5426":
                     true_pain_val = False
 
                 now_iso = utc_now_iso()
@@ -3448,14 +3474,12 @@ def _render_mvp_c_page() -> None:
                     action_decision=action,
                     error_labels=error_labels,
                     reviewer_note_zh=note or None,
-                    suggested_prompt_fix_zh=prompt_fix or None,
-                    suggested_rule_fix_zh=rule_fix or None,
                     created_at=existing.created_at if existing else now_iso,
                     updated_at=now_iso,
                 )
                 try:
                     store.upsert_review(new_review)
-                    st.success("已保存审核结果！")
+                    st.success("\u5df2\u4fdd\u5b58\u5ba1\u6838\u7ed3\u679c\uff01")
                     st.rerun()
                 except Exception as exc:
-                    st.error("保存失败: " + str(exc))
+                    st.error("\u4fdd\u5b58\u5931\u8d25: " + str(exc))
