@@ -1,5 +1,0 @@
-[run-radar] domain=ai_investment_tracking
-Radar complete: raw=163 unique=144 valid_candidates=136
-Draft CSV: examples\real_evidence_pack_ai_investment_tracking_draft.csv
-R1 validation: {'status': 'ran', 'items': 136, 'valid': 0, 'warning': 136, 'invalid': 0}
-Radar report: outputs/radar/radar_report.md
