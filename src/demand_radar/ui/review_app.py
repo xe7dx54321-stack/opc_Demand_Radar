@@ -1,4 +1,4 @@
-"""Streamlit app for local calibration review."""
+﻿"""Streamlit app for local calibration review."""
 
 
 
@@ -532,9 +532,9 @@ def main() -> None:
 
 
 
-    pain_tab, cluster_tab, merge_tab, ai_judge_tab, exception_tab, llm_tab, truth_tab, gap_tab, expansion_tab, lineage_tab, stage35_tab, real_evidence_tab, acquisition_tab, mvp_b_tab, batch_tab = st.tabs(
+    pain_tab, cluster_tab, merge_tab, ai_judge_tab, exception_tab, llm_tab, truth_tab, gap_tab, expansion_tab, lineage_tab, stage35_tab, real_evidence_tab, acquisition_tab, mvp_b_tab, mvp_c_tab, batch_tab = st.tabs(
         ["痛点校准", "需求主题候选", "合并建议审核", "AI合并判断", "人工异常队列", "LLM合并对比", "真实需求评分", "证据缺口分析", "定向证据扩展", "候选谱系追踪",
-        "Stage 3.5 定向验证", "真实证据校准", "自动采集", "MVP-B 痛点抽取", "批次总览"]
+        "Stage 3.5 定向验证", "真实证据校准", "自动采集", "MVP-B 痛点抽取", "MVP-C 人工校准", "批次总览"]
     )
 
     with pain_tab:
@@ -592,6 +592,9 @@ def main() -> None:
 
     with mvp_b_tab:
         _render_mvp_b_page()
+
+    with mvp_c_tab:
+        _render_mvp_c_page()
 
     with batch_tab:
 
@@ -3263,3 +3266,196 @@ def _render_mvp_b_page() -> None:
                     st.write("置信度: " + str(round(item.get("confidence", 0), 2)))
                     if item.get("source_url"):
                         st.write("URL: " + item["source_url"])
+
+def _render_mvp_c_page() -> None:
+    import streamlit as st
+    from demand_radar.mvp_c.review_service import ReviewService
+    from demand_radar.mvp_c.review_store import PainSignalReviewStore
+    from demand_radar.mvp_c.review_schema import PainSignalReview
+    from demand_radar.state.raw_store import next_ids, utc_now_iso
+
+    st.subheader("MVP-C 人工校准 (Pain Signal Review Workbench)")
+
+    store = PainSignalReviewStore()
+    svc = ReviewService(store=store)
+
+    # --- Summary ---
+    try:
+        summary = svc.get_summary()
+    except Exception as exc:
+        st.error("无法加载 pain signals: " + str(exc))
+        return
+
+    if summary.total_pain_items == 0:
+        st.info("未找到已抽取的 pain signals。请先运行: demand-radar run-mvp-b --domain ai_investment_tracking")
+        return
+
+    c1, c2, c3, c4 = st.columns(4)
+    c1.metric("Pain Signals", summary.total_pain_items)
+    c2.metric("已审核", summary.reviewed_count)
+    c3.metric("待审核", summary.unreviewed_count)
+    c4.metric("True Pain", summary.true_pain_count)
+
+    c5, c6, c7, c8 = st.columns(4)
+    c5.metric("Pursue", summary.pursue_count)
+    c6.metric("Watch", summary.watch_count)
+    c7.metric("Reject", summary.reject_count)
+    c8.metric("需要更多证据", summary.needs_more_evidence_count)
+
+    st.divider()
+
+    # --- Filters ---
+    col_f1, col_f2, col_f3 = st.columns(3)
+    with col_f1:
+        show_filter = st.selectbox("显示", ["全部", "待审核", "已审核"], key="mvpc_show_filter")
+    with col_f2:
+        strength_filter = st.selectbox("强度筛选", ["全部", "strong", "medium", "weak"], key="mvpc_strength")
+    with col_f3:
+        action_filter = st.selectbox("决策筛选", ["全部", "pursue", "watch", "reject", "needs_more_evidence"], key="mvpc_action")
+
+    reviewed_only = None
+    if show_filter == "待审核":
+        reviewed_only = False
+    elif show_filter == "已审核":
+        reviewed_only = True
+
+    cards = svc.load_pain_signal_cards(
+        filter_strength=strength_filter if strength_filter != "全部" else None,
+        filter_action=action_filter if action_filter != "全部" else None,
+        reviewed_only=reviewed_only,
+    )
+
+    if not cards:
+        st.info("当前筛选条件下没有 pain signals。")
+        return
+
+    st.markdown(f"**显示 {len(cards)} 条 pain signals**")
+
+    # --- Pain Signal Cards ---
+    for card in cards:
+        reviewed = card.existing_review is not None
+        badge = "✅" if reviewed else "⬜"
+        label = badge + " " + (card.title or card.pain_item_id)[:80]
+        with st.expander(label, expanded=not reviewed):
+            col_a, col_b = st.columns(2)
+            with col_a:
+                st.markdown("**基本信息**")
+                st.write("Persona: " + str(card.persona or "-"))
+                st.write("Workflow: " + str(card.workflow_stage or "-"))
+                st.write("Pain Type: " + str(card.pain_type or "-"))
+                st.write("Evidence Strength: " + str(card.evidence_strength))
+                st.write("Confidence: " + str(round(card.confidence, 2)))
+                if card.source_url:
+                    st.write("URL: " + card.source_url)
+            with col_b:
+                st.markdown("**痛点内容**")
+                if card.pain_description_zh:
+                    st.caption("痛点: " + card.pain_description_zh[:300])
+                if card.evidence_quote:
+                    st.caption("原文证据: " + card.evidence_quote[:250])
+                if card.current_solution:
+                    st.write("当前方案: " + card.current_solution[:100])
+                if card.commercial_signal_type:
+                    st.write("商业信号: " + card.commercial_signal_type)
+
+            st.divider()
+            st.markdown("**人工审核**")
+
+            pid = card.pain_item_id
+            existing = card.existing_review
+            key_prefix = "mvpc_" + pid.replace("_", "").replace(".", "")
+
+            # Pre-fill from existing review
+            default_true_pain_idx = 0
+            default_commercial_idx = 0
+            default_extraction_idx = 0
+            default_domain_idx = 0
+            default_evidence_idx = 0
+            default_action_idx = 0
+            default_note = ""
+            default_prompt_fix = ""
+            default_rule_fix = ""
+            default_sw_fix = ""
+            default_error_labels = []
+
+            TP_OPTIONS = ["不确定", "是", "否"]
+            COMM_OPTIONS = ["unclear", "high", "medium", "low"]
+            EXTRACT_OPTIONS = ["good", "partial", "bad"]
+            DOMAIN_OPTIONS = ["good", "too_loose", "too_strict", "wrong_domain"]
+            EVIDENCE_OPTIONS = ["strong", "medium", "weak", "fake_or_insufficient"]
+            ACTION_OPTIONS = ["needs_more_evidence", "pursue", "watch", "reject"]
+            ERROR_OPTIONS = [
+                "bad_persona", "bad_workflow", "bad_pain_type", "bad_quote",
+                "hallucinated_field", "missed_commercial_signal", "domain_out",
+                "duplicate", "too_generic", "source_too_weak",
+            ]
+
+            if existing:
+                tp_val = existing.true_pain
+                if tp_val is True:
+                    default_true_pain_idx = 1
+                elif tp_val is False:
+                    default_true_pain_idx = 2
+                if existing.commercial_potential and existing.commercial_potential in COMM_OPTIONS:
+                    default_commercial_idx = COMM_OPTIONS.index(existing.commercial_potential)
+                if existing.extraction_quality and existing.extraction_quality in EXTRACT_OPTIONS:
+                    default_extraction_idx = EXTRACT_OPTIONS.index(existing.extraction_quality)
+                if existing.domain_relevance_quality and existing.domain_relevance_quality in DOMAIN_OPTIONS:
+                    default_domain_idx = DOMAIN_OPTIONS.index(existing.domain_relevance_quality)
+                if existing.evidence_quality and existing.evidence_quality in EVIDENCE_OPTIONS:
+                    default_evidence_idx = EVIDENCE_OPTIONS.index(existing.evidence_quality)
+                if existing.action_decision and existing.action_decision in ACTION_OPTIONS:
+                    default_action_idx = ACTION_OPTIONS.index(existing.action_decision)
+                default_note = existing.reviewer_note_zh or ""
+                default_prompt_fix = existing.suggested_prompt_fix_zh or ""
+                default_rule_fix = existing.suggested_rule_fix_zh or ""
+                default_sw_fix = existing.suggested_source_weight_fix_zh or ""
+                default_error_labels = existing.error_labels or []
+
+            r1, r2 = st.columns(2)
+            with r1:
+                true_pain_str = st.radio("真痛点?", TP_OPTIONS, index=default_true_pain_idx, key=key_prefix + "_tp", horizontal=True)
+                commercial = st.selectbox("商业化潜力", COMM_OPTIONS, index=default_commercial_idx, key=key_prefix + "_comm")
+                extraction = st.selectbox("抽取质量", EXTRACT_OPTIONS, index=default_extraction_idx, key=key_prefix + "_ext")
+            with r2:
+                domain_rel = st.selectbox("领域相关性质量", DOMAIN_OPTIONS, index=default_domain_idx, key=key_prefix + "_dom")
+                evidence_q = st.selectbox("证据质量", EVIDENCE_OPTIONS, index=default_evidence_idx, key=key_prefix + "_evq")
+                action = st.selectbox("处置决策", ACTION_OPTIONS, index=default_action_idx, key=key_prefix + "_act")
+
+            error_labels = st.multiselect("错误标签 (可多选)", ERROR_OPTIONS, default=default_error_labels, key=key_prefix + "_err")
+            note = st.text_area("审核备注 (中文)", value=default_note, key=key_prefix + "_note", height=60)
+            prompt_fix = st.text_input("建议 prompt 修改", value=default_prompt_fix, key=key_prefix + "_pfix")
+            rule_fix = st.text_input("建议规则修改", value=default_rule_fix, key=key_prefix + "_rfix")
+
+            if st.button("💾 保存审核", key=key_prefix + "_save"):
+                true_pain_val = None
+                if true_pain_str == "是":
+                    true_pain_val = True
+                elif true_pain_str == "否":
+                    true_pain_val = False
+
+                now_iso = utc_now_iso()
+                rev_ids = next_ids("mvpc_rev_", [], 1)
+                new_review = PainSignalReview(
+                    review_id=existing.review_id if existing else rev_ids[0],
+                    pain_item_id=pid,
+                    candidate_id=card.candidate_id,
+                    true_pain=true_pain_val,
+                    commercial_potential=commercial,
+                    extraction_quality=extraction,
+                    domain_relevance_quality=domain_rel,
+                    evidence_quality=evidence_q,
+                    action_decision=action,
+                    error_labels=error_labels,
+                    reviewer_note_zh=note or None,
+                    suggested_prompt_fix_zh=prompt_fix or None,
+                    suggested_rule_fix_zh=rule_fix or None,
+                    created_at=existing.created_at if existing else now_iso,
+                    updated_at=now_iso,
+                )
+                try:
+                    store.upsert_review(new_review)
+                    st.success("已保存审核结果！")
+                    st.rerun()
+                except Exception as exc:
+                    st.error("保存失败: " + str(exc))

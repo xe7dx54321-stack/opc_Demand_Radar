@@ -1,4 +1,4 @@
-"""Typer CLI for Stage 1 Demand Radar."""
+﻿"""Typer CLI for Stage 1 Demand Radar."""
 
 from __future__ import annotations
 
@@ -2117,3 +2117,37 @@ def build_mvp_b_report_command(
     r3 = build_top_pain_signals_report(pain)
     r4 = build_mvp_b_summary_report(rel, pain, {}, {})
     typer.echo(f"Reports: {r1} | {r2} | {r3} | {r4}")
+
+@app.command("run-mvp-c")
+def run_mvp_c_command() -> None:
+    """Run MVP-C: generate pain signal review reports (no UI)."""
+    from demand_radar.mvp_c.mvp_c_pipeline import run_mvp_c
+    result = run_mvp_c()
+    typer.echo(f"[run-mvp-c] total={result.total_pain_items} reviewed={result.reviewed_count} unreviewed={result.unreviewed_count}")
+    typer.echo(f"[run-mvp-c] true_pain={result.true_pain_count} pursue={result.pursue_count} findings={result.findings_count}")
+    typer.echo(f"[run-mvp-c] engineering={result.engineering_acceptance} product={result.product_acceptance}")
+    if result.errors:
+        for e in result.errors:
+            typer.echo(f"[run-mvp-c] ERROR: {e}", err=True)
+
+
+@app.command("summarize-pain-reviews")
+def summarize_pain_reviews_command() -> None:
+    """Print pain signal review summary to console."""
+    from demand_radar.mvp_c.review_service import ReviewService
+    svc = ReviewService()
+    summary = svc.get_summary()
+    typer.echo(f"Total: {summary.total_pain_items} | Reviewed: {summary.reviewed_count} | Unreviewed: {summary.unreviewed_count}")
+    typer.echo(f"True pain: {summary.true_pain_count} | False: {summary.false_pain_count}")
+    typer.echo(f"Actions - pursue: {summary.pursue_count} | watch: {summary.watch_count} | reject: {summary.reject_count} | needs_more: {summary.needs_more_evidence_count}")
+    typer.echo(f"Commercial - high: {summary.commercial_high_count} | medium: {summary.commercial_medium_count} | low: {summary.commercial_low_count} | unclear: {summary.commercial_unclear_count}")
+    if summary.top_error_labels:
+        typer.echo(f"Top errors: {summary.top_error_labels}")
+
+
+@app.command("build-mvp-c-report")
+def build_mvp_c_report_command() -> None:
+    """Build all MVP-C reports from stored reviews."""
+    from demand_radar.mvp_c.mvp_c_pipeline import run_mvp_c
+    result = run_mvp_c()
+    typer.echo(f"[build-mvp-c-report] Reports generated. engineering={result.engineering_acceptance} product={result.product_acceptance}")
