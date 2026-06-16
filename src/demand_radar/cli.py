@@ -87,7 +87,7 @@ from demand_radar.targeted_expansion.expansion_store import (
 )
 from demand_radar.mvp_d.evidence_consolidator import consolidate_evidence
 from demand_radar.mvp_d.expansion_extraction import run_expansion_extraction
-from demand_radar.mvp_d.mvp_d_pipeline import run_mvp_d
+from demand_radar.mvp_d.mvp_d_pipeline import build_mvp_d_summary_from_stored, run_mvp_d
 from demand_radar.mvp_d.query_generator import generate_queries
 from demand_radar.mvp_d.seed_selector import select_seeds
 from demand_radar.mvp_d.seeded_acquisition import run_seeded_acquisition
@@ -729,16 +729,37 @@ def build_mvp_d_report_command(
     use_cache: Annotated[bool, typer.Option("--use-cache/--no-cache")] = True,
 ) -> None:
     """Build the MVP-D summary report from stored outputs."""
-    summary = run_mvp_d(
-        domain_id=domain,
-        use_cache=use_cache,
-        max_seeds=max_seeds,
-        max_queries=max_queries,
-        max_results=max_results,
-    )
+    summary = build_mvp_d_summary_from_stored(domain_id=domain)
     typer.echo(
         "Built MVP-D summary -> outputs/mvp_d/mvp_d_summary_report.md "
         f"(engineering={summary.engineering_acceptance}, product={summary.product_acceptance})"
+    )
+
+
+@app.command("run-mvp-d-llm-expansion")
+def run_mvp_d_llm_expansion_command(
+    domain: Annotated[str, typer.Option("--domain")] = "ai_investment_tracking",
+    max_results: Annotated[int | None, typer.Option("--max-results")] = None,
+    use_cache: Annotated[bool, typer.Option("--use-cache/--no-cache")] = True,
+) -> None:
+    """Run only the MVP-D LLM expansion pass from stored candidates."""
+    _, pain_rows, extraction_summary = run_expansion_extraction(max_items=max_results, use_cache=use_cache)
+    consolidate_evidence()
+    themes = build_demand_themes(
+        Path("data/processed/mvp_d/seed_profiles.jsonl"),
+        Path("data/processed/mvp_d/seed_evidence_consolidation.jsonl"),
+        Path("data/processed/mvp_d/consolidated_evidence_themes.jsonl"),
+        Path("outputs/mvp_d/demand_theme_grouping_report.md"),
+    )
+    summary = build_mvp_d_summary_from_stored(domain_id=domain)
+    typer.echo(
+        "MVP-D LLM expansion complete -> outputs/mvp_d/mvp_d_llm_expansion_pass_report.md "
+        f"(real_llm_run={str(extraction_summary['real_llm_run']).lower()}, "
+        f"selected={extraction_summary['selected_for_llm']}, "
+        f"processed={extraction_summary['processed']}, "
+        f"should_extract_true={extraction_summary['should_extract_true']}, "
+        f"themes={len(themes)}, engineering={summary.engineering_acceptance}, "
+        f"product={summary.product_acceptance})"
     )
 
 

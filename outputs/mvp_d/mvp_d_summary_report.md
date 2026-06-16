@@ -1,12 +1,12 @@
 # MVP-D Seeded Evidence Expansion Summary
 
 ## Run Metadata
-- generated_at: 2026-06-16T14:20:51Z
-- radar_commit: c3a06e7
+- generated_at: 2026-06-16T16:33:15Z
+- radar_commit: 8344972
 - foundation_commit: unknown
-- provider: none
-- model: none
-- real_llm_run: false
+- provider: responses_compatible
+- model: claude-sonnet-4-6
+- real_llm_run: true
 - cache_enabled: true
 
 ## Seed Summary
@@ -54,7 +54,7 @@
 
 ## Acceptance
 - engineering_acceptance: pass
-- product_acceptance: pass
+- product_acceptance: partial
 - can_enter_second_review: true
 - can_enter_product_discovery: false
-- reason: seeded evidence expansion produced actionable themes
+- reason: real LLM ran but expansion evidence is still limited

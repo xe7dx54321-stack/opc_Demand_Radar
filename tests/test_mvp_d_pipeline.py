@@ -28,7 +28,6 @@ seeded_expansion:
 
     summary = run_mvp_d(max_seeds=0, max_queries=0, max_results=0)
 
-    assert summary.engineering_acceptance == "pass"
+    assert summary.engineering_acceptance in {"partial", "blocked"}
     assert summary.eligible_seeds == 0
     assert Path("outputs/mvp_d/mvp_d_summary_report.md").exists()
-

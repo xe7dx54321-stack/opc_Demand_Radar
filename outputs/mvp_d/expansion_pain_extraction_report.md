@@ -1,9 +1,13 @@
 # MVP-D Expansion Pain Extraction Report
 
-- real_llm_run: false
-- provider: none
-- model: none
+- status: completed
+- blocked_reason: n/a
+- real_llm_run: true
+- provider: responses_compatible
+- model: claude-sonnet-4-6
 - cache_enabled: True
+- prompt_version: acquired_signal_pain_extraction_v1
+- run_scope: demand_radar_mvp_d_seeded_expansion
 - total_candidates: 37
 - selected_for_llm: 28
 - allowed_by_gate: 28
@@ -16,3 +20,4 @@
 - weak: 0
 - failures: 0
 - cache_hits: 0
+- stale_cache_prevented: 0

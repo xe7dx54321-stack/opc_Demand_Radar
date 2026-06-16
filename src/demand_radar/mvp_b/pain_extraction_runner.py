@@ -2,6 +2,7 @@
 from __future__ import annotations
 import hashlib
 import json
+import os
 import re
 from pathlib import Path
 from typing import Any
@@ -133,6 +134,32 @@ def _build_extraction_prompt(
     return system, user
 
 
+def build_extraction_prompt(
+    candidate: dict,
+    relevance: dict | None,
+    max_chars: int = 6000,
+) -> tuple[str, str]:
+    """Public wrapper used by MVP-D and tests."""
+    return _build_extraction_prompt(candidate, relevance, max_chars=max_chars)
+
+
+def make_default_pain_extraction_client():
+    """Create the default real LLM client for pain extraction if configured."""
+    provider = os.environ.get("DEMAND_RADAR_LLM_PROVIDER") or os.environ.get("LLM_PROVIDER") or "anthropic_compatible"
+    from demand_radar.semantic_merge.llm_client import make_llm_client
+
+    llm_conf = {
+        "llm": {
+            "base_url_env": "DEMAND_RADAR_LLM_BASE_URL",
+            "api_key_env": "DEMAND_RADAR_LLM_API_KEY",
+            "model": os.environ.get("DEMAND_RADAR_LLM_MODEL", "claude-sonnet-4-6"),
+            "temperature": 0,
+            "max_tokens": 4000,
+        }
+    }
+    return make_llm_client(provider, llm_conf)
+
+
 def _parse_extraction_response(raw: str) -> dict[str, Any]:
     text = raw.strip()
     text = re.sub(r"```(?:json)?\s*", "", text).replace("```", "")
@@ -225,6 +252,9 @@ def run_pain_extraction(
     config_path: Path | None = None,
     max_items: int | None = None,
     output_path: Path | None = None,
+    cache_backend=None,
+    prompt_version_override: str | None = None,
+    run_scope_override: str | None = None,
 ) -> list[ExtractedPainItem]:
     cfg = _load_config(config_path)
     limits = cfg.get("limits", {})
@@ -232,9 +262,9 @@ def run_pain_extraction(
     max_chars = int(limits.get("max_raw_text_chars", 6000))
     min_score = float(limits.get("min_relevance_score_for_extraction", 0.45))
     cache_cfg = cfg.get("cache", {})
-    use_cache = bool(cache_cfg.get("enabled", True))
-    prompt_version = str(cache_cfg.get("prompt_version", "acquired_signal_pain_extraction_v1"))
-    run_scope = str(cache_cfg.get("run_scope", "demand_radar_mvp_b_llm_pass"))
+    use_cache = bool(cache_cfg.get("enabled", True)) if cache_backend is None else bool(getattr(cache_backend, "enabled", True))
+    prompt_version = str(prompt_version_override or cache_cfg.get("prompt_version", "acquired_signal_pain_extraction_v1"))
+    run_scope = str(run_scope_override or cache_cfg.get("run_scope", "demand_radar_mvp_b_llm_pass"))
     cache_dir = Path(str(cache_cfg.get("cache_dir", ".llm_cache/mvp_b")))
 
     rel_map = {r.get("candidate_id"): r for r in relevance_results}
@@ -274,22 +304,35 @@ def run_pain_extraction(
             continue
 
         system_p, user_p = _build_extraction_prompt(candidate, rel, max_chars)
-
-        # Cache key includes run_scope + prompt_version for proper invalidation
-        input_hash = hashlib.sha256(
-            (run_scope + prompt_version + cid + user_p[:500]).encode()
-        ).hexdigest()[:20]
-        cache_file = cache_dir / f"pain_{prompt_version}_{input_hash}.json"
-        cache_file.parent.mkdir(parents=True, exist_ok=True)
-
+        raw_hash = hashlib.sha256(raw_text.encode("utf-8")).hexdigest()
         data = None
         cache_hit = False
-        if use_cache and cache_file.exists():
+        if cache_backend is not None:
             try:
-                data = json.loads(cache_file.read_text(encoding="utf-8"))
-                cache_hit = True
+                data = cache_backend.get(
+                    candidate_id=cid,
+                    provider=getattr(llm_client, "provider", "none") if llm_client else "none",
+                    model=model_name or "none",
+                    prompt_version=prompt_version,
+                    run_scope=run_scope,
+                    raw_hash=raw_hash,
+                )
+                cache_hit = data is not None
             except Exception:
                 data = None
+                cache_hit = False
+        elif use_cache:
+            input_hash = hashlib.sha256(
+                (run_scope + prompt_version + cid + user_p[:500]).encode()
+            ).hexdigest()[:20]
+            cache_file = cache_dir / f"pain_{prompt_version}_{input_hash}.json"
+            cache_file.parent.mkdir(parents=True, exist_ok=True)
+            if cache_file.exists():
+                try:
+                    data = json.loads(cache_file.read_text(encoding="utf-8"))
+                    cache_hit = True
+                except Exception:
+                    data = None
 
         if data is None:
             last_error = None
@@ -312,7 +355,20 @@ def run_pain_extraction(
                 processed += 1
                 continue
 
-            if use_cache:
+            if cache_backend is not None:
+                try:
+                    cache_backend.set(
+                        candidate_id=cid,
+                        provider=getattr(llm_client, "provider", "none") if llm_client else "none",
+                        model=model_name or "none",
+                        prompt_version=prompt_version,
+                        run_scope=run_scope,
+                        raw_hash=raw_hash,
+                        result=data,
+                    )
+                except Exception:
+                    pass
+            elif use_cache:
                 try:
                     cache_file.write_text(json.dumps(data, ensure_ascii=False), encoding="utf-8")
                 except Exception:
@@ -323,6 +379,15 @@ def run_pain_extraction(
                 pain_ids[i], candidate, data, model_name, prompt_version,
                 cache_hit=cache_hit, raw_text=raw_text,
             )
+            item.metadata = {
+                **(item.metadata or {}),
+                "cache_hit": cache_hit,
+                "quote_matched": item.metadata.get("quote_matched") if item.metadata else False,
+                "provider": getattr(llm_client, "provider", "none") if llm_client else "none",
+                "run_scope": run_scope,
+                "prompt_version": prompt_version,
+                "raw_text_hash": raw_hash,
+            }
         except Exception as exc:
             items.append(_reject_item(
                 pain_ids[i], cid,
