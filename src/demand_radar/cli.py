@@ -1,4 +1,4 @@
-﻿"""Typer CLI for Stage 1 Demand Radar."""
+"""Typer CLI for Stage 1 Demand Radar."""
 
 from __future__ import annotations
 
@@ -1875,3 +1875,87 @@ def run_stage_r1_command(
         typer.echo("Signal CSV: examples/real_evidence_signals_ai_investment_tracking.csv")
     for r in result.get("reports_generated", []):
         typer.echo(f"Report: {r}")
+
+@app.command("run-acquisition")
+def run_acquisition_command(
+    domain: Annotated[str, typer.Option("--domain")] = "ai_investment_tracking",
+    max_items: Annotated[int, typer.Option("--max-items")] = 20,
+) -> None:
+    """Run acquisition for a domain using opc-foundation connectors."""
+    from demand_radar.acquisition.acquisition_pipeline import run_acquisition
+    from demand_radar.acquisition.acquisition_report import build_acquisition_report
+    typer.echo(f"[run-acquisition] domain={domain} max_items={max_items}")
+    try:
+        summary, candidates = run_acquisition(domain_id=domain, max_items_per_query=max_items)
+        build_acquisition_report(summary, candidates)
+        typer.echo(
+            f"Acquisition complete: raw={summary.raw_signal_count} "
+            f"unique={summary.unique_signal_count} "
+            f"valid_candidates={summary.valid_candidate_count}"
+        )
+        if summary.errors:
+            typer.echo(f"Errors: {len(summary.errors)} (see acquisition_report.md)")
+        typer.echo("Report: outputs/acquisition/acquisition_report.md")
+    except Exception as exc:
+        typer.echo(f"[run-acquisition] Error: {exc}", err=True)
+        raise typer.Exit(code=1)
+
+
+@app.command("build-evidence-pack-draft")
+def build_evidence_pack_draft_command(
+    domain: Annotated[str, typer.Option("--domain")] = "ai_investment_tracking",
+) -> None:
+    """Build evidence pack draft CSV from acquisition candidates."""
+    from demand_radar.acquisition.acquisition_store import load_evidence_candidates
+    from demand_radar.acquisition.evidence_pack_draft_builder import build_evidence_pack_draft
+    from demand_radar.acquisition.acquisition_report import build_evidence_pack_draft_report
+    candidates = load_evidence_candidates()
+    if not candidates:
+        typer.echo("No evidence candidates found. Run demand-radar run-acquisition first.")
+        raise typer.Exit(code=0)
+    out = build_evidence_pack_draft(candidates)
+    valid = [c for c in candidates if c.include_in_evidence_pack]
+    build_evidence_pack_draft_report(candidates, out)
+    typer.echo(f"Draft CSV: {out} ({len(valid)} items)")
+    typer.echo("Report: outputs/acquisition/evidence_pack_draft_report.md")
+
+
+@app.command("run-radar")
+def run_radar_command(
+    domain: Annotated[str, typer.Option("--domain")] = "ai_investment_tracking",
+    max_items: Annotated[int, typer.Option("--max-items")] = 20,
+) -> None:
+    """Run full Demand Radar pipeline: acquisition -> draft -> R1 validation -> report."""
+    from demand_radar.acquisition.radar_pipeline import run_radar
+    typer.echo(f"[run-radar] domain={domain}")
+    try:
+        result = run_radar(domain_id=domain)
+        typer.echo(
+            f"Radar complete: raw={result.raw_signals} unique={result.unique_signals} "
+            f"valid_candidates={result.valid_candidates}"
+        )
+        if result.draft_csv:
+            typer.echo(f"Draft CSV: {result.draft_csv}")
+        typer.echo(f"R1 validation: {result.r1_validation_summary}")
+        typer.echo("Radar report: outputs/radar/radar_report.md")
+    except Exception as exc:
+        typer.echo(f"[run-radar] Error: {exc}", err=True)
+        raise typer.Exit(code=1)
+
+
+@app.command("build-acquisition-report")
+def build_acquisition_report_command(
+    domain: Annotated[str, typer.Option("--domain")] = "ai_investment_tracking",
+) -> None:
+    """Build acquisition report from stored candidates."""
+    from demand_radar.acquisition.acquisition_store import load_evidence_candidates, load_run_log
+    from demand_radar.acquisition.acquisition_report import build_acquisition_report
+    from demand_radar.acquisition.acquisition_schema import AcquisitionRunSummary
+    candidates = load_evidence_candidates()
+    run_logs = load_run_log()
+    if not run_logs:
+        typer.echo("No acquisition run log found. Run demand-radar run-acquisition first.")
+        raise typer.Exit(code=0)
+    summary = AcquisitionRunSummary(**run_logs[-1])
+    out = build_acquisition_report(summary, candidates)
+    typer.echo(f"Report: {out}")

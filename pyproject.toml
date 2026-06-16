@@ -18,6 +18,10 @@ dependencies = [
   "typer>=0.12"
 ]
 
+
+# NOTE: opc-foundation must be installed separately:
+#   pip install -e ../opc-foundation
+# Or copy opc_foundation src into site-packages (see README for details)
 [project.optional-dependencies]
 dev = [
   "pytest>=8",

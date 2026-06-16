@@ -1,0 +1,40 @@
+﻿domain_id: ai_investment_tracking
+domain_title_zh: "投资人 / 研究员 AI 产业跟踪与项目初筛"
+
+target_personas:
+  - 投资人
+  - 产业研究员
+  - VC/PE 分析师
+  - 创业项目筛选人员
+  - AI 行业研究人员
+
+focus_workflows:
+  - deal_sourcing
+  - company_tracking
+  - market_monitoring
+  - startup_screening
+  - due_diligence
+  - memo_preparation
+
+search_queries:
+  - AI startup tracking workflow
+  - VC deal sourcing tools
+  - investment research workflow
+  - market intelligence tools
+  - startup screening due diligence
+  - AI company monitoring
+  - research automation tools
+  - venture capital market intelligence
+
+source_mix_targets:
+  community_discussion: 0.35
+  github_issue: 0.20
+  rss: 0.20
+  manual_url: 0.25
+
+minimum_quality:
+  min_raw_signals: 30
+  min_valid_candidates: 15
+  max_duplicate_ratio: 0.40
+  require_source_url: true
+  allow_synthetic: false

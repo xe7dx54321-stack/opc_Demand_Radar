@@ -1375,3 +1375,80 @@ docs/rubrics/evidence_scoring_rubric_v1.md
 docs/rules/rejection_rules_v1.md
 docs/rules/source_weighting_v1.md
 ```
+---
+
+## MVP-A: Automated Acquisition
+
+### Overview
+
+Demand Radar MVP-A integrates `opc-foundation` as the public acquisition layer, upgrading the system from manual evidence input to automated real-signal collection.
+
+```
+Domain Config → Source Registry → opc-foundation Connectors → RawSignal → EvidenceCandidate → Evidence Pack Draft → R1 Validation → Reports
+```
+
+### opc-foundation Dependency
+
+`opc-foundation` is a separate reusable acquisition library. Install it before using MVP-A:
+
+```bash
+# From the parent directory
+pip install -e ../opc-foundation
+```
+
+The library provides: `HackerNewsConnector`, `GitHubIssuesConnector`, `RssConnector`, `ManualUrlConnector`, `RawSignal`, `SourceRegistry`, `dedupe_raw_signals`.
+
+### Domain Config
+
+`configs/domain_configs/ai_investment_tracking.yaml` — defines target personas, focus workflows, search queries, and quality targets.
+
+### Source Registry
+
+`configs/source_registry_ai_investment_tracking.yaml` — defines enabled sources and connectors.
+
+### Currently Supported Sources
+
+| Source | Connector | API Key? |
+|---|---|---|
+| Hacker News | `hacker_news` | No (Algolia API) |
+| GitHub Issues | `github_issues` | Optional `GITHUB_TOKEN` |
+| RSS Feeds | `rss` | No |
+| Manual URL CSV | `manual_url` | No |
+
+### Currently NOT Supported
+
+- Reddit, G2, Capterra, App Store, Google Play
+- Twitter/X, LinkedIn, 小红书
+- Complex crawlers (Playwright/Scrapy)
+
+### Quick Start
+
+```bash
+# 1. Run acquisition (fetches real signals from HN, GitHub, RSS)
+demand-radar run-acquisition --domain ai_investment_tracking
+
+# 2. Build evidence pack draft CSV
+demand-radar build-evidence-pack-draft --domain ai_investment_tracking
+
+# 3. Review draft, fill in persona/pain_type/evidence_quote fields
+# Then run R1 validation:
+demand-radar validate-real-evidence-pack --input examples/real_evidence_pack_ai_investment_tracking_draft.csv
+
+# 4. Full radar pipeline (acquisition + draft + R1 validation + report)
+demand-radar run-radar --domain ai_investment_tracking
+
+# 5. View in UI
+demand-radar review-ui --port 8502
+```
+
+### Output Files
+
+```
+data/raw/acquisition/raw_signals.jsonl
+data/processed/acquisition/evidence_candidates.jsonl
+data/processed/acquisition/acquisition_run_log.jsonl
+examples/real_evidence_pack_ai_investment_tracking_draft.csv
+outputs/acquisition/acquisition_report.md
+outputs/acquisition/evidence_pack_draft_report.md
+outputs/radar/radar_report.md
+```
