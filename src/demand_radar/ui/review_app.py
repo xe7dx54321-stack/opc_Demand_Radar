@@ -3468,10 +3468,11 @@ def _render_mvp_c_page() -> None:
                 )
                 try:
                     store.upsert_review(new_review)
-                    st.success("\u5df2\u4fdd\u5b58\u5ba1\u6838\u7ed3\u679c\uff01")
-                    st.rerun()
+                    st.session_state["_mvpc_saved_" + pid] = True
                 except Exception as exc:
                     st.error("\u4fdd\u5b58\u5931\u8d25: " + str(exc))
+                else:
+                    st.success("\u5df2\u4fdd\u5b58\u5ba1\u6838\u7ed3\u679c\uff01")
 
 
 
