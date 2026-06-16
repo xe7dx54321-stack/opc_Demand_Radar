@@ -3442,6 +3442,8 @@ def _render_mvp_c_page() -> None:
             error_labels = st.multiselect("\u9519\u8bef\u6807\u7b7e (\u53ef\u591a\u9009)", ERROR_OPTIONS, default=default_error_labels, key=key_prefix + "_err")
             note = st.text_area("\u5ba1\u6838\u5907\u6ce8 (\u4e2d\u6587)", value=default_note, key=key_prefix + "_note", height=60)
 
+            save_key = "_mvpc_saved_" + pid
+            err_key = "_mvpc_err_" + pid
             if st.button("\u4fdd\u5b58\u5ba1\u6838", key=key_prefix + "_save"):
                 true_pain_val = None
                 if true_pain_str == "\u662f":
@@ -3450,9 +3452,11 @@ def _render_mvp_c_page() -> None:
                     true_pain_val = False
 
                 now_iso = utc_now_iso()
-                rev_ids = next_ids("mvpc_rev_", [], 1)
+                existing_reviews = store.load_reviews()
+                existing_ids = [r.review_id for r in existing_reviews]
+                rev_id = existing.review_id if existing else next_ids("mvpc_rev_", existing_ids, 1)[0]
                 new_review = PainSignalReview(
-                    review_id=existing.review_id if existing else rev_ids[0],
+                    review_id=rev_id,
                     pain_item_id=pid,
                     candidate_id=card.candidate_id,
                     true_pain=true_pain_val,
@@ -3468,11 +3472,16 @@ def _render_mvp_c_page() -> None:
                 )
                 try:
                     store.upsert_review(new_review)
-                    st.session_state["_mvpc_saved_" + pid] = True
+                    st.session_state[save_key] = True
+                    st.session_state.pop(err_key, None)
                 except Exception as exc:
-                    st.error("\u4fdd\u5b58\u5931\u8d25: " + str(exc))
-                else:
-                    st.success("\u5df2\u4fdd\u5b58\u5ba1\u6838\u7ed3\u679c\uff01")
+                    st.session_state[err_key] = str(exc)
+                    st.session_state.pop(save_key, None)
+
+            if st.session_state.get(save_key):
+                st.success("\u5df2\u4fdd\u5b58\u5ba1\u6838\u7ed3\u679c\uff01")
+            if st.session_state.get(err_key):
+                st.error("\u4fdd\u5b58\u5931\u8d25: " + st.session_state[err_key])
 
 
 
