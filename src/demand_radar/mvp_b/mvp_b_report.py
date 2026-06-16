@@ -238,3 +238,160 @@ def build_mvp_b_summary_report(
 
     out.write_text("\n".join(lines), encoding="utf-8")
     return out
+
+def build_llm_pass_report(
+    rel_dicts: list[dict],
+    pain_dicts: list[dict],
+    provider: str = "anthropic_compatible",
+    model: str = "claude-sonnet-4-6",
+    real_llm_run: bool = True,
+    prompt_version: str = "acquired_signal_pain_extraction_v1",
+    radar_commit: str = "unknown",
+    foundation_commit: str = "b6d23bc",
+    output_path: "Path | None" = None,
+) -> "Path":
+    from pathlib import Path as _Path
+    out = output_path or _Path("outputs/mvp_b/mvp_b_llm_pass_report.md")
+    out.parent.mkdir(parents=True, exist_ok=True)
+
+    selected = [r for r in rel_dicts if r.get("relevance_decision") in ("include", "uncertain")]
+    processed = [p for p in pain_dicts if p.get("candidate_id") in {r.get("candidate_id") for r in selected}]
+
+    should_extract_items = [p for p in processed if p.get("should_extract")]
+    rejected = [p for p in processed if not p.get("should_extract")]
+    strong = [p for p in processed if p.get("evidence_strength") == "strong"]
+    medium = [p for p in processed if p.get("evidence_strength") == "medium"]
+    weak = [p for p in processed if p.get("evidence_strength") == "weak"]
+    reject = [p for p in processed if p.get("evidence_strength") == "reject"]
+    failures = [p for p in processed if "failed after retry" in (p.get("reject_reason") or "")]
+    cache_hits = sum(1 for p in processed if p.get("metadata", {}).get("cache_hit"))
+
+    quote_present = sum(1 for p in processed if p.get("evidence_quote"))
+    quote_matched = sum(1 for p in processed if p.get("metadata", {}).get("quote_matched"))
+    persona_pop = sum(1 for p in processed if p.get("persona"))
+    workflow_pop = sum(1 for p in processed if p.get("workflow_stage"))
+    pain_type_pop = sum(1 for p in processed if p.get("pain_type"))
+    commercial_ct = sum(1 for p in processed if p.get("commercial_signal_type") not in (None, "no_commercial_signal", "unclear"))
+
+    lines = [
+        "# MVP-B LLM Pass Report",
+        "",
+        "## Run Metadata",
+        "",
+        f"- generated_at: {_now()}",
+        f"- radar_commit: {radar_commit}",
+        f"- foundation_commit: {foundation_commit}",
+        f"- provider: {provider}",
+        f"- model: {model}",
+        f"- real_llm_run: {real_llm_run}",
+        f"- prompt_version: {prompt_version}",
+        f"- cache_enabled: true",
+        "",
+        "## Input Summary",
+        "",
+        f"- total_candidates: {len(rel_dicts)}",
+        f"- include: {sum(1 for r in rel_dicts if r.get('relevance_decision') == 'include')}",
+        f"- uncertain: {sum(1 for r in rel_dicts if r.get('relevance_decision') == 'uncertain')}",
+        f"- selected_for_llm: {len(selected)}",
+        "",
+        "## LLM Extraction Summary",
+        "",
+        f"- processed: {len(processed)}",
+        f"- should_extract_true: {len(should_extract_items)}",
+        f"- rejected: {len(rejected)}",
+        f"- strong: {len(strong)}",
+        f"- medium: {len(medium)}",
+        f"- weak: {len(weak)}",
+        f"- reject_strength: {len(reject)}",
+        f"- failures: {len(failures)}",
+        f"- cache_hits: {cache_hits}",
+        "",
+        "## Quality Checks",
+        "",
+        f"- evidence_quote_present: {quote_present}/{len(processed)}",
+        f"- evidence_quote_matched_raw_text: {quote_matched}/{quote_present if quote_present else 1}",
+        f"- persona_populated: {persona_pop}/{len(processed)}",
+        f"- workflow_stage_populated: {workflow_pop}/{len(processed)}",
+        f"- pain_type_populated: {pain_type_pop}/{len(processed)}",
+        f"- commercial_signal_count: {commercial_ct}",
+        "",
+        "## Top Extracted Pain Items",
+        "",
+    ]
+
+    top = sorted(
+        should_extract_items,
+        key=lambda x: (
+            {"strong": 3, "medium": 2, "weak": 1}.get(x.get("evidence_strength", ""), 0),
+            x.get("confidence", 0),
+        ),
+        reverse=True,
+    )
+
+    if not top:
+        lines.append("_No pain items extracted. Check domain relevance or LLM configuration._")
+    else:
+        for item in top:
+            title = _safe(item.get("title") or item.get("candidate_id", ""), 80)
+            lines += [
+                f"### {title}",
+                "",
+                f"- source_url: {item.get('source_url', '')}",
+                f"- persona: {item.get('persona', '-')}",
+                f"- workflow_stage: {item.get('workflow_stage', '-')}",
+                f"- pain_type: {item.get('pain_type', '-')}",
+                f"- evidence_strength: {item.get('evidence_strength', '-')} | confidence: {item.get('confidence', 0):.2f}",
+                f"- commercial_signal: {item.get('commercial_signal_type', '-')}",
+                "",
+                f"**Pain (ZH):** {_safe(item.get('pain_description_zh'), 200)}",
+                "",
+                f"**Evidence quote:** {_safe(item.get('evidence_quote'), 300)}",
+                "",
+                f"**Current solution:** {_safe(item.get('current_solution')) or 'N/A'}",
+                "",
+            ]
+
+    out.write_text("\n".join(lines), encoding="utf-8")
+    return out
+
+
+def build_r1_validation_comparison_report(
+    r1_before: dict,
+    r1_after: dict,
+    before_path: str = "examples/real_evidence_pack_ai_investment_tracking_draft.csv",
+    after_path: str = "examples/real_evidence_pack_ai_investment_tracking_filled.csv",
+    output_path: "Path | None" = None,
+) -> "Path":
+    from pathlib import Path as _Path
+    out = output_path or _Path("outputs/mvp_b/r1_validation_after_extraction_report.md")
+    out.parent.mkdir(parents=True, exist_ok=True)
+
+    lines = [
+        "# R1 Validation: Before vs After LLM Extraction",
+        "",
+        f"- generated_at: {_now()}",
+        "",
+        "## Before (Draft CSV)",
+        "",
+        f"- input: {before_path}",
+        f"- valid: {r1_before.get('valid', 0)}",
+        f"- warning: {r1_before.get('warning', 0)}",
+        f"- invalid: {r1_before.get('invalid', 0)}",
+        "",
+        "## After (Filled CSV from LLM Pass)",
+        "",
+        f"- input: {after_path}",
+        f"- valid: {r1_after.get('valid', 0)}",
+        f"- warning: {r1_after.get('warning', 0)}",
+        f"- invalid: {r1_after.get('invalid', 0)}",
+        "",
+        "## Delta",
+        "",
+        f"- valid delta: {r1_after.get('valid', 0) - r1_before.get('valid', 0):+d}",
+        f"- warning delta: {r1_after.get('warning', 0) - r1_before.get('warning', 0):+d}",
+        f"- invalid delta: {r1_after.get('invalid', 0) - r1_before.get('invalid', 0):+d}",
+        "",
+    ]
+
+    out.write_text("\n".join(lines), encoding="utf-8")
+    return out

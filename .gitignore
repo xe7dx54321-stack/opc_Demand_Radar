@@ -34,3 +34,6 @@ outputs/*.json
 !outputs/llm_ai_reviewed_cluster_groups_report.md
 !outputs/llm_human_exception_queue_report.md
 !outputs/llm_semantic_merge_comparison_report.md
+
+# LLM response cache
+.llm_cache/

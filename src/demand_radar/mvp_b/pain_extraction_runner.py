@@ -1,4 +1,4 @@
-﻿"""MVP-B: Pain extraction runner with caching and retry."""
+﻿"""MVP-B: Pain extraction runner with caching, retry, and quote validation."""
 from __future__ import annotations
 import hashlib
 import json
@@ -29,6 +29,8 @@ def _reject_item(
     source_type: str | None = None,
     title: str | None = None,
     model: str | None = None,
+    prompt_version: str = "pain_extraction_v1",
+    cache_hit: bool = False,
 ) -> ExtractedPainItem:
     return ExtractedPainItem(
         pain_item_id=pain_item_id,
@@ -41,8 +43,34 @@ def _reject_item(
         source_type=source_type,
         title=title,
         model=model,
+        prompt_version=prompt_version,
         created_at=utc_now_iso(),
+        metadata={"cache_hit": cache_hit},
     )
+
+
+def _normalize_text(text: str) -> str:
+    """Normalise text for fuzzy quote matching."""
+    t = re.sub(r"<[^>]+>", " ", text)  # strip HTML
+    t = re.sub(r"&#x27;", "'", t)
+    t = re.sub(r"&amp;", "&", t)
+    t = re.sub(r"&quot;", '"', t)
+    t = re.sub(r"&#x2F;", "/", t)
+    t = re.sub(r"\s+", " ", t)
+    return t.strip().lower()
+
+
+def _check_quote_in_raw_text(evidence_quote: str | None, raw_text: str) -> bool:
+    """Return True if evidence_quote appears (normalised) in raw_text."""
+    if not evidence_quote:
+        return False
+    norm_q = _normalize_text(evidence_quote)
+    norm_r = _normalize_text(raw_text)
+    if not norm_q or len(norm_q) < 10:
+        return False
+    # Check first 60 chars of quote are contained
+    snippet = norm_q[:60]
+    return snippet in norm_r
 
 
 def _build_extraction_prompt(
@@ -61,19 +89,41 @@ def _build_extraction_prompt(
     rel_score = 0.0
     if relevance:
         rel_decision = relevance.get("relevance_decision", "unknown")
-        rel_score = relevance.get("relevance_score", 0.0)
+        rel_score = float(relevance.get("relevance_score", 0.0))
 
     system = (
-        "You are a demand signal extraction specialist for investment research and AI-assisted analysis workflows. "
-        "Extract structured pain point information. Output ONLY valid JSON."
+        "You are a demand signal extraction specialist focused on the investment research, "
+        "venture capital, and AI-investment-tracking domain. "
+        "Extract structured pain signals from real-world web content.\n\n"
+        "Core rules (must follow):\n"
+        "1. Only extract information directly supported by the raw_text. Do NOT invent or embellish.\n"
+        "2. evidence_quote MUST be verbatim text from raw_text. If no suitable quote exists, set should_extract=false.\n"
+        "3. If raw_text is a product page with no user pain, set should_extract=false.\n"
+        "4. evidence_strength='strong' only if ALL of: persona, workflow_stage, pain_description_zh, evidence_quote are present.\n"
+        "5. If persona unclear, set persona_confidence <= 0.5 and do NOT use evidence_strength='strong'.\n"
+        "6. paid_alternative and budget_signal: null if not explicitly mentioned.\n"
+        "7. For off-domain content, set should_extract=false and evidence_strength='reject'.\n"
+        "8. Output ONLY valid JSON. No markdown, no commentary."
     )
     user = (
-        f"Extract pain signals from this investment-domain evidence:\n\n"
-        f"Title: {title}\nSource: {source_type} | {source_url}\n"
-        f"Domain relevance: {rel_decision} (score: {rel_score:.2f})\n"
-        f"Detected signal types: {signals}\n\n"
-        f"Raw text (truncated to {max_chars} chars):\n{raw_text}\n\n"
-        f'Output JSON:\n{{"candidate_id": "{cid}", "should_extract": true, "reject_reason": null, '
+        f"Domain: \u6295\u8d44\u4eba / \u7814\u7a76\u5458 AI \u4ea7\u4e1a\u8ddf\u8e2a\u4e0e\u9879\u76ee\u521d\u7b5b\n"
+        f"Target personas: investor, VC analyst, PE analyst, investment researcher, market researcher, financial analyst, startup scout\n\n"
+        f"Evidence candidate:\n"
+        f"candidate_id: {cid}\n"
+        f"title: {title}\n"
+        f"source_type: {source_type}\n"
+        f"source_url: {source_url}\n"
+        f"domain_relevance: {rel_decision} (score: {rel_score:.2f})\n"
+        f"detected_signal_types: {signals}\n\n"
+        f"raw_text (up to {max_chars} chars):\n{raw_text}\n\n"
+        f"Instructions:\n"
+        f"- Read the raw_text carefully.\n"
+        f"- Identify the primary pain point or demand signal relevant to investment research / AI-investment-tracking.\n"
+        f"- Extract only what is directly stated or strongly implied in the text.\n"
+        f"- evidence_quote must be a direct excerpt from the raw_text above.\n"
+        f"- If the text is purely a product description with no user pain/workflow context, set should_extract=false.\n\n"
+        f'Output this exact JSON structure:\n'
+        f'{{"candidate_id": "{cid}", "should_extract": true, "reject_reason": null, '
         f'"persona": null, "persona_confidence": 0.0, "workflow_stage": null, "job_to_be_done": null, '
         f'"pain_type": null, "pain_description_zh": null, "evidence_quote": null, '
         f'"current_solution": null, "paid_alternative": null, "business_impact": null, '
@@ -98,7 +148,9 @@ def _build_pain_item_from_data(
     candidate: dict,
     data: dict[str, Any],
     model: str | None = None,
-    prompt_version: str = "pain_extraction_v1",
+    prompt_version: str = "acquired_signal_pain_extraction_v1",
+    cache_hit: bool = False,
+    raw_text: str = "",
 ) -> ExtractedPainItem:
     should_extract = bool(data.get("should_extract", False))
     evidence_strength = str(data.get("evidence_strength") or "weak")
@@ -107,15 +159,27 @@ def _build_pain_item_from_data(
     evidence_quote = data.get("evidence_quote") or None
     reject_reason = data.get("reject_reason") or None
 
-    # Enforce: should_extract=True needs evidence_quote
+    # Rule: should_extract=True needs evidence_quote
     if should_extract and not evidence_quote:
         should_extract = False
         reject_reason = "evidence_quote missing in LLM output"
         evidence_strength = "reject"
 
-    # Enforce: should_extract=False needs reject_reason
+    # Rule: should_extract=False needs reject_reason
     if not should_extract and not reject_reason:
         reject_reason = "LLM returned should_extract=false without reason"
+
+    # Quote validation: check evidence_quote appears in raw_text
+    quote_matched = False
+    if should_extract and evidence_quote and raw_text:
+        quote_matched = _check_quote_in_raw_text(evidence_quote, raw_text)
+        if not quote_matched:
+            # Downgrade strong to medium; downgrade medium to weak
+            if evidence_strength == "strong":
+                evidence_strength = "medium"
+            elif evidence_strength == "medium":
+                evidence_strength = "weak"
+            # Record warning in metadata
 
     return ExtractedPainItem(
         pain_item_id=pain_item_id,
@@ -123,7 +187,10 @@ def _build_pain_item_from_data(
         should_extract=should_extract,
         reject_reason=reject_reason,
         persona=data.get("persona"),
-        persona_confidence=float(data.get("persona_confidence") or 0.0) if data.get("persona_confidence") is not None else None,
+        persona_confidence=(
+            float(data.get("persona_confidence") or 0.0)
+            if data.get("persona_confidence") is not None else None
+        ),
         workflow_stage=data.get("workflow_stage"),
         job_to_be_done=data.get("job_to_be_done"),
         pain_type=data.get("pain_type"),
@@ -144,6 +211,10 @@ def _build_pain_item_from_data(
         prompt_version=prompt_version,
         model=model,
         created_at=utc_now_iso(),
+        metadata={
+            "cache_hit": cache_hit,
+            "quote_matched": quote_matched,
+        },
     )
 
 
@@ -162,8 +233,8 @@ def run_pain_extraction(
     min_score = float(limits.get("min_relevance_score_for_extraction", 0.45))
     cache_cfg = cfg.get("cache", {})
     use_cache = bool(cache_cfg.get("enabled", True))
-    prompt_version = str(cache_cfg.get("prompt_version", "pain_extraction_v1"))
-    run_scope = str(cache_cfg.get("run_scope", "demand_radar_mvp_b"))
+    prompt_version = str(cache_cfg.get("prompt_version", "acquired_signal_pain_extraction_v1"))
+    run_scope = str(cache_cfg.get("run_scope", "demand_radar_mvp_b_llm_pass"))
     cache_dir = Path(str(cache_cfg.get("cache_dir", ".llm_cache/mvp_b")))
 
     rel_map = {r.get("candidate_id"): r for r in relevance_results}
@@ -181,6 +252,7 @@ def run_pain_extraction(
         rel = rel_map.get(cid, {})
         rel_decision = rel.get("relevance_decision", "exclude")
         rel_score = float(rel.get("relevance_score", 0.0))
+        raw_text = candidate.get("raw_text") or ""
 
         # Skip if excluded or score too low
         if rel_decision == "exclude" or rel_score < min_score:
@@ -188,7 +260,7 @@ def run_pain_extraction(
                 pain_ids[i], cid,
                 f"domain relevance excluded or score too low ({rel_score:.2f})",
                 candidate.get("source_url"), candidate.get("source_type"), candidate.get("title"),
-                model=model_name,
+                model=model_name, prompt_version=prompt_version,
             ))
             continue
 
@@ -197,25 +269,29 @@ def run_pain_extraction(
                 pain_ids[i], cid,
                 "no LLM client configured",
                 candidate.get("source_url"), candidate.get("source_type"), candidate.get("title"),
+                prompt_version=prompt_version,
             ))
             continue
 
         system_p, user_p = _build_extraction_prompt(candidate, rel, max_chars)
 
-        # Cache key
-        input_hash = hashlib.sha256((cid + user_p[:200]).encode()).hexdigest()[:16]
+        # Cache key includes run_scope + prompt_version for proper invalidation
+        input_hash = hashlib.sha256(
+            (run_scope + prompt_version + cid + user_p[:500]).encode()
+        ).hexdigest()[:20]
         cache_file = cache_dir / f"pain_{prompt_version}_{input_hash}.json"
         cache_file.parent.mkdir(parents=True, exist_ok=True)
 
         data = None
+        cache_hit = False
         if use_cache and cache_file.exists():
             try:
                 data = json.loads(cache_file.read_text(encoding="utf-8"))
+                cache_hit = True
             except Exception:
                 data = None
 
         if data is None:
-            # Try LLM with one retry
             last_error = None
             for attempt in range(2):
                 try:
@@ -231,7 +307,7 @@ def run_pain_extraction(
                     pain_ids[i], cid,
                     f"LLM extraction failed after retry: {last_error}",
                     candidate.get("source_url"), candidate.get("source_type"), candidate.get("title"),
-                    model=model_name,
+                    model=model_name, prompt_version=prompt_version,
                 ))
                 processed += 1
                 continue
@@ -243,13 +319,16 @@ def run_pain_extraction(
                     pass
 
         try:
-            item = _build_pain_item_from_data(pain_ids[i], candidate, data, model_name, prompt_version)
+            item = _build_pain_item_from_data(
+                pain_ids[i], candidate, data, model_name, prompt_version,
+                cache_hit=cache_hit, raw_text=raw_text,
+            )
         except Exception as exc:
             items.append(_reject_item(
                 pain_ids[i], cid,
                 f"Pydantic validation error: {exc}",
                 candidate.get("source_url"), candidate.get("source_type"), candidate.get("title"),
-                model=model_name,
+                model=model_name, prompt_version=prompt_version,
             ))
             processed += 1
             continue

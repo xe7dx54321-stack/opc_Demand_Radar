@@ -1,5 +1,6 @@
 ﻿"""MVP-B: Orchestration pipeline."""
 from __future__ import annotations
+import subprocess
 from dataclasses import dataclass, field
 from pathlib import Path
 
@@ -15,9 +16,13 @@ class MVPBRunSummary:
     should_extract_count: int
     strong_count: int
     medium_count: int
+    cache_hits: int = 0
     r1_before: dict = field(default_factory=dict)
     r1_after: dict = field(default_factory=dict)
     filled_csv: Path | None = None
+    provider: str = "unknown"
+    model: str = "unknown"
+    real_llm_run: bool = False
     errors: list[str] = field(default_factory=list)
 
 
@@ -28,6 +33,15 @@ _PAIN_OUT = Path("data/processed/mvp_b/extracted_pain_items.jsonl")
 _FILLED_CSV = Path("examples/real_evidence_pack_ai_investment_tracking_filled.csv")
 _R1_ITEMS_OUT = Path("data/processed/mvp_b/r1_items.jsonl")
 _R1_VAL_OUT = Path("data/processed/mvp_b/r1_validation.jsonl")
+
+
+def _git_commit() -> str:
+    try:
+        return subprocess.check_output(
+            ["git", "rev-parse", "--short", "HEAD"], text=True
+        ).strip()
+    except Exception:
+        return "unknown"
 
 
 def run_mvp_b(
@@ -46,8 +60,10 @@ def run_mvp_b(
     from demand_radar.mvp_b.evidence_pack_filler import fill_evidence_pack
     from demand_radar.mvp_b.mvp_b_report import (
         build_domain_relevance_report,
+        build_llm_pass_report,
         build_mvp_b_summary_report,
         build_pain_extraction_report,
+        build_r1_validation_comparison_report,
         build_top_pain_signals_report,
     )
     from demand_radar.mvp_b.mvp_b_store import (
@@ -60,8 +76,11 @@ def run_mvp_b(
 
     errors: list[str] = []
     cands_path = candidates_path or _CANDIDATES_PATH
+    radar_commit = _git_commit()
+    provider = getattr(llm_client, "provider", "none") if llm_client else "none"
+    model = getattr(llm_client, "model", "none") if llm_client else "none"
+    real_llm_run = llm_client is not None and provider != "fake"
 
-    # Step 1: Load candidates
     def _load_jsonl(p: Path) -> list[dict]:
         if not p.exists():
             return []
@@ -89,6 +108,9 @@ def run_mvp_b(
             should_extract_count=0,
             strong_count=0,
             medium_count=0,
+            provider=provider,
+            model=model,
+            real_llm_run=real_llm_run,
             errors=["No candidates found"],
         )
 
@@ -115,6 +137,7 @@ def run_mvp_b(
     should_n = sum(1 for p in pain_dicts if p.get("should_extract"))
     strong_n = sum(1 for p in pain_dicts if p.get("evidence_strength") == "strong")
     medium_n = sum(1 for p in pain_dicts if p.get("evidence_strength") == "medium")
+    cache_hits_n = sum(1 for p in pain_dicts if p.get("metadata", {}).get("cache_hit"))
 
     # Step 4: R1 validation before (draft)
     r1_before: dict = {"valid": 0, "warning": 0, "invalid": 0}
@@ -160,6 +183,12 @@ def run_mvp_b(
     build_domain_relevance_report(rel_dicts)
     build_pain_extraction_report(pain_dicts)
     build_top_pain_signals_report(pain_dicts)
+    build_llm_pass_report(
+        rel_dicts, pain_dicts,
+        provider=provider, model=model, real_llm_run=real_llm_run,
+        radar_commit=radar_commit,
+    )
+    build_r1_validation_comparison_report(r1_before, r1_after)
     build_mvp_b_summary_report(rel_dicts, pain_dicts, r1_before, r1_after)
 
     return MVPBRunSummary(
@@ -172,8 +201,12 @@ def run_mvp_b(
         should_extract_count=should_n,
         strong_count=strong_n,
         medium_count=medium_n,
+        cache_hits=cache_hits_n,
         r1_before=r1_before,
         r1_after=r1_after,
         filled_csv=filled,
+        provider=provider,
+        model=model,
+        real_llm_run=real_llm_run,
         errors=errors,
     )

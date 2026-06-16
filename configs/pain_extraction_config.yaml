@@ -1,28 +1,48 @@
 ﻿pain_extraction:
   enabled: true
-  provider_env: DEMAND_RADAR_LLM_PROVIDER
-  model_env: DEMAND_RADAR_LLM_MODEL
-  default_provider: openai_compatible
-  default_model: claude-sonnet-4-6
 
   input:
     evidence_candidates_path: data/processed/acquisition/evidence_candidates.jsonl
+    domain_relevance_scores_path: data/processed/mvp_b/domain_relevance_scores.jsonl
     draft_csv_path: examples/real_evidence_pack_ai_investment_tracking_draft.csv
 
   output:
-    domain_relevance_scores_path: data/processed/mvp_b/domain_relevance_scores.jsonl
     extracted_pain_items_path: data/processed/mvp_b/extracted_pain_items.jsonl
     filled_evidence_pack_path: examples/real_evidence_pack_ai_investment_tracking_filled.csv
-    r1_validation_after_extraction_path: outputs/mvp_b/r1_validation_after_extraction_report.md
+    llm_pass_report_path: outputs/mvp_b/mvp_b_llm_pass_report.md
     top_pain_signals_report_path: outputs/mvp_b/top_pain_signals_report.md
+    r1_validation_after_extraction_path: outputs/mvp_b/r1_validation_after_extraction_report.md
+
+  selection:
+    relevance_decisions:
+      - include
+      - uncertain
+    min_relevance_score_for_extraction: 0.45
+    max_items: 20
+
+  llm:
+    provider_env: LLM_PROVIDER
+    model_env: LLM_MODEL
+    default_provider: anthropic_compatible
+    default_model: claude-sonnet-4-6
+    temperature: 0
+    max_tokens: 4000
 
   limits:
-    max_items: 150
+    max_items: 20
     max_raw_text_chars: 6000
     min_relevance_score_for_extraction: 0.45
 
   cache:
     enabled: true
-    prompt_version: pain_extraction_v1
-    run_scope: demand_radar_mvp_b
+    prompt_version: acquired_signal_pain_extraction_v1
+    run_scope: demand_radar_mvp_b_llm_pass
     cache_dir: .llm_cache/mvp_b
+
+  safety:
+    require_evidence_quote_from_raw_text: true
+    reject_if_no_pain: true
+    reject_domain_out: true
+
+  provider: anthropic_compatible
+  model: claude-sonnet-4-6
