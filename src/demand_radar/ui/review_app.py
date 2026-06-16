@@ -3258,21 +3258,27 @@ def _render_mvp_b_page() -> None:
 
 def _render_mvp_c_page() -> None:
     import streamlit as st
-    from demand_radar.mvp_c.review_service import ReviewService
     from demand_radar.mvp_c.review_store import PainSignalReviewStore
     from demand_radar.mvp_c.review_schema import PainSignalReview
-    from demand_radar.mvp_c.real_pain_signal_gate import run_gate, build_gate_report, quarantine_stale_reviews
+    from demand_radar.mvp_c.real_pain_signal_gate import quarantine_stale_reviews
     from demand_radar.state.raw_store import next_ids, utc_now_iso
     from pathlib import Path
 
     st.subheader("MVP-C \u4eba\u5de5\u6821\u51c6 (Pain Signal Review Workbench)")
 
     store = PainSignalReviewStore()
-    svc = ReviewService(store=store)
 
-    # --- Gate Summary ---
+    # --- Gate + Cards (cached 30s to avoid re-reading large files on every rerender) ---
+    @st.cache_data(ttl=30, show_spinner=False)
+    def _load_gate_cached():
+        from demand_radar.mvp_c.review_service import ReviewService
+        svc = ReviewService(store=PainSignalReviewStore())
+        gs = svc.get_gate_summary()
+        cards = svc.load_pain_signal_cards() if gs.reviewable_count > 0 else []
+        return gs, cards
+
     try:
-        gate_summary = svc.get_gate_summary()
+        gate_summary, cards_all_cached = _load_gate_cached()
     except Exception as exc:
         st.error("\u65e0\u6cd5\u52a0\u8f7d gate: " + str(exc))
         return
@@ -3308,9 +3314,11 @@ def _render_mvp_c_page() -> None:
         except Exception as exc:
             st.warning("\u9694\u79bb\u65e7 review \u5931\u8d25: " + str(exc))
 
-    # --- Summary ---
+    # --- Summary (live, not cached, so reviewed counts are always fresh) ---
     try:
-        summary = svc.get_summary()
+        from demand_radar.mvp_c.review_service import ReviewService
+        svc_live = ReviewService(store=store)
+        summary = svc_live.get_summary()
     except Exception as exc:
         st.error("\u65e0\u6cd5\u52a0\u8f7d\u6c47\u603b: " + str(exc))
         return
@@ -3344,11 +3352,21 @@ def _render_mvp_c_page() -> None:
     elif show_filter == "\u5df2\u5ba1\u6838":
         reviewed_only = True
 
-    cards = svc.load_pain_signal_cards(
-        filter_strength=strength_filter if strength_filter != "\u5168\u90e8" else None,
-        filter_action=action_filter if action_filter != "\u5168\u90e8" else None,
-        reviewed_only=reviewed_only,
-    )
+    # Filter from cache + refresh existing_review live (so save reflects immediately)
+    live_reviews = {r.pain_item_id: r for r in store.load_reviews()}
+    cards = []
+    for c in cards_all_cached:
+        c.existing_review = live_reviews.get(c.pain_item_id)
+        if reviewed_only is True and c.existing_review is None:
+            continue
+        if reviewed_only is False and c.existing_review is not None:
+            continue
+        if strength_filter and strength_filter != "\u5168\u90e8" and c.evidence_strength != strength_filter:
+            continue
+        if action_filter and action_filter != "\u5168\u90e8":
+            if c.existing_review is None or c.existing_review.action_decision != action_filter:
+                continue
+        cards.append(c)
 
     if not cards:
         st.info("\u5f53\u524d\u7b5b\u9009\u6761\u4ef6\u4e0b\u6ca1\u6709 pain signals\u3002")
