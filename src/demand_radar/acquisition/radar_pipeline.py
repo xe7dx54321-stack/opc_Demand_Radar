@@ -39,15 +39,27 @@ def run_radar(
     draft_output: Path | None = None,
     radar_report_path: Path | None = None,
     skip_r1_validation: bool = False,
+    use_cached_acquisition: bool = False,
 ) -> RadarRunSummary:
     """Full radar pipeline: acquisition -> draft -> R1 validation -> report."""
 
-    # Step 1: acquisition
-    summary, candidates = run_acquisition(
+    # Step 1: acquisition (or use cached)
+    if use_cached_acquisition:
+        from .acquisition_store import load_evidence_candidates, load_run_log
+        from .acquisition_schema import AcquisitionRunSummary as _ARS
+        run_logs = load_run_log()
+        if run_logs:
+            summary = _ARS(**run_logs[-1])
+            candidates = load_evidence_candidates()
+        else:
+            use_cached_acquisition = False
+
+    if not use_cached_acquisition:
+        summary, candidates = run_acquisition(
         domain_id=domain_id,
         domain_config_dir=domain_config_dir,
-        source_registry_path=source_registry_path,
-    )
+            source_registry_path=source_registry_path,
+        )
 
     # Step 2: build acquisition report
     build_acquisition_report(summary, candidates)
