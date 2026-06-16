@@ -1,4 +1,4 @@
-﻿"""Streamlit app for local calibration review."""
+"""Streamlit app for local calibration review."""
 
 
 
@@ -576,10 +576,6 @@ def main() -> None:
 
     with stage35_tab:
         _render_stage35_page()
-
-
-    with real_evidence_tab:
-        _render_real_evidence_page()
 
 
     with real_evidence_tab:
@@ -3476,6 +3472,48 @@ def _render_mvp_c_page() -> None:
                     st.rerun()
                 except Exception as exc:
                     st.error("\u4fdd\u5b58\u5931\u8d25: " + str(exc))
+
+
+
+
+def _render_stage35_page() -> None:
+    """Stage 3.5 targeted validation overview."""
+    import streamlit as st
+    st.subheader("Stage 3.5 定向验证")
+    st.caption("定向证据扩展与验证结果概览。")
+    try:
+        from demand_radar.ui.stage35_service import (
+            get_stage35_selected_candidates,
+            get_stage35_run_summary,
+            get_stage35_gate_result,
+        )
+        summary = get_stage35_run_summary()
+        gate = get_stage35_gate_result()
+        candidates = get_stage35_selected_candidates()
+    except Exception as exc:
+        st.warning(f"Stage 3.5 数据加载失败: {exc}")
+        return
+    if summary is None:
+        st.info("尚未运行 Stage 3.5。请先运行 demand-radar run-stage35。")
+        return
+    col1, col2, col3 = st.columns(3)
+    col1.metric("已选候选", summary.selected_candidates)
+    col2.metric("有效信号", summary.valid_signals)
+    col3.metric("Gate 状态", gate.status if gate else "N/A")
+    if gate:
+        st.divider()
+        st.markdown(f"**Gate 结论**: {gate.reason_zh}")
+        st.markdown(f"**下一步**: {gate.required_next_action_zh}")
+    if candidates:
+        st.divider()
+        st.markdown(f"**已选候选（{len(candidates)} 条）：**")
+        for c in candidates:
+            with st.expander(f"#{c.priority_rank} {c.group_title_zh} — TruthScore {c.current_truth_score:.2f}"):
+                st.write(f"当前状态: {c.current_truth_level} / {c.current_next_action}")
+                st.write(f"选择原因: {c.selected_reason_zh}")
+                st.write(f"目标新增信号数: {c.target_new_signals}")
+    else:
+        st.info("无候选数据。")
 
 
 if __name__ == "__main__":
