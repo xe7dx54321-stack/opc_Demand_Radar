@@ -3442,7 +3442,7 @@ def _render_mvp_c_page() -> None:
             error_labels = st.multiselect("\u9519\u8bef\u6807\u7b7e (\u53ef\u591a\u9009)", ERROR_OPTIONS, default=default_error_labels, key=key_prefix + "_err")
             note = st.text_area("\u5ba1\u6838\u5907\u6ce8 (\u4e2d\u6587)", value=default_note, key=key_prefix + "_note", height=60)
 
-            if st.button("\ud83d\udcbe \u4fdd\u5b58\u5ba1\u6838", key=key_prefix + "_save"):
+            if st.button("\u4fdd\u5b58\u5ba1\u6838", key=key_prefix + "_save"):
                 true_pain_val = None
                 if true_pain_str == "\u662f":
                     true_pain_val = True
