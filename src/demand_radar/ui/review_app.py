@@ -2028,13 +2028,6 @@ def _review_note_label(value: str) -> str:
 
 
 
-if __name__ == "__main__":
-
-    main()
-
-
-
-
 
 # ---------------------------------------------------------------------------
 
@@ -3483,3 +3476,7 @@ def _render_mvp_c_page() -> None:
                     st.rerun()
                 except Exception as exc:
                     st.error("\u4fdd\u5b58\u5931\u8d25: " + str(exc))
+
+
+if __name__ == "__main__":
+    main()
