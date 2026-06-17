@@ -1,6 +1,7 @@
 """Navigation config tests for consolidated Review Console."""
 
 from demand_radar.ui.navigation_config import HISTORY_PAGES, NAV_TABS
+from demand_radar.ui.review_app import _current_console_tab_labels
 
 
 def test_top_level_navigation_has_current_workbench_entries_only() -> None:
@@ -23,3 +24,18 @@ def test_history_archive_keeps_legacy_stage_entries() -> None:
     assert any("MVP-C" in label for label in labels)
     assert any("MVP-D4" in label for label in labels)
     assert any("批次总览" in label for label in labels)
+
+
+def test_current_console_tab_labels_backfills_theme_tab_for_cached_config() -> None:
+    stale_tabs = ["当前任务", "待审核队列", "需求证据结果", "诊断与历史", "设置与运行状态"]
+
+    labels = _current_console_tab_labels(stale_tabs)
+
+    assert labels == [
+        "当前任务",
+        "待审核队列",
+        "需求证据结果",
+        "需求主题",
+        "诊断与历史",
+        "设置与运行状态",
+    ]

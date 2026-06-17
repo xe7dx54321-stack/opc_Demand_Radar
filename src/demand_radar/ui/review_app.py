@@ -3863,19 +3863,29 @@ def main() -> None:
     st.title("需求雷达审核台")
     st.caption("当前入口按用户任务组织。历史阶段页已收进诊断归档，当前主任务是 D4 第二轮人工审核。")
 
-    current_tab, queue_tab, evidence_tab, themes_tab, history_tab, settings_tab = st.tabs(NAV_TABS)
-    with current_tab:
+    tab_labels = _current_console_tab_labels(NAV_TABS)
+    tab_map = dict(zip(tab_labels, st.tabs(tab_labels)))
+    with tab_map["当前任务"]:
         _render_current_task_console_page()
-    with queue_tab:
+    with tab_map["待审核队列"]:
         _render_d4_review_queue_console_page()
-    with evidence_tab:
+    with tab_map["需求证据结果"]:
         _render_d4_evidence_results_console_page()
-    with themes_tab:
+    with tab_map["需求主题"]:
         _render_d5_demand_themes_console_page()
-    with history_tab:
+    with tab_map["诊断与历史"]:
         _render_history_archive_console_page()
-    with settings_tab:
+    with tab_map["设置与运行状态"]:
         _render_runtime_status_console_page()
+
+
+def _current_console_tab_labels(nav_tabs: list[str]) -> list[str]:
+    """Return stable Review Console tabs even if Streamlit caches an older config module."""
+    labels = list(nav_tabs)
+    if "需求主题" not in labels:
+        insert_at = labels.index("需求证据结果") + 1 if "需求证据结果" in labels else len(labels)
+        labels.insert(insert_at, "需求主题")
+    return labels
 
 
 def _render_current_task_console_page() -> None:
