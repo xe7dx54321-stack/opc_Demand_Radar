@@ -1,0 +1,79 @@
+demand_theme_grouping:
+  domain_id: ai_investment_tracking
+  domain_title_zh: 投资人 / 研究员 AI 产业跟踪与项目初筛
+
+  input:
+    d4_pain_items_path: data/processed/mvp_d4/foundation_search_pain_items.jsonl
+    d4_reviews_path: data/processed/reviews/d4_pain_signal_reviews.jsonl
+
+  output:
+    deduped_pain_items_path: data/processed/d5/deduped_pain_items.jsonl
+    source_groups_path: data/processed/d5/source_groups.jsonl
+    demand_themes_path: data/processed/d5/demand_themes.jsonl
+    theme_review_queue_path: data/processed/d5/theme_review_queue.jsonl
+
+    dedupe_report_path: outputs/d5/dedupe_report.md
+    source_group_report_path: outputs/d5/source_group_report.md
+    demand_theme_report_path: outputs/d5/demand_theme_report.md
+    theme_review_queue_report_path: outputs/d5/theme_review_queue_report.md
+    d5_summary_report_path: outputs/d5/d5_summary_report.md
+
+  evidence_selection:
+    include_strength:
+      - strong
+      - medium
+    exclude_strength:
+      - reject
+    weak_as_auxiliary: true
+
+  dedupe:
+    dedupe_by_source_url: true
+    dedupe_by_result_domain: true
+    dedupe_by_title_similarity: true
+    title_similarity_threshold: 0.88
+    pain_description_similarity_threshold: 0.82
+
+  grouping:
+    method: lightweight_rules_plus_llm_label
+    target_theme_count_min: 3
+    target_theme_count_max: 5
+    group_by:
+      - persona
+      - workflow_stage
+      - pain_type
+      - job_to_be_done
+      - pain_description_zh
+
+  source_weighting:
+    first_hand_community: 1.0
+    workaround_discussion: 0.9
+    product_review_comment: 0.85
+    practitioner_blog: 0.65
+    content_marketing: 0.45
+    vendor_blog: 0.4
+    job_description: 0.35
+    generic_article: 0.25
+    technical_issue: 0.2
+
+  theme_decision_rules:
+    pursue_candidate:
+      min_reviewed_pursue: 1
+      min_unique_domains: 2
+      min_first_hand_or_workaround_evidence: 1
+      min_strong_medium_evidence: 3
+
+    watch:
+      min_strong_medium_evidence: 2
+
+    needs_more_evidence:
+      default: true
+
+  llm:
+    enabled: true
+    provider_env: LLM_PROVIDER
+    model_env: LLM_MODEL
+    default_provider: anthropic_compatible
+    default_model: claude-sonnet-4-6
+    prompt_version: demand_theme_labeling_v1
+    run_scope: demand_radar_d5_theme_grouping
+    cache_enabled: true

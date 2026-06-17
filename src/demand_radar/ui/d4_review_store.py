@@ -1,4 +1,7 @@
-"""D4 review store for second-round reviews, isolated from MVP-C."""
+"""D4 审核存储。
+
+与 MVP-C review 文件隔离，专门保存 D4 第二轮人工审核结果。
+"""
 from __future__ import annotations
 
 import json

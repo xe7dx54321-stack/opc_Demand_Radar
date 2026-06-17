@@ -69,6 +69,7 @@ from demand_radar.ui.cluster_review_service import (
 )
 
 from demand_radar.ui.chinese_presenter import build_chinese_review_view, looks_like_english
+from demand_radar.ui import d4_chinese_labels as d4_labels
 
 from demand_radar.ui.merge_review_service import (
 
@@ -2685,10 +2686,10 @@ def _render_llm_comparison_page() -> None:
 
 def _render_truth_scoring_page() -> None:
     """Render the Stage 3 Truth Scoring review tab."""
-    st.header("\u771f\u5b9e\u9700\u6c42\u8bc4\u5206 (Stage 3 Truth Scoring)")
+    st.header("真实需求评分（Stage 3）")
     scores = get_truth_scores()
     if not scores:
-        st.info("\u6682\u65e0\u8bc4\u5206\u7ed3\u679c\u3002\u8bf7\u5148\u8fd0\u884c: demand-radar run-stage3 --source calibrated_llm")
+        st.info("暂无评分结果。请先运行：demand-radar run-stage3 --source calibrated_llm")
         return
 
     level_counts = {"strong": 0, "medium": 0, "weak": 0, "insufficient": 0}
@@ -2698,17 +2699,17 @@ def _render_truth_scoring_page() -> None:
         action_counts[s.recommended_next_action] = action_counts.get(s.recommended_next_action, 0) + 1
 
     col1, col2, col3, col4 = st.columns(4)
-    col1.metric("\U0001f7e2 Strong", level_counts.get("strong", 0))
-    col2.metric("\U0001f7e1 Medium", level_counts.get("medium", 0))
-    col3.metric("\U0001f7e0 Weak", level_counts.get("weak", 0))
-    col4.metric("\U0001f534 Insufficient", level_counts.get("insufficient", 0))
+    col1.metric("\U0001f7e2 强", level_counts.get("strong", 0))
+    col2.metric("\U0001f7e1 中", level_counts.get("medium", 0))
+    col3.metric("\U0001f7e0 弱", level_counts.get("weak", 0))
+    col4.metric("\U0001f534 不足", level_counts.get("insufficient", 0))
 
     proceed = action_counts.get("proceed_to_fit_scoring", 0)
     needs_ev = action_counts.get("needs_more_evidence", 0)
     keep = action_counts.get("keep_watch", 0)
     discard = action_counts.get("discard", 0)
     st.caption(
-        f"\u53ef\u8fdb Fit Scoring: **{proceed}** | "
+        f"可进入适配度评分：**{proceed}** | "
         f"\u9700\u66f4\u591a\u8bc1\u636e: **{needs_ev}** | "
         f"\u89c2\u5bdf\u4e2d: **{keep}** | "
         f"\u5efa\u8bae\u4e22\u5f03: **{discard}**"
@@ -2717,10 +2718,10 @@ def _render_truth_scoring_page() -> None:
 
     LEVEL_EMOJI = {"strong": "\U0001f7e2", "medium": "\U0001f7e1", "weak": "\U0001f7e0", "insufficient": "\U0001f534"}
     ACTION_LABELS = {
-        "proceed_to_fit_scoring": "\u53ef\u8fdb\u884c Fit Scoring",
-        "needs_more_evidence": "\u9700\u8981\u66f4\u591a\u8bc1\u636e",
-        "keep_watch": "\u6301\u7eed\u89c2\u5bdf",
-        "discard": "\u5efa\u8bae\u4e22\u5f03",
+        "proceed_to_fit_scoring": "可进入适配度评分",
+        "needs_more_evidence": "需要更多证据",
+        "keep_watch": "持续观察",
+        "discard": "建议丢弃",
     }
 
     sorted_scores = sorted(scores, key=lambda x: -x.truth_score)
@@ -2729,17 +2730,17 @@ def _render_truth_scoring_page() -> None:
         with st.expander(f"{emoji} {s.group_title_zh} | {s.truth_score:.1f}\u5206 | {ACTION_LABELS.get(s.recommended_next_action, s.recommended_next_action)}"):
             c1, c2 = st.columns(2)
             with c1:
-                st.markdown(f"**Truth Score:** {s.truth_score:.1f} / 100")
-                st.markdown(f"**Level:** {emoji} {s.truth_level}")
-                st.markdown(f"**Next Action:** {ACTION_LABELS.get(s.recommended_next_action, s.recommended_next_action)}")
-                st.markdown(f"**Evidence Count:** {s.evidence_count}")
-                st.markdown(f"**Source Count:** {s.source_count}")
+                st.markdown(f"**真实需求评分：** {s.truth_score:.1f} / 100")
+                st.markdown(f"**评分等级：** {emoji} {d4_labels.truth_level_label(s.truth_level)}")
+                st.markdown(f"**下一步动作：** {ACTION_LABELS.get(s.recommended_next_action, s.recommended_next_action)}")
+                st.markdown(f"**证据数：** {s.evidence_count}")
+                st.markdown(f"**来源数：** {s.source_count}")
                 if s.personas:
-                    st.markdown(f"**Personas:** {', '.join(s.personas)}")
+                    st.markdown(f"**用户角色：** {', '.join(s.personas)}")
                 if s.domain_tags:
-                    st.markdown(f"**Domain Tags:** {', '.join(s.domain_tags)}")
+                    st.markdown(f"**领域标签：** {', '.join(s.domain_tags)}")
             with c2:
-                st.markdown("**Dimension Scores:**")
+                st.markdown("**维度评分：**")
                 dim_labels = {
                     "pain_evidence_strength": "\u75db\u70b9\u8bc1\u636e\u5f3a\u5ea6",
                     "frequency_repetition": "\u91cd\u590d\u9891\u7387",
@@ -2794,21 +2795,21 @@ def _render_truth_scoring_page() -> None:
                 if st.button("\U0001f6ab \u5e94\u4e22\u5f03", key=f"discard_{s.truth_score_id}"):
                     submit_truth_review(s.truth_score_id, s.source_group_id, "should_discard")
                     st.success("\u5df2\u8bb0\u5f55")
-                if st.button("\u27a1\ufe0f \u53ef\u8fdb Fit Scoring", key=f"fit_{s.truth_score_id}"):
+                if st.button("➡️ 可进入适配度评分", key=f"fit_{s.truth_score_id}"):
                     submit_truth_review(s.truth_score_id, s.source_group_id, "should_enter_fit_scoring")
                     st.success("\u5df2\u8bb0\u5f55")
 
 
 
 def _render_evidence_gap_page() -> None:
-    """Render Stage 3.2 Evidence Gap Analysis tab."""
-    st.header("证据缺口分析 (Stage 3.2 Evidence Gap Analysis)")
+    """Render Stage 3.2 evidence gap analysis tab."""
+    st.header("证据缺口分析（Stage 3.2）")
     gaps = get_gap_analyses()
     plans = get_collection_plans()
     plan_by_gap = {p.gap_analysis_id: p for p in plans}
 
     if not gaps:
-        st.info("暂无证据缺口分析。请先运行: demand-radar run-stage32 --source calibrated_llm")
+        st.info("暂无证据缺口分析。请先运行：demand-radar run-stage32 --source calibrated_llm")
         return
 
     by_pri = {"high": 0, "medium": 0, "low": 0}
@@ -2828,25 +2829,25 @@ def _render_evidence_gap_page() -> None:
     for g in sorted(gaps, key=lambda x: (x.priority != "high", x.priority != "medium", -x.current_truth_score)):
         emoji = PRI_EMOJI.get(g.priority, "")
         plan = plan_by_gap.get(g.gap_analysis_id)
-        with st.expander(f"{emoji} {g.group_title_zh} | {g.current_truth_score:.1f}分 | {g.priority} priority"):
+        with st.expander(f"{emoji} {g.group_title_zh} | {g.current_truth_score:.1f}分 | {d4_labels.priority_label(g.priority)}优先级"):
             col1, col2 = st.columns(2)
             with col1:
-                st.markdown(f"**Truth Score:** {g.current_truth_score:.1f} / 100")
-                st.markdown(f"**Truth Level:** {g.current_truth_level}")
-                st.markdown(f"**Next Action:** {g.current_next_action}")
-                st.markdown(f"**Priority:** {emoji} {g.priority}")
-                st.markdown("**Main Bottleneck Dimensions:**")
+                st.markdown(f"**真实需求评分：** {g.current_truth_score:.1f} / 100")
+                st.markdown(f"**评分等级：** {d4_labels.truth_level_label(g.current_truth_level)}")
+                st.markdown(f"**下一步动作：** {d4_labels.next_action_label(g.current_next_action)}")
+                st.markdown(f"**优先级：** {emoji} {d4_labels.priority_label(g.priority)}")
+                st.markdown("**主要瓶颈维度：**")
                 for b in g.main_bottleneck_dimensions:
                     score = g.dimension_scores.get(b, 0)
                     st.markdown(f"  - {b}: {score:.1f}")
             with col2:
-                st.markdown("**Missing Evidence Types:**")
+                st.markdown("**缺失证据类型：**")
                 for m in g.missing_evidence_types:
                     st.markdown(f"  - `{m}`")
-                st.markdown(f"**Target New Signals:** {g.target_new_signals}")
+                st.markdown(f"**目标新增信号：** {g.target_new_signals}")
 
-            st.markdown(f"**Gap Reason:** {g.gap_reason_zh}")
-            st.markdown(f"**Upgrade Path:** {g.upgrade_path_zh}")
+            st.markdown(f"**缺口原因：** {g.gap_reason_zh}")
+            st.markdown(f"**补强路径：** {g.upgrade_path_zh}")
 
             if plan:
                 st.markdown("---")
@@ -2854,7 +2855,7 @@ def _render_evidence_gap_page() -> None:
                 if plan.search_keywords_zh:
                     st.markdown("中文关键词: " + " | ".join(plan.search_keywords_zh[:4]))
                 if plan.search_keywords_en:
-                    st.markdown("EN keywords: " + " | ".join(plan.search_keywords_en[:3]))
+                    st.markdown("英文关键词：" + " | ".join(plan.search_keywords_en[:3]))
                 if plan.target_source_types:
                     st.markdown("目标来源: " + ", ".join(plan.target_source_types[:4]))
                 st.markdown(f"**采集建议:** {plan.collection_notes_zh}")
@@ -2883,7 +2884,7 @@ def _render_targeted_expansion_page() -> None:
     col7.metric("新增定向信号", summary.targeted_rows_included)
 
     if summary.excluded_synthetic > 0:
-        st.warning(f"已排除 synthetic 信号: {summary.excluded_synthetic} 条")
+        st.warning(f"已排除合成信号：{summary.excluded_synthetic} 条")
 
     st.markdown("---")
 
@@ -2917,23 +2918,28 @@ def _render_targeted_expansion_page() -> None:
     deltas = get_truth_score_deltas()
     if deltas:
         st.markdown("---")
-        st.subheader("Truth Score 对比（前后）")
+        st.subheader("真实需求评分对比（前后）")
         for delta in deltas:
             before = delta.before_truth_score
             after = delta.after_truth_score
             change = delta.delta
-            level_change = f"{delta.before_truth_level} → {delta.after_truth_level}" if delta.before_truth_level else "N/A"
+            level_change = (
+                f"{d4_labels.truth_level_label(delta.before_truth_level)} → "
+                f"{d4_labels.truth_level_label(delta.after_truth_level)}"
+                if delta.before_truth_level
+                else "暂无"
+            )
             with st.expander(f"{delta.group_title_zh} | {before:.1f} → {after:.1f} (Δ {change:+.1f})" if before is not None and after is not None else delta.group_title_zh):
                 col_a, col_b, col_c = st.columns(3)
-                col_a.metric("扩展前", f"{before:.1f}" if before is not None else "N/A")
-                col_b.metric("扩展后", f"{after:.1f}" if after is not None else "N/A", delta=f"{change:+.1f}" if change is not None else None)
+                col_a.metric("扩展前", f"{before:.1f}" if before is not None else "暂无")
+                col_b.metric("扩展后", f"{after:.1f}" if after is not None else "暂无", delta=f"{change:+.1f}" if change is not None else None)
                 col_c.metric("级别变化", level_change)
                 if delta.improved_dimensions:
-                    st.markdown("改善维度: " + ", ".join(delta.improved_dimensions))
+                    st.markdown("改善维度：" + ", ".join(delta.improved_dimensions))
                 if delta.remaining_gaps:
-                    st.markdown("剩余缺口: " + ", ".join(delta.remaining_gaps))
+                    st.markdown("剩余缺口：" + ", ".join(delta.remaining_gaps))
     else:
-        st.info("尚无 Truth Score 对比数据。完整重跑后可查看。")
+        st.info("尚无真实需求评分对比数据。完整重跑后可查看。")
 
 
 def _render_lineage_page() -> None:
@@ -2974,7 +2980,7 @@ def _render_lineage_page() -> None:
 
     # Stable delta section
     if stable_deltas:
-        st.subheader("稳定 Truth Score Delta")
+        st.subheader("稳定评分变化")
         dc = Counter(d.delta_confidence for d in stable_deltas)
         c1, c2, c3 = st.columns(3)
         c1.metric("高置信", dc.get("high", 0))
@@ -2983,23 +2989,23 @@ def _render_lineage_page() -> None:
 
         for delta in sorted(stable_deltas, key=lambda d: -(d.stable_delta or 0)):
             delta_str = f"+{delta.stable_delta:.1f}" if delta.stable_delta and delta.stable_delta > 0 else (
-                f"{delta.stable_delta:.1f}" if delta.stable_delta is not None else "N/A"
+                f"{delta.stable_delta:.1f}" if delta.stable_delta is not None else "暂无"
             )
             title = delta.before_group_title_zh or delta.after_group_title_zh or delta.stable_delta_id
             conf_emoji = {"high": "🟢", "medium": "🟡", "low": "🔴"}.get(delta.delta_confidence, "⚪")
-            with st.expander(f"{conf_emoji} {title[:55]} | Δ {delta_str} [{delta.delta_confidence}]"):
+            with st.expander(f"{conf_emoji} {title[:55]} | 变化 {delta_str} [{d4_labels.priority_label(delta.delta_confidence)}置信]"):
                 col_a, col_b, col_c = st.columns(3)
-                col_a.metric("扩展前", f"{delta.before_truth_score:.1f}" if delta.before_truth_score else "N/A",
+                col_a.metric("扩展前", f"{delta.before_truth_score:.1f}" if delta.before_truth_score else "暂无",
                              delta=None)
-                col_b.metric("扩展后", f"{delta.after_truth_score:.1f}" if delta.after_truth_score else "N/A",
+                col_b.metric("扩展后", f"{delta.after_truth_score:.1f}" if delta.after_truth_score else "暂无",
                              delta=delta_str if delta.stable_delta else None)
-                col_c.metric("置信度", delta.delta_confidence)
+                col_c.metric("置信度", d4_labels.priority_label(delta.delta_confidence))
                 st.markdown(f"**解释:** {delta.interpretation_zh}")
-                st.markdown(f"**建议:** `{delta.recommended_next_action}`")
+                st.markdown(f"**建议:** {d4_labels.next_action_label(delta.recommended_next_action)}")
                 if delta.drift_flags:
-                    st.warning("漂移标记: " + ", ".join(delta.drift_flags))
+                    st.warning("漂移标记：" + ", ".join(delta.drift_flags))
                 if delta.delta_confidence == "low":
-                    st.error("⚠️ 低置信 delta 不应用于 Stage 4 决策")
+                    st.error("⚠️ 低置信变化不应用于 Stage 4 决策")
 
     st.markdown("---")
 
@@ -3057,7 +3063,7 @@ def _render_real_evidence_page() -> None:
     from demand_radar.real_evidence.real_evidence_schema import CalibrationReview
     from demand_radar.state.raw_store import next_ids, utc_now_iso
 
-    st.subheader("真实证据校准 (Stage R1)")
+    st.subheader("真实证据校准（Stage R1）")
 
     summary = get_real_evidence_summary()
 
@@ -3114,11 +3120,11 @@ def _render_real_evidence_page() -> None:
         with st.expander(
             f"{status_emoji} [{item['source_type']}] {item.get('title') or item['evidence_id'][:60]}"
         ):
-            st.markdown(f"**Source:** {item.get('source_url') or item.get('source_note') or 'N/A'}")
-            st.markdown(f"**Persona:** {item.get('persona') or 'N/A'} | **Stage:** {item.get('workflow_stage') or 'N/A'}")
-            st.markdown(f"**Pain type:** {item.get('pain_type') or 'N/A'}")
+            st.markdown(f"**来源：** {item.get('source_url') or item.get('source_note') or '暂无'}")
+            st.markdown(f"**用户角色：** {item.get('persona') or '暂无'} | **工作流阶段：** {item.get('workflow_stage') or '暂无'}")
+            st.markdown(f"**痛点类型：** {item.get('pain_type') or '暂无'}")
             if item.get("evidence_quote"):
-                st.info(f"引文: {item['evidence_quote'][:200]}")
+                st.info(f"引文：{item['evidence_quote'][:200]}")
             if item.get("raw_text"):
                 st.text_area("原文", item["raw_text"][:500], height=80, key=f"rt_{item['evidence_id']}", disabled=True)
 
@@ -3140,13 +3146,13 @@ def _render_real_evidence_page() -> None:
                         created_at=utc_now_iso(),
                     )
                     append_calibration_review(review)
-                    st.success(f"已提交标注: {selected}")
+                    st.success(f"已提交标注：{selected}")
                 else:
                     st.warning("请选择至少一个标签。")
 
     if summary["calibration_reviews"] > 0:
         st.markdown("---")
-        st.subheader(f"校准 Review 记录 ({summary['calibration_reviews']} 条)")
+        st.subheader(f"校准审核记录 ({summary['calibration_reviews']} 条)")
         reviews = get_calibration_reviews()
         for r in reviews[-10:]:
             st.markdown(f"- `{r['evidence_id']}` {r['human_labels']} {r.get('reviewer_note_zh') or ''}")
@@ -3163,7 +3169,7 @@ def _render_acquisition_page() -> None:
         st.info("尚未运行采集。请先运行: demand-radar run-acquisition --domain ai_investment_tracking")
         return
 
-    st.caption("Run ID: " + str(summary["last_run_id"]))
+    st.caption("运行编号：" + str(summary["last_run_id"]))
 
     c1, c2, c3, c4 = st.columns(4)
     c1.metric("原始信号", summary["raw_signal_count"])
@@ -3179,7 +3185,7 @@ def _render_acquisition_page() -> None:
     if summary["by_source"]:
         st.markdown("**来源分布**")
         for src, cnt in summary["by_source"].items():
-            st.write("- " + str(src) + ": " + str(cnt))
+            st.write("- " + str(src) + "： " + str(cnt))
 
     if summary["errors"]:
         with st.expander("错误", expanded=False):
@@ -3194,17 +3200,17 @@ def _render_acquisition_page() -> None:
     candidates = get_evidence_candidates()
     valid_cands = [c for c in candidates if c.get("validation_status") == "valid"]
     if valid_cands:
-        st.markdown("**Top 有效候选 (共 " + str(len(valid_cands)) + " 条)**")
+        st.markdown("**主要有效候选 (共 " + str(len(valid_cands)) + " 条)**")
         for cand in valid_cands[:30]:
             label = (cand.get("title") or cand.get("source_url") or "(无标题)")[:80]
             with st.expander(label):
-                st.write("来源类型: " + str(cand.get("source_type", "-")))
+                st.write("来源类型：" + str(cand.get("source_type", "-")))
                 if cand.get("source_url"):
-                    st.write("URL: " + cand["source_url"])
+                    st.write("来源链接：" + cand["source_url"])
                 st.write("状态: " + str(cand.get("validation_status", "-")))
                 sigs = cand.get("detected_signal_types", [])
                 if sigs:
-                    st.write("信号类型: " + ", ".join(sigs))
+                    st.write("信号类型：" + ", ".join(sigs))
                 raw = cand.get("raw_text", "")
                 if raw:
                     st.caption(raw[:300])
@@ -3228,9 +3234,9 @@ def _render_mvp_b_page() -> None:
     exclude_ct = sum(1 for r in rel_results if r.get("relevance_decision") == "exclude")
 
     c1, c2, c3 = st.columns(3)
-    c1.metric("领域相关 (include)", include_ct)
-    c2.metric("不确定 (uncertain)", uncertain_ct)
-    c3.metric("域外排除 (exclude)", exclude_ct)
+    c1.metric("领域相关", include_ct)
+    c2.metric("不确定", uncertain_ct)
+    c3.metric("域外排除", exclude_ct)
 
     if pain_items:
         extract_ct = sum(1 for p in pain_items if p.get("should_extract"))
@@ -3251,22 +3257,22 @@ def _render_mvp_b_page() -> None:
         )[:20]
 
         if top_pains:
-            st.markdown("**Top 痛点信号**")
+            st.markdown("**代表性痛点信号**")
             for item in top_pains:
                 title = item.get("title") or item.get("candidate_id") or ""
-                strength_label = "[" + str(item.get("evidence_strength", "-")) + "] " + str(title)[:80]
+                strength_label = "[" + d4_labels.strength_label(item.get("evidence_strength")) + "] " + str(title)[:80]
                 with st.expander(strength_label):
-                    st.write("Persona: " + str(item.get("persona", "-")))
-                    st.write("Workflow: " + str(item.get("workflow_stage", "-")))
-                    st.write("Pain Type: " + str(item.get("pain_type", "-")))
+                    st.write("用户角色：" + str(item.get("persona", "-")))
+                    st.write("工作流阶段：" + d4_labels.workflow_label(item.get("workflow_stage")))
+                    st.write("痛点类型：" + d4_labels.pain_type_label(item.get("pain_type")))
                     if item.get("pain_description_zh"):
-                        st.write("痛点: " + item["pain_description_zh"])
+                        st.write("痛点：" + item["pain_description_zh"])
                     if item.get("evidence_quote"):
-                        st.caption("原文证据: " + item["evidence_quote"][:300])
-                    st.write("商业信号: " + str(item.get("commercial_signal_type", "-")))
-                    st.write("置信度: " + str(round(item.get("confidence", 0), 2)))
+                        st.caption("原文证据：" + item["evidence_quote"][:300])
+                    st.write("商业信号：" + d4_labels.commercial_signal_label(item.get("commercial_signal_type")))
+                    st.write("置信度：" + str(round(item.get("confidence", 0), 2)))
                     if item.get("source_url"):
-                        st.write("URL: " + item["source_url"])
+                        st.write("来源链接：" + item["source_url"])
 
 def _render_mvp_c_page() -> None:
     import streamlit as st
@@ -3276,7 +3282,7 @@ def _render_mvp_c_page() -> None:
     from demand_radar.state.raw_store import next_ids, utc_now_iso
     from pathlib import Path
 
-    st.subheader("MVP-C \u4eba\u5de5\u6821\u51c6 (Pain Signal Review Workbench)")
+    st.subheader("MVP-C 人工校准（旧审核台）")
 
     store = PainSignalReviewStore()
 
@@ -3295,20 +3301,20 @@ def _render_mvp_c_page() -> None:
         st.error("\u65e0\u6cd5\u52a0\u8f7d gate: " + str(exc))
         return
 
-    with st.expander("\u4fe1\u53f7\u95f8\u9053\u72b6\u6001 (Source Gate)", expanded=True):
+    with st.expander("信号闸门状态", expanded=True):
         gc1, gc2, gc3 = st.columns(3)
         gc1.metric("\u62bd\u53d6\u603b\u6570", gate_summary.total_items)
-        gc2.metric("\u53ef\u5ba1\u6838 (Reviewable)", gate_summary.reviewable_count)
-        gc3.metric("\u88ab\u62e6\u622a (Blocked)", gate_summary.blocked_count, delta=None)
+        gc2.metric("可审核", gate_summary.reviewable_count)
+        gc3.metric("被拦截", gate_summary.blocked_count, delta=None)
         if gate_summary.blocked_count > 0:
-            st.warning("\u4ee5\u4e0b\u9879\u76ee\u5df2\u88ab\u62e6\u622a\uff0c\u4e0d\u8fdb\u5165 review\uff1a")
+            st.warning("以下项目已被拦截，不进入审核：")
             for reason, count in gate_summary.blocked_reasons.items():
                 st.write("- " + str(count) + "\u6761: " + str(reason))
         else:
             st.success("\u6240\u6709\u4fe1\u53f7\u5747\u6765\u81ea\u771f\u5b9e\u91c7\u96c6\uff0c\u65e0\u62e6\u622a\u9879\u76ee\u3002")
 
     if gate_summary.reviewable_count == 0:
-        st.error("\u9519\u8bef\uff1a\u6ca1\u6709\u53ef\u5ba1\u6838\u7684\u771f\u5b9e pain signals\u3002\u8bf7\u786e\u8ba4\u5df2\u8fd0\u884c MVP-B LLM pass: demand-radar run-mvp-b --domain ai_investment_tracking")
+        st.error("错误：没有可审核的真实痛点信号。请确认已运行 MVP-B 大模型抽取：demand-radar run-mvp-b --domain ai_investment_tracking")
         return
 
     # Quarantine stale reviews for blocked items
@@ -3322,9 +3328,9 @@ def _render_mvp_c_page() -> None:
             allowed_ids = {r.pain_item_id for r in allowed_results}
             kept, quarantined = quarantine_stale_reviews(reviews_path, allowed_ids)
             if quarantined > 0:
-                st.info(str(quarantined) + " \u4e2a\u65e7 review \u5df2\u79fb\u5165\u9694\u79bb\u533a (quarantined_reviews.jsonl)\uff0c\u4e0d\u8ba1\u5165\u5f53\u524d\u6c47\u603b\u3002")
+                st.info(str(quarantined) + " 个旧审核已移入隔离区 (quarantined_reviews.jsonl)，不计入当前汇总。")
         except Exception as exc:
-            st.warning("\u9694\u79bb\u65e7 review \u5931\u8d25: " + str(exc))
+            st.warning("隔离旧审核失败：" + str(exc))
 
     # --- Summary (live, not cached, so reviewed counts are always fresh) ---
     try:
@@ -3336,15 +3342,15 @@ def _render_mvp_c_page() -> None:
         return
 
     c1, c2, c3, c4 = st.columns(4)
-    c1.metric("Pain Signals", summary.total_pain_items)
+    c1.metric("痛点信号", summary.total_pain_items)
     c2.metric("\u5df2\u5ba1\u6838", summary.reviewed_count)
     c3.metric("\u5f85\u5ba1\u6838", summary.unreviewed_count)
-    c4.metric("True Pain", summary.true_pain_count)
+    c4.metric("真痛点", summary.true_pain_count)
 
     c5, c6, c7, c8 = st.columns(4)
-    c5.metric("Pursue", summary.pursue_count)
-    c6.metric("Watch", summary.watch_count)
-    c7.metric("Reject", summary.reject_count)
+    c5.metric("继续推进", summary.pursue_count)
+    c6.metric("观察", summary.watch_count)
+    c7.metric("拒绝", summary.reject_count)
     c8.metric("\u9700\u8981\u66f4\u591a\u8bc1\u636e", summary.needs_more_evidence_count)
 
     st.divider()
@@ -3354,9 +3360,19 @@ def _render_mvp_c_page() -> None:
     with col_f1:
         show_filter = st.selectbox("\u663e\u793a", ["\u5168\u90e8", "\u5f85\u5ba1\u6838", "\u5df2\u5ba1\u6838"], key="mvpc_show_filter")
     with col_f2:
-        strength_filter = st.selectbox("\u5f3a\u5ea6\u7b5b\u9009", ["\u5168\u90e8", "strong", "medium", "weak"], key="mvpc_strength")
+        strength_filter = st.selectbox(
+            "强度筛选",
+            ["全部", "strong", "medium", "weak"],
+            key="mvpc_strength",
+            format_func=lambda value: "全部" if value == "全部" else d4_labels.strength_label(value),
+        )
     with col_f3:
-        action_filter = st.selectbox("\u51b3\u7b56\u7b5b\u9009", ["\u5168\u90e8", "pursue", "watch", "reject", "needs_more_evidence"], key="mvpc_action")
+        action_filter = st.selectbox(
+            "决策筛选",
+            ["全部", "pursue", "watch", "reject", "needs_more_evidence"],
+            key="mvpc_action",
+            format_func=lambda value: "全部" if value == "全部" else d4_labels.action_label(value),
+        )
 
     reviewed_only = None
     if show_filter == "\u5f85\u5ba1\u6838":
@@ -3381,10 +3397,10 @@ def _render_mvp_c_page() -> None:
         cards.append(c)
 
     if not cards:
-        st.info("\u5f53\u524d\u7b5b\u9009\u6761\u4ef6\u4e0b\u6ca1\u6709 pain signals\u3002")
+        st.info("当前筛选条件下没有痛点信号。")
         return
 
-    st.markdown("**\u663e\u793a " + str(len(cards)) + " \u6761\u771f\u5b9e pain signals**")
+    st.markdown("**显示 " + str(len(cards)) + " 条真实痛点信号**")
 
     TP_OPTIONS = ["\u4e0d\u786e\u5b9a", "\u662f", "\u5426"]
     COMM_OPTIONS = ["unclear", "high", "medium", "low"]
@@ -3406,13 +3422,13 @@ def _render_mvp_c_page() -> None:
             col_a, col_b = st.columns(2)
             with col_a:
                 st.markdown("**\u57fa\u672c\u4fe1\u606f**")
-                st.write("Persona: " + str(card.persona or "-"))
-                st.write("Workflow: " + str(card.workflow_stage or "-"))
-                st.write("Pain Type: " + str(card.pain_type or "-"))
-                st.write("Evidence Strength: " + str(card.evidence_strength))
-                st.write("Confidence: " + str(round(card.confidence, 2)))
+                st.write("用户角色：" + str(card.persona or "-"))
+                st.write("工作流阶段：" + d4_labels.workflow_label(card.workflow_stage))
+                st.write("痛点类型：" + d4_labels.pain_type_label(card.pain_type))
+                st.write("证据强度：" + d4_labels.strength_label(card.evidence_strength))
+                st.write("置信度：" + str(round(card.confidence, 2)))
                 if card.source_url:
-                    st.write("URL: " + card.source_url)
+                    st.write("来源链接：" + card.source_url)
             with col_b:
                 st.markdown("**\u75db\u70b9\u5185\u5bb9**")
                 if card.pain_description_zh:
@@ -3422,7 +3438,7 @@ def _render_mvp_c_page() -> None:
                 if card.current_solution:
                     st.write("\u5f53\u524d\u65b9\u6848: " + card.current_solution[:100])
                 if card.commercial_signal_type:
-                    st.write("\u5546\u4e1a\u4fe1\u53f7: " + card.commercial_signal_type)
+                    st.write("商业信号：" + d4_labels.commercial_signal_label(card.commercial_signal_type))
 
             st.divider()
             st.markdown("**\u4eba\u5de5\u5ba1\u6838**")
@@ -3462,14 +3478,14 @@ def _render_mvp_c_page() -> None:
             r1, r2 = st.columns(2)
             with r1:
                 true_pain_str = st.radio("\u771f\u75db\u70b9?", TP_OPTIONS, index=default_true_pain_idx, key=key_prefix + "_tp", horizontal=True)
-                commercial = st.selectbox("\u5546\u4e1a\u5316\u6f5c\u529b", COMM_OPTIONS, index=default_commercial_idx, key=key_prefix + "_comm")
-                extraction = st.selectbox("\u629b\u53d6\u8d28\u91cf", EXTRACT_OPTIONS, index=default_extraction_idx, key=key_prefix + "_ext")
+                commercial = st.selectbox("商业化潜力", COMM_OPTIONS, index=default_commercial_idx, key=key_prefix + "_comm", format_func=d4_labels.commercial_label)
+                extraction = st.selectbox("抽取质量", EXTRACT_OPTIONS, index=default_extraction_idx, key=key_prefix + "_ext", format_func=d4_labels.extraction_label)
             with r2:
                 domain_rel = st.selectbox("\u9886\u57df\u76f8\u5173\u6027\u8d28\u91cf", DOMAIN_OPTIONS, index=default_domain_idx, key=key_prefix + "_dom")
-                evidence_q = st.selectbox("\u8bc1\u636e\u8d28\u91cf", EVIDENCE_OPTIONS, index=default_evidence_idx, key=key_prefix + "_evq")
-                action = st.selectbox("\u5904\u7f6e\u51b3\u7b56", ACTION_OPTIONS, index=default_action_idx, key=key_prefix + "_act")
+                evidence_q = st.selectbox("证据质量", EVIDENCE_OPTIONS, index=default_evidence_idx, key=key_prefix + "_evq", format_func=d4_labels.strength_label)
+                action = st.selectbox("处理决策", ACTION_OPTIONS, index=default_action_idx, key=key_prefix + "_act", format_func=d4_labels.action_label)
 
-            error_labels = st.multiselect("\u9519\u8bef\u6807\u7b7e (\u53ef\u591a\u9009)", ERROR_OPTIONS, default=default_error_labels, key=key_prefix + "_err")
+            error_labels = st.multiselect("错误标签（可多选）", ERROR_OPTIONS, default=default_error_labels, key=key_prefix + "_err", format_func=d4_labels.error_label)
             note = st.text_area("\u5ba1\u6838\u5907\u6ce8 (\u4e2d\u6587)", value=default_note, key=key_prefix + "_note", height=60)
 
             save_key = "_mvpc_saved_" + pid
@@ -3529,7 +3545,7 @@ def _render_mvp_d_page() -> None:
     )
 
     st.subheader("MVP-D 证据扩展")
-    st.caption("围绕人工确认的 pain seeds 生成定向查询、采集新证据，并做轻量需求主题归组。")
+    st.caption("围绕人工确认的痛点种子生成定向查询、采集新证据，并做轻量需求主题归组。")
 
     try:
         overview = get_mvp_d_overview()
@@ -3540,82 +3556,82 @@ def _render_mvp_d_page() -> None:
         consolidations = get_seed_consolidations()
         themes = get_demand_themes()
     except Exception as exc:
-        st.warning(f"MVP-D 数据加载失败: {exc}")
+        st.warning(f"MVP-D 数据加载失败：{exc}")
         return
 
     if not seeds and not queries and not candidates and not themes:
-        st.info("尚未运行 MVP-D。请先执行: demand-radar run-mvp-d --domain ai_investment_tracking")
+        st.info("尚未运行 MVP-D。请先执行：demand-radar run-mvp-d --domain ai_investment_tracking")
         return
 
     c1, c2, c3, c4, c5 = st.columns(5)
-    c1.metric("Eligible Seeds", overview["eligible_seeds"])
-    c2.metric("Queries", overview["total_queries"])
-    c3.metric("Candidates", overview["expansion_candidates"])
-    c4.metric("New Pain", overview["new_extracted_pain"])
-    c5.metric("Themes", overview["themes"])
+    c1.metric("可扩展种子", overview["eligible_seeds"])
+    c2.metric("查询数", overview["total_queries"])
+    c3.metric("候选数", overview["expansion_candidates"])
+    c4.metric("新增痛点", overview["new_extracted_pain"])
+    c5.metric("需求主题", overview["themes"])
 
     status_cols = st.columns(4)
-    status_cols[0].metric("Engineering", overview.get("engineering_acceptance") or "n/a")
-    status_cols[1].metric("Product", overview.get("product_acceptance") or "n/a")
-    status_cols[2].metric("Second Review", "yes" if overview.get("can_enter_second_review") else "no")
-    status_cols[3].metric("Discovery", "yes" if overview.get("can_enter_product_discovery") else "no")
+    status_cols[0].metric("工程验收", overview.get("engineering_acceptance") or "暂无")
+    status_cols[1].metric("产品验收", overview.get("product_acceptance") or "暂无")
+    status_cols[2].metric("可进入二轮审核", "是" if overview.get("can_enter_second_review") else "否")
+    status_cols[3].metric("可进入产品发现", "是" if overview.get("can_enter_product_discovery") else "否")
     if overview.get("reason"):
         st.info(str(overview["reason"]))
 
     st.divider()
-    st.markdown("**Seed Profiles**")
+    st.markdown("**种子画像**")
     for seed in seeds[:10]:
         title = seed.get("title") or seed.get("pain_item_id") or seed.get("seed_id") or "seed"
         with st.expander(str(title)[:100]):
-            st.write("Seed ID: " + str(seed.get("seed_id", "-")))
-            st.write("Pain Item: " + str(seed.get("pain_item_id", "-")))
-            st.write("Persona: " + str(seed.get("persona", "-")))
-            st.write("Workflow: " + str(seed.get("workflow_stage", "-")))
-            st.write("Pain Type: " + str(seed.get("pain_type", "-")))
-            st.write("Priority: " + str(seed.get("expansion_priority", "-")))
+            st.write("种子编号：" + str(seed.get("seed_id", "-")))
+            st.write("痛点编号：" + str(seed.get("pain_item_id", "-")))
+            st.write("用户角色：" + str(seed.get("persona", "-")))
+            st.write("工作流阶段：" + d4_labels.workflow_label(seed.get("workflow_stage")))
+            st.write("痛点类型：" + d4_labels.pain_type_label(seed.get("pain_type")))
+            st.write("扩展优先级：" + str(seed.get("expansion_priority", "-")))
             if seed.get("source_url"):
-                st.write("URL: " + str(seed["source_url"]))
+                st.write("来源链接：" + str(seed["source_url"]))
             if seed.get("pain_description_zh"):
                 st.caption(str(seed["pain_description_zh"])[:300])
 
-    st.markdown("**Query Plan**")
+    st.markdown("**查询计划**")
     by_connector: dict[str, int] = {}
     for query in queries:
         connector = query.get("connector", "unknown")
         by_connector[connector] = by_connector.get(connector, 0) + 1
     if by_connector:
-        st.write("By connector: " + ", ".join(f"{k}: {v}" for k, v in sorted(by_connector.items())))
+        st.write("按采集器分布：" + ", ".join(f"{k}: {v}" for k, v in sorted(by_connector.items())))
     for query in queries[:20]:
         st.caption(
             f"{query.get('query_id')} | {query.get('connector')} | "
-            f"{query.get('query_type')} | {query.get('query')}"
+            f"{d4_labels.query_type_label(query.get('query_type'))} | {query.get('query')}"
         )
 
-    st.markdown("**Seeded Acquisition**")
-    st.write(f"Raw candidates: {len(candidates)}")
-    st.write(f"Expanded pain items: {sum(1 for item in pain_items if item.get('should_extract'))}")
+    st.markdown("**定向采集**")
+    st.write(f"原始候选数：{len(candidates)}")
+    st.write(f"扩展抽取痛点数：{sum(1 for item in pain_items if item.get('should_extract'))}")
 
-    st.markdown("**Evidence Consolidation**")
+    st.markdown("**证据汇总**")
     if not consolidations:
-        st.info("尚无 consolidation 结果。")
+        st.info("尚无证据汇总结果。")
     for item in consolidations:
         st.write(
             f"{item.get('seed_id')} -> {item.get('recommendation')} | "
-            f"new_candidates={item.get('new_related_candidates_count')} | "
-            f"new_pain={item.get('new_extracted_pain_count')}"
+            f"新增候选={item.get('new_related_candidates_count')} | "
+            f"新增痛点={item.get('new_extracted_pain_count')}"
         )
 
-    st.markdown("**Demand Themes**")
+    st.markdown("**需求主题**")
     if not themes:
         st.info("尚无轻量需求主题。")
     for theme in themes:
         with st.expander(str(theme.get("theme_title_zh") or theme.get("theme_id"))):
-            st.write("Recommendation: " + str(theme.get("action_recommendation", "-")))
-            st.write("Evidence count: " + str(theme.get("evidence_count", 0)))
-            st.write("Reviewed seeds: " + str(theme.get("reviewed_seed_count", 0)))
-            st.write("New evidence: " + str(theme.get("new_evidence_count", 0)))
-            st.write("Commercial: " + str(theme.get("commercial_potential", "-")))
-            st.write("Confidence: " + str(theme.get("confidence", "-")))
+            st.write("建议动作：" + d4_labels.action_label(theme.get("action_recommendation")))
+            st.write("证据数：" + str(theme.get("evidence_count", 0)))
+            st.write("已审核种子：" + str(theme.get("reviewed_seed_count", 0)))
+            st.write("新增证据：" + str(theme.get("new_evidence_count", 0)))
+            st.write("商业潜力：" + d4_labels.commercial_label(theme.get("commercial_potential")))
+            st.write("置信度：" + str(theme.get("confidence", "-")))
             if theme.get("theme_summary_zh"):
                 st.caption(str(theme["theme_summary_zh"])[:500])
 
@@ -3631,7 +3647,7 @@ def _render_mvp_d2_page() -> None:
     )
 
     st.subheader("MVP-D2 诊断与校准")
-    st.caption("诊断 MVP-D 扩展失败原因，展示 source quality、query v2 和 calibrated pilot 对比。")
+    st.caption("诊断 MVP-D 扩展失败原因，展示来源质量、第二版查询和校准试跑对比。")
 
     try:
         overview = get_mvp_d2_overview()
@@ -3640,32 +3656,32 @@ def _render_mvp_d2_page() -> None:
         queries = get_calibrated_query_plan()
         pain_items = get_calibrated_pain_items()
     except Exception as exc:
-        st.warning(f"MVP-D2 数据加载失败: {exc}")
+        st.warning(f"MVP-D2 数据加载失败：{exc}")
         return
 
     if not diagnostics and not source_scores and not queries:
-        st.info("尚未运行 MVP-D2。请先执行: demand-radar run-mvp-d2 --domain ai_investment_tracking")
+        st.info("尚未运行 MVP-D2。请先执行：demand-radar run-mvp-d2 --domain ai_investment_tracking")
         return
 
     c1, c2, c3, c4, c5 = st.columns(5)
-    c1.metric("Rejected", overview["total_rejected"])
-    c2.metric("Sources", overview["source_rows"])
-    c3.metric("V2 Queries", overview["v2_queries"])
-    c4.metric("Pilot Extracted", overview["should_extract_true"])
-    c5.metric("Yield", overview["yield_rate"])
+    c1.metric("被拒绝候选", overview["total_rejected"])
+    c2.metric("来源记录", overview["source_rows"])
+    c3.metric("第二版查询", overview["v2_queries"])
+    c4.metric("试跑抽取成功", overview["should_extract_true"])
+    c5.metric("产出率", overview["yield_rate"])
 
     status_cols = st.columns(4)
-    status_cols[0].metric("Pilot", "ran" if overview.get("ran_pilot") else "blocked")
-    status_cols[1].metric("Comparison", overview.get("comparison_result") or "n/a")
-    status_cols[2].metric("Engineering", overview.get("engineering_acceptance") or "n/a")
-    status_cols[3].metric("Product", overview.get("product_acceptance") or "n/a")
+    status_cols[0].metric("校准试跑", "已运行" if overview.get("ran_pilot") else "被阻断")
+    status_cols[1].metric("对比结果", overview.get("comparison_result") or "暂无")
+    status_cols[2].metric("工程验收", overview.get("engineering_acceptance") or "暂无")
+    status_cols[3].metric("产品验收", overview.get("product_acceptance") or "暂无")
     if overview.get("blocked_reason") and overview.get("blocked_reason") != "n/a":
-        st.warning("Pilot blocked: " + str(overview["blocked_reason"]))
+        st.warning("校准试跑被阻断：" + str(overview["blocked_reason"]))
     if overview.get("reason"):
         st.info(str(overview["reason"]))
 
     st.divider()
-    st.markdown("**Reject Diagnostics Summary**")
+    st.markdown("**拒绝原因诊断汇总**")
     category_counts: dict[str, int] = {}
     source_counts: dict[str, int] = {}
     query_counts: dict[str, int] = {}
@@ -3677,45 +3693,45 @@ def _render_mvp_d2_page() -> None:
         source_counts[source] = source_counts.get(source, 0) + 1
         query_counts[query_type] = query_counts.get(query_type, 0) + 1
     if diagnostics:
-        st.write("By category: " + ", ".join(f"{k}: {v}" for k, v in sorted(category_counts.items())))
-        st.write("By source: " + ", ".join(f"{k}: {v}" for k, v in sorted(source_counts.items())))
-        st.write("By query type: " + ", ".join(f"{k}: {v}" for k, v in sorted(query_counts.items())))
+        st.write("按拒绝类别：" + ", ".join(f"{k}: {v}" for k, v in sorted(category_counts.items())))
+        st.write("按来源：" + ", ".join(f"{k}: {v}" for k, v in sorted(source_counts.items())))
+        st.write("按查询类型：" + ", ".join(f"{d4_labels.query_type_label(k)}: {v}" for k, v in sorted(query_counts.items())))
     else:
-        st.info("暂无 reject diagnostics。")
+        st.info("暂无拒绝诊断结果。")
 
-    st.markdown("**Source Quality**")
+    st.markdown("**来源质量**")
     if not source_scores:
-        st.info("暂无 source quality 结果。")
+        st.info("暂无来源质量结果。")
     for row in source_scores:
         st.write(
             f"{row.get('source_type')} / {row.get('connector')} -> "
             f"{row.get('source_strategy_recommendation')} | "
-            f"yield={row.get('yield_rate')} | reject={row.get('reject_count')} | "
-            f"dominant={row.get('dominant_reject_reason') or 'n/a'}"
+            f"产出率={row.get('yield_rate')} | 拒绝数={row.get('reject_count')} | "
+            f"主要原因={row.get('dominant_reject_reason') or '暂无'}"
         )
 
-    st.markdown("**Query V2 Examples**")
+    st.markdown("**第二版查询示例**")
     for query in queries[:25]:
         meta = query.get("metadata") or {}
         st.caption(
             f"{query.get('seed_id')} | {query.get('connector')} | "
-            f"{query.get('query_type')} | {meta.get('source_category', 'unknown')} | "
+            f"{d4_labels.query_type_label(query.get('query_type'))} | {meta.get('source_category', 'unknown')} | "
             f"{query.get('query')}"
         )
 
-    st.markdown("**Calibrated Pilot Results**")
-    st.write(f"Calibrated pain items: {len(pain_items)}")
+    st.markdown("**校准试跑结果**")
+    st.write(f"校准痛点条目：{len(pain_items)}")
     extracted = [item for item in pain_items if item.get("should_extract")]
     if extracted:
         for item in extracted[:10]:
             with st.expander(str(item.get("title") or item.get("candidate_id"))[:120]):
-                st.write("Candidate: " + str(item.get("candidate_id")))
-                st.write("Source: " + str(item.get("source_type", "-")))
-                st.write("Evidence strength: " + str(item.get("evidence_strength", "-")))
+                st.write("候选编号：" + str(item.get("candidate_id")))
+                st.write("来源：" + d4_labels.source_type_label(item.get("source_type")))
+                st.write("证据强度：" + d4_labels.strength_label(item.get("evidence_strength")))
                 if item.get("pain_description_zh"):
                     st.caption(str(item["pain_description_zh"])[:500])
     elif pain_items:
-        st.info("Pilot 已处理候选，但暂无 should_extract=true。")
+        st.info("试跑已处理候选，但暂无可抽取痛点。")
 
 
 def _render_stage35_page() -> None:
@@ -3741,7 +3757,7 @@ def _render_stage35_page() -> None:
     col1, col2, col3 = st.columns(3)
     col1.metric("已选候选", summary.selected_candidates)
     col2.metric("有效信号", summary.valid_signals)
-    col3.metric("Gate 状态", gate.status if gate else "N/A")
+    col3.metric("闸门状态", gate.status if gate else "暂无")
     if gate:
         st.divider()
         st.markdown(f"**Gate 结论**: {gate.reason_zh}")
@@ -3762,31 +3778,35 @@ def _render_stage35_page() -> None:
 
 def _render_mvp_d3_page() -> None:
     import streamlit as st
-    st.subheader("MVP-D3 搜索验证 (Search Provider Pilot)")
-    st.caption("基于校准 Query v2 的 Search Provider 验证结果。")
+    st.subheader("MVP-D3 搜索验证（搜索服务试跑）")
+    st.caption("基于第二版校准查询的搜索服务验证结果。")
     try:
         from demand_radar.mvp_d3.search_provider_client import detect_provider
         from pathlib import Path as _Path
         import json
         provider, key = detect_provider()
         if provider:
-            st.success(f"已检测到 search provider: {provider}")
+            st.success(f"已检测到搜索服务：{provider}")
         else:
-            st.warning("未检测到 search provider，请设置 TAVILY_API_KEY 或 BRAVE_SEARCH_API_KEY")
+            st.warning("未检测到搜索服务，请设置 TAVILY_API_KEY 或 BRAVE_SEARCH_API_KEY")
         summary_path = _Path("outputs/mvp_d3/mvp_d3_summary_report.md")
         if summary_path.exists():
             st.markdown(summary_path.read_text(encoding="utf-8"))
         else:
-            st.info("尚未运行 MVP-D3。请执行: demand-radar run-mvp-d3 --domain ai_investment_tracking")
+            st.info("尚未运行 MVP-D3。请执行：demand-radar run-mvp-d3 --domain ai_investment_tracking")
         pain_path = _Path("data/processed/mvp_d3/search_pain_items.jsonl")
         if pain_path.exists():
             items = [json.loads(l) for l in pain_path.read_text(encoding="utf-8").splitlines() if l.strip()]
             top = [p for p in items if p.get("should_extract")][:5]
             if top:
                 st.divider()
-                st.markdown("**Top Pain Signals**")
+                st.markdown("**代表性痛点信号**")
                 for p in top:
-                    st.markdown(f"- **{p.get('title','?')}** | {p.get('evidence_strength','?')} | {p.get('source_url','?')[:80]}")
+                    st.markdown(
+                        f"- **{p.get('title','?')}** | "
+                        f"{d4_labels.strength_label(p.get('evidence_strength'))} | "
+                        f"{p.get('source_url','?')[:80]}"
+                    )
     except Exception as exc:
         st.error(f"加载 MVP-D3 数据失败: {exc}")
 
@@ -3794,33 +3814,37 @@ def _render_mvp_d3_page() -> None:
 
 def _render_mvp_d4_page() -> None:
     import streamlit as st
-    st.subheader("MVP-D4 Foundation 搜索验证 (Foundation Search Pilot)")
+    st.subheader("MVP-D4 基础运行时搜索验证")
     st.caption("基于 Foundation v0.1.2 搜索运行时的真实搜索验证结果。")
     try:
         from demand_radar.mvp_d4.foundation_search_adapter import detect_provider, check_foundation_version
         from pathlib import Path as _Path
         import json
         ver_ok, ver = check_foundation_version()
-        st.metric("Foundation Version", ver, delta="OK" if ver_ok else "NEEDS UPDATE")
+        st.metric("Foundation 版本", ver, delta="可用" if ver_ok else "需要更新")
         provider = detect_provider()
         if provider:
-            st.success(f"已检测到 Foundation search provider: {provider}")
+            st.success(f"已检测到 Foundation 搜索服务：{provider}")
         else:
-            st.warning("未检测到 search provider，请设置 TAVILY_API_KEY")
+            st.warning("未检测到搜索服务，请设置 TAVILY_API_KEY")
         summary_path = _Path("outputs/mvp_d4/mvp_d4_summary_report.md")
         if summary_path.exists():
             st.markdown(summary_path.read_text(encoding="utf-8"))
         else:
-            st.info("尚未运行 MVP-D4。请执行: demand-radar run-mvp-d4 --domain ai_investment_tracking")
+            st.info("尚未运行 MVP-D4。请执行：demand-radar run-mvp-d4 --domain ai_investment_tracking")
         pain_path = _Path("data/processed/mvp_d4/foundation_search_pain_items.jsonl")
         if pain_path.exists() and pain_path.stat().st_size > 0:
             items = [json.loads(l) for l in pain_path.read_text(encoding="utf-8").splitlines() if l.strip()]
             top = [p for p in items if p.get("should_extract")][:5]
             if top:
                 st.divider()
-                st.markdown("**Top Pain Signals**")
+                st.markdown("**代表性痛点信号**")
                 for p in top:
-                    st.markdown(f"- **{p.get('title','?')}** | {p.get('evidence_strength','?')} | {p.get('source_url','?')[:80]}")
+                    st.markdown(
+                        f"- **{p.get('title','?')}** | "
+                        f"{d4_labels.strength_label(p.get('evidence_strength'))} | "
+                        f"{p.get('source_url','?')[:80]}"
+                    )
     except Exception as exc:
         st.error(f"加载 MVP-D4 数据失败: {exc}")
 
@@ -3833,19 +3857,21 @@ def main() -> None:
     """Render the consolidated current review workbench."""
     from demand_radar.ui.navigation_config import NAV_TABS
 
-    st.set_page_config(page_title="Demand Radar Review Console", layout="wide")
+    st.set_page_config(page_title="需求雷达审核台", layout="wide")
     _hide_streamlit_chrome()
 
-    st.title("Demand Radar 审核台")
+    st.title("需求雷达审核台")
     st.caption("当前入口按用户任务组织。历史阶段页已收进诊断归档，当前主任务是 D4 第二轮人工审核。")
 
-    current_tab, queue_tab, evidence_tab, history_tab, settings_tab = st.tabs(NAV_TABS)
+    current_tab, queue_tab, evidence_tab, themes_tab, history_tab, settings_tab = st.tabs(NAV_TABS)
     with current_tab:
         _render_current_task_console_page()
     with queue_tab:
         _render_d4_review_queue_console_page()
     with evidence_tab:
         _render_d4_evidence_results_console_page()
+    with themes_tab:
+        _render_d5_demand_themes_console_page()
     with history_tab:
         _render_history_archive_console_page()
     with settings_tab:
@@ -3863,31 +3889,31 @@ def _render_current_task_console_page() -> None:
 
     st.subheader("当前任务")
     if not summary["data_available"]:
-        st.warning("当前没有可审核的 D4 pain signals，请先运行 run-mvp-d4。")
+        st.warning("当前没有可审核的 D4 痛点信号，请先运行 run-mvp-d4。")
         st.code("demand-radar run-mvp-d4 --domain ai_investment_tracking")
         return
 
     cols = st.columns(6)
     cols[0].metric("当前阶段", summary["phase"])
     cols[1].metric("待审核总数", summary["total"])
-    cols[2].metric("Strong", summary["strong"])
-    cols[3].metric("Medium", summary["medium"])
-    cols[4].metric("Weak", summary["weak"])
+    cols[2].metric("强证据", summary["strong"])
+    cols[3].metric("中证据", summary["medium"])
+    cols[4].metric("弱证据", summary["weak"])
     cols[5].metric("未审核", queue_stats["unreviewed"])
 
     st.info(
-        "你现在应该做什么：先进入「待审核队列」，优先审核 strong 15 条；"
-        "逐条标记 pursue / watch / reject / needs_more_evidence；"
-        "审完后生成第二轮 review report。"
+        "你现在应该做什么：先进入「待审核队列」，优先审核强证据；"
+        "逐条标记继续推进、观察、拒绝或需要更多证据；"
+        "审完后生成第二轮审核报告。"
     )
 
     status_cols = st.columns(3)
-    status_cols[0].metric("当前数据源", summary["source"])
-    status_cols[1].metric("建议优先审核", f"{summary['priority_count']} 条 strong")
-    status_cols[2].metric("可进入产品发现", "否，需先完成第二轮 review")
+    status_cols[0].metric("当前数据源", "D4 Foundation 搜索验证")
+    status_cols[1].metric("建议优先审核", f"{summary['priority_count']} 条强证据")
+    status_cols[2].metric("可进入产品发现", "否，需先完成第二轮审核")
 
     st.markdown("**当前有效审核对象**")
-    st.write("D4 抽取出的 should_extract=true pain signals。历史 MVP-C/D/D2/D3 页面仅作为诊断参考。")
+    st.write("D4 抽取出的可审核痛点信号。历史 MVP-C/D/D2/D3 页面仅作为诊断参考。")
 
 
 def _render_d4_review_queue_console_page() -> None:
@@ -3902,14 +3928,14 @@ def _render_d4_review_queue_console_page() -> None:
     stats = get_queue_stats(store)
 
     if stats["total"] == 0:
-        st.warning("当前没有可审核的 D4 pain signals，请先运行 run-mvp-d4。")
+        st.warning("当前没有可审核的 D4 痛点信号，请先运行 run-mvp-d4。")
         return
 
     cols = st.columns(6)
     cols[0].metric("全部", stats["total"])
-    cols[1].metric("Strong", stats["strong"])
-    cols[2].metric("Medium", stats["medium"])
-    cols[3].metric("Weak", stats["weak"])
+    cols[1].metric("强证据", stats["strong"])
+    cols[2].metric("中证据", stats["medium"])
+    cols[3].metric("弱证据", stats["weak"])
     cols[4].metric("已审核", stats["reviewed"])
     cols[5].metric("未审核", stats["unreviewed"])
 
@@ -3919,6 +3945,7 @@ def _render_d4_review_queue_console_page() -> None:
         "证据强度",
         ["strong", "medium", "weak"],
         default=["strong", "medium"],
+        format_func=d4_labels.strength_label,
     )
     limit = filter_cols[2].number_input("本页最多显示", min_value=5, max_value=100, value=30, step=5)
 
@@ -3936,15 +3963,15 @@ def _render_d4_review_queue_console_page() -> None:
         items.append(item)
 
     st.caption(
-        "默认筛选：仅未审核，strong / medium；排序：strong 在前，medium 其次，weak 最后，同强度按 confidence 降序。"
+        "默认筛选：仅未审核，强证据和中证据；排序：强证据在前，中证据其次，弱证据最后，同强度按置信度降序。"
     )
 
-    if st.button("生成第二轮 review report", key="build_d4_review_report"):
+    if st.button("生成第二轮审核报告", key="build_d4_review_report"):
         build_d4_review_report(store=store)
-        st.success("已生成 outputs/reviews/d4_second_review_report.md")
+        st.success("已生成第二轮审核报告：outputs/reviews/d4_second_review_report.md")
 
     if not items:
-        st.info("当前筛选条件下没有待展示的 pain signals。")
+        st.info("当前筛选条件下没有待展示的痛点信号。")
         return
 
     for item in items[: int(limit)]:
@@ -3956,31 +3983,32 @@ def _render_d4_review_card(item, store, next_ids_func, utc_now_iso_func, review_
     if not pain_item_id:
         return
     existing = store.get_review(pain_item_id)
-    title = str(item.get("title") or pain_item_id)
+    title = d4_labels.d4_card_title(item)
     reviewed_label = "已审核" if existing else "待审核"
     strength = str(item.get("evidence_strength") or "-")
+    strength_text = d4_labels.strength_label(strength)
     confidence = float(item.get("confidence") or 0)
-    header = f"[{reviewed_label}] [{strength}] {confidence:.2f} - {title[:110]}"
+    header = f"[{reviewed_label}] [{strength_text}] 置信度 {confidence:.2f} - {title[:110]}"
 
     with st.expander(header, expanded=existing is None):
         col_a, col_b = st.columns(2)
         with col_a:
             st.markdown("**证据信息**")
-            st.write("pain_item_id: " + pain_item_id)
-            st.write("candidate_id: " + str(item.get("candidate_id") or "-"))
-            st.write("source_url: " + str(item.get("source_url") or "-"))
-            st.write("seed_id: " + str(item.get("seed_id") or "-"))
-            st.write("query_type: " + str(item.get("query_type") or "-"))
-            st.write("raw_text_source: " + str(item.get("raw_text_source") or "-"))
-            st.write("result_domain: " + str(item.get("result_domain") or "-"))
+            st.write("痛点编号：" + pain_item_id)
+            st.write("候选编号：" + str(item.get("candidate_id") or "-"))
+            st.write("来源链接：" + str(item.get("source_url") or "-"))
+            st.write("种子编号：" + str(item.get("seed_id") or "-"))
+            st.write("查询类型：" + d4_labels.query_type_label(item.get("query_type")))
+            st.write("正文来源：" + d4_labels.raw_text_source_label(item.get("raw_text_source")))
+            st.write("结果域名：" + str(item.get("result_domain") or "-"))
         with col_b:
             st.markdown("**抽取结果**")
-            st.write("persona: " + str(item.get("persona") or "-"))
-            st.write("workflow_stage: " + str(item.get("workflow_stage") or "-"))
-            st.write("pain_type: " + str(item.get("pain_type") or "-"))
-            st.write("commercial_signal_type: " + str(item.get("commercial_signal_type") or "-"))
-            st.write("evidence_strength: " + strength)
-            st.write(f"confidence: {confidence:.2f}")
+            st.write("用户角色：" + str(item.get("persona") or "-"))
+            st.write("工作流阶段：" + d4_labels.workflow_label(item.get("workflow_stage")))
+            st.write("痛点类型：" + d4_labels.pain_type_label(item.get("pain_type")))
+            st.write("商业信号：" + d4_labels.commercial_signal_label(item.get("commercial_signal_type")))
+            st.write("证据强度：" + strength_text)
+            st.write(f"置信度：{confidence:.2f}")
 
         if item.get("pain_description_zh"):
             st.markdown("**痛点描述**")
@@ -4024,39 +4052,44 @@ def _render_d4_review_card(item, store, next_ids_func, utc_now_iso_func, review_
 
         key_base = "d4_" + pain_item_id.replace("_", "").replace(".", "")[:28]
         r1, r2, r3 = st.columns(3)
-        true_choice = r1.radio("true_pain", true_options, index=true_idx, horizontal=True, key=key_base + "_tp")
+        true_choice = r1.radio("是否真痛点", true_options, index=true_idx, horizontal=True, key=key_base + "_tp")
         commercial = r1.selectbox(
-            "commercial_potential",
+            "商业化潜力",
             commercial_options,
             index=_idx(commercial_options, existing.commercial_potential if existing else None),
+            format_func=d4_labels.commercial_label,
             key=key_base + "_comm",
         )
         evidence_quality = r2.selectbox(
-            "evidence_quality",
+            "证据质量",
             evidence_options,
             index=_idx(evidence_options, existing.evidence_quality if existing else strength),
+            format_func=d4_labels.strength_label,
             key=key_base + "_ev",
         )
         action = r2.selectbox(
-            "action_decision",
+            "处理决策",
             action_options,
             index=_idx(action_options, existing.action_decision if existing else None),
+            format_func=d4_labels.action_label,
             key=key_base + "_action",
         )
         extraction = r3.selectbox(
-            "extraction_quality",
+            "抽取质量",
             extraction_options,
             index=_idx(extraction_options, existing.extraction_quality if existing else "good"),
+            format_func=d4_labels.extraction_label,
             key=key_base + "_ext",
         )
         error_labels = st.multiselect(
-            "error_labels",
+            "错误标签",
             error_options,
             default=existing.error_labels if existing else [],
+            format_func=d4_labels.error_label,
             key=key_base + "_errors",
         )
         reviewer_note = st.text_area(
-            "reviewer_note_zh",
+            "审核备注",
             value=existing.reviewer_note_zh if existing and existing.reviewer_note_zh else "",
             height=80,
             key=key_base + "_note",
@@ -4148,36 +4181,176 @@ def _render_d4_evidence_results_console_page() -> None:
     yield_rate = should_true / total_processed if total_processed else 0.0
 
     cols = st.columns(7)
-    cols[0].metric("selected_queries", selected_queries)
-    cols[1].metric("search_results", len(search_results))
-    cols[2].metric("unique_urls", unique_urls)
-    cols[3].metric("gate_allowed", gate_allowed)
-    cols[4].metric("selected_for_llm", total_processed)
-    cols[5].metric("should_extract_true", should_true)
-    cols[6].metric("yield_rate", f"{yield_rate:.1%}")
+    cols[0].metric("已选择查询", selected_queries)
+    cols[1].metric("搜索结果", len(search_results))
+    cols[2].metric("去重 URL", unique_urls)
+    cols[3].metric("闸门通过", gate_allowed)
+    cols[4].metric("送入大模型", total_processed)
+    cols[5].metric("可审核痛点", should_true)
+    cols[6].metric("证据产出率", f"{yield_rate:.1%}")
 
     strength_cols = st.columns(3)
-    strength_cols[0].metric("strong", strengths.get("strong", 0))
-    strength_cols[1].metric("medium", strengths.get("medium", 0))
-    strength_cols[2].metric("weak", strengths.get("weak", 0))
+    strength_cols[0].metric("强证据", strengths.get("strong", 0))
+    strength_cols[1].metric("中证据", strengths.get("medium", 0))
+    strength_cols[2].metric("弱证据", strengths.get("weak", 0))
 
-    st.markdown("**Top domains**")
+    st.markdown("**主要来源域名**")
     st.write(", ".join(f"{domain}: {count}" for domain, count in domains.most_common(10)))
-    st.markdown("**Top query types**")
-    st.write(", ".join(f"{query_type}: {count}" for query_type, count in query_types.most_common(10)))
-    st.markdown("**Top seeds**")
+    st.markdown("**主要查询类型**")
+    st.write(
+        ", ".join(
+            f"{d4_labels.query_type_label(query_type)}: {count}"
+            for query_type, count in query_types.most_common(10)
+        )
+    )
+    st.markdown("**主要种子**")
     st.write(", ".join(f"{seed}: {count}" for seed, count in seeds.most_common(10)))
 
-    st.markdown("**Top Pain Signals**")
+    st.markdown("**代表性痛点信号**")
     for item in items[:10]:
-        with st.expander(str(item.get("title") or item.get("pain_item_id"))[:120]):
-            st.write("source_url: " + str(item.get("source_url") or "-"))
-            st.write("evidence_strength: " + str(item.get("evidence_strength") or "-"))
-            st.write("confidence: " + str(item.get("confidence") or "-"))
+        with st.expander(d4_labels.d4_card_title(item, max_chars=100)):
+            st.write("来源链接：" + str(item.get("source_url") or "-"))
+            st.write("证据强度：" + d4_labels.strength_label(item.get("evidence_strength")))
+            st.write("置信度：" + str(item.get("confidence") or "-"))
             if item.get("pain_description_zh"):
                 st.write(str(item["pain_description_zh"]))
             if item.get("evidence_quote"):
+                st.markdown("**证据原文**")
                 st.caption(str(item["evidence_quote"]))
+
+
+def _render_d5_demand_themes_console_page() -> None:
+    from demand_radar.ui.mvp_d_service import (
+        get_d5_demand_themes,
+        get_d5_overview,
+        get_d5_theme_review_queue,
+    )
+
+    st.subheader("需求主题")
+    st.caption("这里展示 D5 从 D4 单条痛点证据合并出的主题级判断。证据原文和来源链接保留原始语言。")
+
+    overview = get_d5_overview()
+    themes = get_d5_demand_themes()
+    queue = get_d5_theme_review_queue()
+
+    if not themes:
+        st.warning("当前还没有 D5 需求主题。请先运行 demand-radar run-d5。")
+        st.code("demand-radar run-d5 --domain ai_investment_tracking")
+        return
+
+    cols = st.columns(6)
+    cols[0].metric("主题数", overview["themes"])
+    cols[1].metric("待主题审核", overview["queue_count"])
+    cols[2].metric("建议推进", overview["pursue_candidate"])
+    cols[3].metric("观察", overview["watch"])
+    cols[4].metric("需补证据", overview["needs_more_evidence"])
+    cols[5].metric("拒绝", overview["reject"])
+
+    status_cols = st.columns(3)
+    status_cols[0].metric("去重代表证据", overview["deduped_representatives"])
+    status_cols[1].metric("来源组", overview["source_groups"])
+    status_cols[2].metric("可进入主题审核", "是" if overview.get("can_enter_theme_review") else "否")
+
+    if overview.get("reason"):
+        st.info(str(overview["reason"]))
+
+    queue_rank = {item.get("theme_id"): idx for idx, item in enumerate(queue)}
+    themes = sorted(
+        themes,
+        key=lambda item: (
+            queue_rank.get(item.get("theme_id"), 999),
+            _action_rank(item.get("action_recommendation")),
+            -float(item.get("confidence") or 0),
+        ),
+    )
+
+    for theme in themes:
+        title = str(theme.get("theme_title_zh") or theme.get("theme_id") or "未命名主题")
+        action = _theme_action_label(theme.get("action_recommendation"))
+        confidence = float(theme.get("confidence") or 0)
+        header = f"{title} | {action} | 置信度 {confidence:.2f}"
+        with st.expander(header, expanded=theme.get("action_recommendation") in {"pursue_candidate", "watch"}):
+            metric_cols = st.columns(5)
+            metric_cols[0].metric("证据数", theme.get("evidence_count", 0))
+            metric_cols[1].metric("独立域名", theme.get("unique_domain_count", 0))
+            metric_cols[2].metric("一手证据", theme.get("first_hand_evidence_count", 0))
+            metric_cols[3].metric("人工推进", theme.get("reviewed_pursue_count", 0))
+            metric_cols[4].metric("商业潜力", _commercial_zh(theme.get("commercial_potential")))
+
+            st.markdown("**核心痛点**")
+            st.write(str(theme.get("core_pain_zh") or "-"))
+
+            detail_cols = st.columns(2)
+            with detail_cols[0]:
+                st.write("用户角色：" + str(theme.get("persona_group") or "-"))
+                st.write("工作流：" + str(theme.get("workflow_group") or "-"))
+                st.write("痛点类型：" + str(theme.get("pain_type_group") or "-"))
+                st.write("证据质量：" + _evidence_quality_zh(theme.get("evidence_quality")))
+                st.write("来源多样性：" + _source_diversity_zh(theme.get("source_diversity")))
+            with detail_cols[1]:
+                st.write("当前替代方案：" + str(theme.get("current_workaround_zh") or "-"))
+                st.write("要完成的任务：" + str(theme.get("job_to_be_done_zh") or "-"))
+                st.write("处理建议：" + action)
+
+            st.markdown("**判断理由**")
+            st.write(str(theme.get("recommendation_reason_zh") or "-"))
+
+            quotes = theme.get("representative_quotes") or []
+            if quotes:
+                st.markdown("**代表性证据原文**")
+                for quote in quotes[:5]:
+                    st.caption(str(quote))
+
+            urls = theme.get("representative_source_urls") or []
+            if urls:
+                st.markdown("**代表性来源链接**")
+                for url in urls[:5]:
+                    st.write(str(url))
+
+
+def _action_rank(action: object) -> int:
+    return {
+        "pursue_candidate": 0,
+        "watch": 1,
+        "needs_more_evidence": 2,
+        "reject": 3,
+    }.get(str(action or ""), 9)
+
+
+def _theme_action_label(action: object) -> str:
+    return {
+        "pursue_candidate": "建议推进",
+        "watch": "观察",
+        "needs_more_evidence": "需要更多证据",
+        "reject": "拒绝",
+    }.get(str(action or ""), str(action or "-"))
+
+
+def _commercial_zh(value: object) -> str:
+    return {
+        "high": "高",
+        "medium": "中",
+        "low": "低",
+        "unclear": "不明确",
+    }.get(str(value or ""), str(value or "-"))
+
+
+def _evidence_quality_zh(value: object) -> str:
+    return {
+        "strong": "强",
+        "medium": "中",
+        "weak": "弱",
+        "mixed": "混合",
+        "reject": "拒绝",
+    }.get(str(value or ""), str(value or "-"))
+
+
+def _source_diversity_zh(value: object) -> str:
+    return {
+        "high": "高",
+        "medium": "中",
+        "low": "低",
+    }.get(str(value or ""), str(value or "-"))
 
 
 def _render_history_archive_console_page() -> None:
@@ -4267,23 +4440,23 @@ def _render_runtime_status_console_page() -> None:
         )
 
         ok, version = check_foundation_version()
-        foundation_version = f"{version} ({'ok' if ok else 'needs update'})"
+        foundation_version = f"{version} ({'可用' if ok else '需要更新'})"
         provider = detect_provider()
     except Exception as exc:
-        foundation_version = f"unknown ({exc})"
+        foundation_version = f"未知（{exc}）"
 
     llm_provider = os.environ.get("DEMAND_RADAR_LLM_PROVIDER") or os.environ.get("LLM_PROVIDER")
     llm_model = os.environ.get("DEMAND_RADAR_LLM_MODEL") or os.environ.get("LLM_MODEL")
     tavily_available = bool(os.environ.get("TAVILY_API_KEY"))
 
     cols = st.columns(2)
-    cols[0].write("Foundation version: " + foundation_version)
-    cols[0].write("Foundation install method: copy_to_site_packages")
-    cols[0].write("Search provider: " + (provider or "Search provider 未配置"))
-    cols[0].write("TAVILY_API_KEY: " + ("可用" if tavily_available else "未配置"))
-    cols[1].write("LLM provider: " + (llm_provider or "LLM provider 未配置"))
-    cols[1].write("LLM model: " + (llm_model or "LLM model 未配置"))
-    cols[1].write("最近一次 D4 run 时间: " + _file_mtime_text(d4_summary))
+    cols[0].write("Foundation 版本：" + foundation_version)
+    cols[0].write("Foundation 安装方式：copy_to_site_packages")
+    cols[0].write("搜索服务：" + (provider or "搜索服务未配置"))
+    cols[0].write("TAVILY_API_KEY 状态：" + ("可用" if tavily_available else "未配置"))
+    cols[1].write("大模型服务：" + (llm_provider or "大模型服务未配置"))
+    cols[1].write("大模型名称：" + (llm_model or "大模型名称未配置"))
+    cols[1].write("最近一次 D4 运行时间：" + _file_mtime_text(d4_summary))
 
     st.markdown("**当前数据文件路径**")
     st.code(

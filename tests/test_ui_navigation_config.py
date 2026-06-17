@@ -8,10 +8,11 @@ def test_top_level_navigation_has_current_workbench_entries_only() -> None:
         "当前任务",
         "待审核队列",
         "需求证据结果",
+        "需求主题",
         "诊断与历史",
         "设置与运行状态",
     ]
-    assert len(NAV_TABS) <= 5
+    assert len(NAV_TABS) <= 6
     assert "MVP-D4 Foundation搜索" not in NAV_TABS
     assert "MVP-C 人工校准" not in NAV_TABS
 

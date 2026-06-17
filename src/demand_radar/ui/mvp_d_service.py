@@ -78,3 +78,38 @@ def get_seed_consolidations() -> list[dict[str, Any]]:
 
 def get_demand_themes() -> list[dict[str, Any]]:
     return _load_jsonl("data/processed/mvp_d/consolidated_evidence_themes.jsonl")
+
+
+def get_d5_overview() -> dict[str, Any]:
+    themes = get_d5_demand_themes()
+    queue = get_d5_theme_review_queue()
+    deduped = _load_jsonl("data/processed/d5/deduped_pain_items.jsonl")
+    source_groups = _load_jsonl("data/processed/d5/source_groups.jsonl")
+    run_summary = _load_json("outputs/run_summary.json")
+    return {
+        "themes": len(themes),
+        "queue_count": len(queue),
+        "deduped_representatives": sum(1 for item in deduped if item.get("is_representative")),
+        "source_groups": len(source_groups),
+        "pursue_candidate": sum(1 for theme in themes if theme.get("action_recommendation") == "pursue_candidate"),
+        "watch": sum(1 for theme in themes if theme.get("action_recommendation") == "watch"),
+        "needs_more_evidence": sum(1 for theme in themes if theme.get("action_recommendation") == "needs_more_evidence"),
+        "reject": sum(1 for theme in themes if theme.get("action_recommendation") == "reject"),
+        "engineering_acceptance": run_summary.get("d5_engineering_acceptance"),
+        "product_acceptance": run_summary.get("d5_product_acceptance"),
+        "can_enter_theme_review": run_summary.get("d5_can_enter_theme_review"),
+        "can_enter_product_discovery": run_summary.get("d5_can_enter_product_discovery"),
+        "reason": run_summary.get("d5_reason"),
+    }
+
+
+def get_d5_demand_themes() -> list[dict[str, Any]]:
+    return _load_jsonl("data/processed/d5/demand_themes.jsonl")
+
+
+def get_d5_theme_review_queue() -> list[dict[str, Any]]:
+    return _load_jsonl("data/processed/d5/theme_review_queue.jsonl")
+
+
+def get_d5_source_groups() -> list[dict[str, Any]]:
+    return _load_jsonl("data/processed/d5/source_groups.jsonl")

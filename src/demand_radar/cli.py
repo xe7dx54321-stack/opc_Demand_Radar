@@ -91,7 +91,7 @@ from demand_radar.mvp_d.mvp_d_pipeline import build_mvp_d_summary_from_stored, r
 from demand_radar.mvp_d.query_generator import generate_queries
 from demand_radar.mvp_d.seed_selector import select_seeds
 from demand_radar.mvp_d.seeded_acquisition import run_seeded_acquisition
-from demand_radar.mvp_d.theme_grouping import build_demand_themes
+from demand_radar.mvp_d.theme_grouping import build_demand_themes as build_mvp_d_demand_themes
 from demand_radar.mvp_d2.calibrated_expansion_runner import run_calibrated_expansion
 from demand_radar.mvp_d2.calibrated_query_generator import build_calibrated_query_plan
 from demand_radar.mvp_d2.d2_comparison import compare_expansion_v1_v2
@@ -712,17 +712,15 @@ def build_demand_themes_command(
     max_results: Annotated[int | None, typer.Option("--max-results")] = None,
     use_cache: Annotated[bool, typer.Option("--use-cache/--no-cache")] = True,
 ) -> None:
-    """Build lightweight demand themes from MVP-D evidence consolidation."""
-    consolidate_evidence()
-    themes = build_demand_themes(
-        Path("data/processed/mvp_d/seed_profiles.jsonl"),
-        Path("data/processed/mvp_d/seed_evidence_consolidation.jsonl"),
-        Path("data/processed/mvp_d/consolidated_evidence_themes.jsonl"),
-        Path("outputs/mvp_d/demand_theme_grouping_report.md"),
-    )
+    """Build D5 demand themes from stored D4 pain items and reviews."""
+    from demand_radar.d5.d5_pipeline import run_d5
+
+    del max_seeds, max_queries, max_results, use_cache
+    summary = run_d5(domain_id=domain)
     typer.echo(
-        "Built MVP-D demand themes -> data/processed/mvp_d/consolidated_evidence_themes.jsonl "
-        f"(themes={len(themes)})"
+        "[build-demand-themes] themes -> data/processed/d5/demand_themes.jsonl "
+        f"themes={summary.theme_count} queue={summary.queue_count} "
+        f"engineering={summary.engineering_acceptance} product={summary.product_acceptance}"
     )
 
 
@@ -751,7 +749,7 @@ def run_mvp_d_llm_expansion_command(
     """Run only the MVP-D LLM expansion pass from stored candidates."""
     _, pain_rows, extraction_summary = run_expansion_extraction(max_items=max_results, use_cache=use_cache)
     consolidate_evidence()
-    themes = build_demand_themes(
+    themes = build_mvp_d_demand_themes(
         Path("data/processed/mvp_d/seed_profiles.jsonl"),
         Path("data/processed/mvp_d/seed_evidence_consolidation.jsonl"),
         Path("data/processed/mvp_d/consolidated_evidence_themes.jsonl"),
@@ -1063,6 +1061,51 @@ def build_d4_review_report_command() -> None:
         f"[build-d4-review-report] report={DEFAULT_D4_REVIEW_REPORT_PATH} "
         f"reviews={summary['total']} pursue={summary['pursue']} "
         f"watch={summary['watch']} reject={summary['reject']}"
+    )
+
+
+@app.command("run-d5")
+def run_d5_command(
+    domain: Annotated[str, typer.Option("--domain")] = "ai_investment_tracking",
+) -> None:
+    """Run D5 evidence consolidation and demand theme grouping."""
+    from demand_radar.d5.d5_pipeline import run_d5
+
+    summary = run_d5(domain_id=domain)
+    typer.echo(
+        "[run-d5] complete -> outputs/d5/d5_summary_report.md "
+        f"themes={summary.theme_count} queue={summary.queue_count} "
+        f"deduped_representatives={summary.deduped_representatives} "
+        f"engineering={summary.engineering_acceptance} product={summary.product_acceptance}"
+    )
+
+
+@app.command("build-demand-themes-d5")
+def build_demand_themes_d5_command(
+    domain: Annotated[str, typer.Option("--domain")] = "ai_investment_tracking",
+) -> None:
+    """Build D5 demand themes from stored D4 pain items and reviews."""
+    from demand_radar.d5.d5_pipeline import run_d5
+
+    summary = run_d5(domain_id=domain)
+    typer.echo(
+        "[build-demand-themes-d5] themes -> data/processed/d5/demand_themes.jsonl "
+        f"themes={summary.theme_count} queue={summary.queue_count}"
+    )
+
+
+@app.command("build-d5-report")
+def build_d5_report_command(
+    domain: Annotated[str, typer.Option("--domain")] = "ai_investment_tracking",
+) -> None:
+    """Rebuild D5 reports from stored D4 inputs."""
+    from demand_radar.d5.d5_pipeline import build_d5_report_from_stored
+
+    summary = build_d5_report_from_stored(domain_id=domain)
+    typer.echo(
+        "[build-d5-report] report=outputs/d5/d5_summary_report.md "
+        f"engineering={summary.engineering_acceptance} product={summary.product_acceptance} "
+        f"themes={summary.theme_count}"
     )
 
 

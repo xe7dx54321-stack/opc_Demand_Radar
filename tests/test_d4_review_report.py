@@ -64,9 +64,9 @@ def test_d4_review_report_can_generate_summary_and_candidates(tmp_path: Path) ->
     )
 
     assert report_path.exists()
-    assert "total_pain_signals: 2" in text
-    assert "reviewed_count: 1" in text
-    assert "unreviewed_count: 1" in text
-    assert "true_pain_count: 1" in text
-    assert "Top Pursue Candidates" in text
+    assert "痛点信号总数：2" in text
+    assert "已审核：1" in text
+    assert "未审核：1" in text
+    assert "真痛点：1" in text
+    assert "建议继续推进的候选" in text
     assert "Manual investment research workflow" in text
