@@ -3888,6 +3888,17 @@ def _current_console_tab_labels(nav_tabs: list[str]) -> list[str]:
     return labels
 
 
+def _load_d5_ui_service():
+    """Load D5 UI helpers, reloading stale modules during Streamlit hot reload."""
+    import importlib
+
+    from demand_radar.ui import mvp_d_service
+
+    if not hasattr(mvp_d_service, "get_d5_demand_themes"):
+        return importlib.reload(mvp_d_service)
+    return mvp_d_service
+
+
 def _render_current_task_console_page() -> None:
     from demand_radar.ui.current_task_service import get_current_task_summary
     from demand_radar.ui.d4_review_store import D4ReviewStore
@@ -4230,18 +4241,14 @@ def _render_d4_evidence_results_console_page() -> None:
 
 
 def _render_d5_demand_themes_console_page() -> None:
-    from demand_radar.ui.mvp_d_service import (
-        get_d5_demand_themes,
-        get_d5_overview,
-        get_d5_theme_review_queue,
-    )
+    d5_service = _load_d5_ui_service()
 
     st.subheader("需求主题")
     st.caption("这里展示 D5 从 D4 单条痛点证据合并出的主题级判断。证据原文和来源链接保留原始语言。")
 
-    overview = get_d5_overview()
-    themes = get_d5_demand_themes()
-    queue = get_d5_theme_review_queue()
+    overview = d5_service.get_d5_overview()
+    themes = d5_service.get_d5_demand_themes()
+    queue = d5_service.get_d5_theme_review_queue()
 
     if not themes:
         st.warning("当前还没有 D5 需求主题。请先运行 demand-radar run-d5。")

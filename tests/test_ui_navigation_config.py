@@ -1,7 +1,7 @@
 """Navigation config tests for consolidated Review Console."""
 
 from demand_radar.ui.navigation_config import HISTORY_PAGES, NAV_TABS
-from demand_radar.ui.review_app import _current_console_tab_labels
+from demand_radar.ui.review_app import _current_console_tab_labels, _load_d5_ui_service
 
 
 def test_top_level_navigation_has_current_workbench_entries_only() -> None:
@@ -39,3 +39,10 @@ def test_current_console_tab_labels_backfills_theme_tab_for_cached_config() -> N
         "诊断与历史",
         "设置与运行状态",
     ]
+
+
+def test_load_d5_ui_service_exposes_d5_helpers() -> None:
+    service = _load_d5_ui_service()
+
+    assert hasattr(service, "get_d5_demand_themes")
+    assert hasattr(service, "get_d5_theme_review_queue")
