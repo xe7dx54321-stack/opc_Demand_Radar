@@ -1,0 +1,88 @@
+query_calibration:
+  domain_id: ai_investment_tracking
+
+  input:
+    seed_profiles_path: data/processed/mvp_d/seed_profiles.jsonl
+
+  output:
+    calibrated_query_plan_path: data/processed/mvp_d2/calibrated_query_plan_v2.jsonl
+    calibrated_candidates_path: data/processed/mvp_d2/calibrated_expansion_candidates.jsonl
+    calibrated_domain_relevance_path: data/processed/mvp_d2/calibrated_domain_relevance_scores.jsonl
+    calibrated_pain_items_path: data/processed/mvp_d2/calibrated_expansion_pain_items.jsonl
+    query_calibration_report_path: outputs/mvp_d2/calibrated_query_plan_report.md
+    calibrated_expansion_report_path: outputs/mvp_d2/calibrated_expansion_report.md
+    d2_comparison_report_path: outputs/mvp_d2/d2_comparison_report.md
+    d2_summary_report_path: outputs/mvp_d2/mvp_d2_summary_report.md
+
+  query_generation:
+    max_queries_per_seed: 12
+    min_queries_per_seed: 6
+    max_total_queries: 48
+
+  query_types:
+    - pain_phrase
+    - complaint_phrase
+    - workaround_phrase
+    - job_to_be_done
+    - manual_workflow
+    - spreadsheet_workaround
+    - alternative_tool
+    - buying_intent
+    - competitor_review
+    - community_question
+
+  required_pain_terms:
+    - manual
+    - time consuming
+    - spreadsheet
+    - hard to track
+    - too much information
+    - workflow
+    - problem
+    - pain
+    - frustrated
+    - alternative
+    - workaround
+    - expensive
+    - inaccurate
+    - difficult
+
+  negative_terms:
+    - recipe
+    - diet
+    - fitness
+    - game
+    - dating
+    - crypto trading bot
+    - casino
+    - generic chatbot
+    - tutorial
+    - hello world
+
+  source_strategy:
+    existing_connectors:
+      - hacker_news
+      - github_issues
+      - rss
+      - manual_url
+
+    preferred_source_categories:
+      - user_discussion
+      - product_review
+      - workaround_discussion
+      - community_question
+      - comparison_page
+      - practitioner_blog
+      - job_description
+
+    deprioritized_source_categories:
+      - product_launch
+      - generic_news
+      - technical_repo_issue
+      - pure_marketing_page
+
+  pilot:
+    run_calibrated_pilot: true
+    max_total_new_signals: 80
+    max_llm_candidates: 40
+    require_real_llm: true

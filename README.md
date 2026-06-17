@@ -1578,6 +1578,48 @@ demand-radar review-ui --port 8502
 
 Without an LLM client, MVP-D still runs and clearly reports `real_llm_run: false`; extraction items become rejects rather than fake production positives.
 
+## MVP-D2: Expansion Diagnostics & Query Calibration
+
+MVP-D2 diagnoses why MVP-D found related candidates but produced no new extracted pain evidence. It does not modify `opc-foundation`, add source connectors, or fake live pilot results. It reads MVP-D outputs, attributes rejected candidates by seed/query/source/raw text quality, scores source usefulness, generates a pain-oriented query plan v2, and either runs a small calibrated pilot or reports `blocked_by_missing_search_provider`.
+
+Run end to end:
+
+```bash
+demand-radar run-mvp-d2 --domain ai_investment_tracking
+```
+
+Step-by-step commands:
+
+```bash
+demand-radar diagnose-expansion-rejects --domain ai_investment_tracking
+demand-radar build-calibrated-query-plan --domain ai_investment_tracking
+demand-radar run-calibrated-expansion --domain ai_investment_tracking
+demand-radar compare-expansion-v1-v2 --domain ai_investment_tracking
+demand-radar build-mvp-d2-report --domain ai_investment_tracking
+```
+
+Outputs:
+
+```text
+configs/expansion_diagnostics_config.yaml
+configs/query_calibration_config.yaml
+data/processed/mvp_d2/reject_diagnostics.jsonl
+data/processed/mvp_d2/source_quality_scores.jsonl
+data/processed/mvp_d2/calibrated_query_plan_v2.jsonl
+data/processed/mvp_d2/calibrated_expansion_candidates.jsonl
+data/processed/mvp_d2/calibrated_expansion_pain_items.jsonl
+outputs/mvp_d2/reject_diagnostics_report.md
+outputs/mvp_d2/source_quality_report.md
+outputs/mvp_d2/calibrated_query_plan_report.md
+outputs/mvp_d2/calibrated_expansion_report.md
+outputs/mvp_d2/d2_comparison_report.md
+outputs/mvp_d2/mvp_d2_summary_report.md
+```
+
+Query v2 is intentionally biased toward pain evidence rather than generic product discovery. Examples include `"investment research workflow" "spreadsheet"`, `"portfolio monitoring" "hard to track"`, `"deal sourcing" "manual research"`, and `"VC analyst" "due diligence" "spreadsheet"`.
+
+The Review UI includes a read-only `MVP-D2 诊断校准` tab showing reject diagnostics, source quality recommendations, query v2 examples, calibrated pilot status, and v1/v2 comparison.
+
 ### Domain Relevance Filter
 
 Configured in `configs/domain_relevance_config.yaml`.

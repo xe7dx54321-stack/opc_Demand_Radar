@@ -92,6 +92,12 @@ from demand_radar.mvp_d.query_generator import generate_queries
 from demand_radar.mvp_d.seed_selector import select_seeds
 from demand_radar.mvp_d.seeded_acquisition import run_seeded_acquisition
 from demand_radar.mvp_d.theme_grouping import build_demand_themes
+from demand_radar.mvp_d2.calibrated_expansion_runner import run_calibrated_expansion
+from demand_radar.mvp_d2.calibrated_query_generator import build_calibrated_query_plan
+from demand_radar.mvp_d2.d2_comparison import compare_expansion_v1_v2
+from demand_radar.mvp_d2.mvp_d2_pipeline import build_mvp_d2_summary_from_stored, run_mvp_d2
+from demand_radar.mvp_d2.reject_diagnostics_runner import run_reject_diagnostics
+from demand_radar.mvp_d2.source_quality_analyzer import analyze_source_quality
 app = typer.Typer(help="Domain-Bounded Demand Radar Stage 1 CLI.")
 calibration_review_app = typer.Typer(help="Human calibration review commands.")
 app.add_typer(calibration_review_app, name="calibration-review")
@@ -783,6 +789,124 @@ def run_mvp_d_command(
         "MVP-D complete -> outputs/mvp_d/mvp_d_summary_report.md "
         f"(seeds={summary.eligible_seeds}, queries={summary.total_queries}, "
         f"candidates={summary.unique_new_signals}, themes={summary.themes}, "
+        f"engineering={summary.engineering_acceptance}, product={summary.product_acceptance})"
+    )
+
+
+@app.command("diagnose-expansion-rejects")
+def diagnose_expansion_rejects_command(
+    domain: Annotated[str, typer.Option("--domain")] = "ai_investment_tracking",
+    max_queries: Annotated[int | None, typer.Option("--max-queries")] = None,
+    max_results: Annotated[int | None, typer.Option("--max-results")] = None,
+    use_cache: Annotated[bool, typer.Option("--use-cache/--no-cache")] = True,
+    skip_pilot: Annotated[bool, typer.Option("--skip-pilot")] = False,
+) -> None:
+    """Diagnose MVP-D rejected expansion candidates."""
+    diagnostics, summary = run_reject_diagnostics()
+    _, source_summary = analyze_source_quality()
+    typer.echo(
+        "Built MVP-D2 reject diagnostics -> data/processed/mvp_d2/reject_diagnostics.jsonl "
+        f"(total_rejected={summary['total_rejected']}, by_category={summary['by_reject_category']})"
+    )
+    typer.echo(
+        "Built MVP-D2 source quality -> data/processed/mvp_d2/source_quality_scores.jsonl "
+        f"(recommendations={source_summary.get('by_recommendation', {})}, diagnostics={len(diagnostics)})"
+    )
+
+
+@app.command("build-calibrated-query-plan")
+def build_calibrated_query_plan_command(
+    domain: Annotated[str, typer.Option("--domain")] = "ai_investment_tracking",
+    max_queries: Annotated[int | None, typer.Option("--max-queries")] = None,
+    max_results: Annotated[int | None, typer.Option("--max-results")] = None,
+    use_cache: Annotated[bool, typer.Option("--use-cache/--no-cache")] = True,
+    skip_pilot: Annotated[bool, typer.Option("--skip-pilot")] = False,
+) -> None:
+    """Build MVP-D2 pain-oriented calibrated query plan v2."""
+    queries = build_calibrated_query_plan(max_queries=max_queries)
+    typer.echo(
+        "Built MVP-D2 calibrated query plan -> data/processed/mvp_d2/calibrated_query_plan_v2.jsonl "
+        f"(queries={len(queries)})"
+    )
+
+
+@app.command("run-calibrated-expansion")
+def run_calibrated_expansion_command(
+    domain: Annotated[str, typer.Option("--domain")] = "ai_investment_tracking",
+    max_queries: Annotated[int | None, typer.Option("--max-queries")] = None,
+    max_results: Annotated[int | None, typer.Option("--max-results")] = None,
+    use_cache: Annotated[bool, typer.Option("--use-cache/--no-cache")] = True,
+    skip_pilot: Annotated[bool, typer.Option("--skip-pilot")] = False,
+) -> None:
+    """Run MVP-D2 calibrated expansion pilot or report why it is blocked."""
+    candidates, pains, summary = run_calibrated_expansion(
+        max_queries=max_queries,
+        max_results=max_results,
+        use_cache=use_cache,
+        skip_pilot=skip_pilot,
+    )
+    typer.echo(
+        "Built MVP-D2 calibrated expansion -> outputs/mvp_d2/calibrated_expansion_report.md "
+        f"(status={summary.get('status')}, blocked={summary.get('blocked_reason') or 'n/a'}, "
+        f"candidates={len(candidates)}, pain_items={len(pains)}, "
+        f"should_extract_true={summary.get('should_extract_true', 0)})"
+    )
+
+
+@app.command("compare-expansion-v1-v2")
+def compare_expansion_v1_v2_command(
+    domain: Annotated[str, typer.Option("--domain")] = "ai_investment_tracking",
+    max_queries: Annotated[int | None, typer.Option("--max-queries")] = None,
+    max_results: Annotated[int | None, typer.Option("--max-results")] = None,
+    use_cache: Annotated[bool, typer.Option("--use-cache/--no-cache")] = True,
+    skip_pilot: Annotated[bool, typer.Option("--skip-pilot")] = False,
+) -> None:
+    """Compare MVP-D v1 expansion yield with MVP-D2 calibrated pilot."""
+    comparison = compare_expansion_v1_v2()
+    typer.echo(
+        "Built MVP-D2 comparison -> outputs/mvp_d2/d2_comparison_report.md "
+        f"(result={comparison['result']}, v1_yield={comparison['v1'].get('yield_rate')}, "
+        f"v2_yield={comparison['v2'].get('yield_rate')})"
+    )
+
+
+@app.command("build-mvp-d2-report")
+def build_mvp_d2_report_command(
+    domain: Annotated[str, typer.Option("--domain")] = "ai_investment_tracking",
+    max_queries: Annotated[int | None, typer.Option("--max-queries")] = None,
+    max_results: Annotated[int | None, typer.Option("--max-results")] = None,
+    use_cache: Annotated[bool, typer.Option("--use-cache/--no-cache")] = True,
+    skip_pilot: Annotated[bool, typer.Option("--skip-pilot")] = False,
+) -> None:
+    """Build MVP-D2 summary report from stored outputs."""
+    summary = build_mvp_d2_summary_from_stored(domain_id=domain)
+    typer.echo(
+        "Built MVP-D2 summary -> outputs/mvp_d2/mvp_d2_summary_report.md "
+        f"(engineering={summary.engineering_acceptance}, product={summary.product_acceptance}, "
+        f"comparison={summary.comparison_result})"
+    )
+
+
+@app.command("run-mvp-d2")
+def run_mvp_d2_command(
+    domain: Annotated[str, typer.Option("--domain")] = "ai_investment_tracking",
+    max_queries: Annotated[int | None, typer.Option("--max-queries")] = None,
+    max_results: Annotated[int | None, typer.Option("--max-results")] = None,
+    use_cache: Annotated[bool, typer.Option("--use-cache/--no-cache")] = True,
+    skip_pilot: Annotated[bool, typer.Option("--skip-pilot")] = False,
+) -> None:
+    """Run MVP-D2 expansion diagnostics and query calibration end-to-end."""
+    summary = run_mvp_d2(
+        domain_id=domain,
+        max_queries=max_queries,
+        max_results=max_results,
+        use_cache=use_cache,
+        skip_pilot=skip_pilot,
+    )
+    typer.echo(
+        "MVP-D2 complete -> outputs/mvp_d2/mvp_d2_summary_report.md "
+        f"(rejected={summary.total_rejected}, queries={summary.generated_v2_queries}, "
+        f"pilot_blocked={summary.blocked_reason or 'n/a'}, comparison={summary.comparison_result}, "
         f"engineering={summary.engineering_acceptance}, product={summary.product_acceptance})"
     )
 

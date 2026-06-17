@@ -1,0 +1,33 @@
+expansion_diagnostics:
+  domain_id: ai_investment_tracking
+
+  input:
+    expansion_candidates_path: data/processed/mvp_d/expansion_evidence_candidates.jsonl
+    expansion_pain_items_path: data/processed/mvp_d/expansion_pain_items.jsonl
+    seed_profiles_path: data/processed/mvp_d/seed_profiles.jsonl
+    query_plan_path: data/processed/mvp_d/seeded_query_plan.jsonl
+
+  output:
+    reject_diagnostics_path: data/processed/mvp_d2/reject_diagnostics.jsonl
+    source_quality_scores_path: data/processed/mvp_d2/source_quality_scores.jsonl
+    source_quality_report_path: outputs/mvp_d2/source_quality_report.md
+    reject_diagnostics_report_path: outputs/mvp_d2/reject_diagnostics_report.md
+
+  buckets:
+    raw_text_too_thin_chars: 300
+    raw_text_good_chars: 1200
+
+  reject_categories:
+    - domain_out
+    - product_marketing
+    - technical_issue_not_business_pain
+    - generic_article
+    - raw_text_too_thin
+    - no_user_persona
+    - no_workflow
+    - no_pain
+    - no_evidence_quote
+    - duplicate_or_near_duplicate
+    - source_low_quality
+    - prompt_too_strict_possible
+    - unknown

@@ -532,9 +532,9 @@ def main() -> None:
 
 
 
-    pain_tab, cluster_tab, merge_tab, ai_judge_tab, exception_tab, llm_tab, truth_tab, gap_tab, expansion_tab, lineage_tab, stage35_tab, real_evidence_tab, acquisition_tab, mvp_b_tab, mvp_c_tab, mvp_d_tab, batch_tab = st.tabs(
+    pain_tab, cluster_tab, merge_tab, ai_judge_tab, exception_tab, llm_tab, truth_tab, gap_tab, expansion_tab, lineage_tab, stage35_tab, real_evidence_tab, acquisition_tab, mvp_b_tab, mvp_c_tab, mvp_d_tab, mvp_d2_tab, batch_tab = st.tabs(
         ["痛点校准", "需求主题候选", "合并建议审核", "AI合并判断", "人工异常队列", "LLM合并对比", "真实需求评分", "证据缺口分析", "定向证据扩展", "候选谱系追踪",
-        "Stage 3.5 定向验证", "真实证据校准", "自动采集", "MVP-B 痛点抽取", "MVP-C 人工校准", "MVP-D 证据扩展", "批次总览"]
+        "Stage 3.5 定向验证", "真实证据校准", "自动采集", "MVP-B 痛点抽取", "MVP-C 人工校准", "MVP-D 证据扩展", "MVP-D2 诊断校准", "批次总览"]
     )
 
     with pain_tab:
@@ -594,6 +594,9 @@ def main() -> None:
 
     with mvp_d_tab:
         _render_mvp_d_page()
+
+    with mvp_d2_tab:
+        _render_mvp_d2_page()
 
     with batch_tab:
 
@@ -3609,6 +3612,104 @@ def _render_mvp_d_page() -> None:
             st.write("Confidence: " + str(theme.get("confidence", "-")))
             if theme.get("theme_summary_zh"):
                 st.caption(str(theme["theme_summary_zh"])[:500])
+
+
+def _render_mvp_d2_page() -> None:
+    import streamlit as st
+    from demand_radar.ui.mvp_d2_service import (
+        get_calibrated_pain_items,
+        get_calibrated_query_plan,
+        get_mvp_d2_overview,
+        get_reject_diagnostics,
+        get_source_quality_scores,
+    )
+
+    st.subheader("MVP-D2 诊断与校准")
+    st.caption("诊断 MVP-D 扩展失败原因，展示 source quality、query v2 和 calibrated pilot 对比。")
+
+    try:
+        overview = get_mvp_d2_overview()
+        diagnostics = get_reject_diagnostics()
+        source_scores = get_source_quality_scores()
+        queries = get_calibrated_query_plan()
+        pain_items = get_calibrated_pain_items()
+    except Exception as exc:
+        st.warning(f"MVP-D2 数据加载失败: {exc}")
+        return
+
+    if not diagnostics and not source_scores and not queries:
+        st.info("尚未运行 MVP-D2。请先执行: demand-radar run-mvp-d2 --domain ai_investment_tracking")
+        return
+
+    c1, c2, c3, c4, c5 = st.columns(5)
+    c1.metric("Rejected", overview["total_rejected"])
+    c2.metric("Sources", overview["source_rows"])
+    c3.metric("V2 Queries", overview["v2_queries"])
+    c4.metric("Pilot Extracted", overview["should_extract_true"])
+    c5.metric("Yield", overview["yield_rate"])
+
+    status_cols = st.columns(4)
+    status_cols[0].metric("Pilot", "ran" if overview.get("ran_pilot") else "blocked")
+    status_cols[1].metric("Comparison", overview.get("comparison_result") or "n/a")
+    status_cols[2].metric("Engineering", overview.get("engineering_acceptance") or "n/a")
+    status_cols[3].metric("Product", overview.get("product_acceptance") or "n/a")
+    if overview.get("blocked_reason") and overview.get("blocked_reason") != "n/a":
+        st.warning("Pilot blocked: " + str(overview["blocked_reason"]))
+    if overview.get("reason"):
+        st.info(str(overview["reason"]))
+
+    st.divider()
+    st.markdown("**Reject Diagnostics Summary**")
+    category_counts: dict[str, int] = {}
+    source_counts: dict[str, int] = {}
+    query_counts: dict[str, int] = {}
+    for item in diagnostics:
+        category = str(item.get("reject_category", "unknown"))
+        source = str(item.get("source_type", "unknown"))
+        query_type = str(item.get("query_type", "unknown"))
+        category_counts[category] = category_counts.get(category, 0) + 1
+        source_counts[source] = source_counts.get(source, 0) + 1
+        query_counts[query_type] = query_counts.get(query_type, 0) + 1
+    if diagnostics:
+        st.write("By category: " + ", ".join(f"{k}: {v}" for k, v in sorted(category_counts.items())))
+        st.write("By source: " + ", ".join(f"{k}: {v}" for k, v in sorted(source_counts.items())))
+        st.write("By query type: " + ", ".join(f"{k}: {v}" for k, v in sorted(query_counts.items())))
+    else:
+        st.info("暂无 reject diagnostics。")
+
+    st.markdown("**Source Quality**")
+    if not source_scores:
+        st.info("暂无 source quality 结果。")
+    for row in source_scores:
+        st.write(
+            f"{row.get('source_type')} / {row.get('connector')} -> "
+            f"{row.get('source_strategy_recommendation')} | "
+            f"yield={row.get('yield_rate')} | reject={row.get('reject_count')} | "
+            f"dominant={row.get('dominant_reject_reason') or 'n/a'}"
+        )
+
+    st.markdown("**Query V2 Examples**")
+    for query in queries[:25]:
+        meta = query.get("metadata") or {}
+        st.caption(
+            f"{query.get('seed_id')} | {query.get('connector')} | "
+            f"{query.get('query_type')} | {meta.get('source_category', 'unknown')} | "
+            f"{query.get('query')}"
+        )
+
+    st.markdown("**Calibrated Pilot Results**")
+    st.write(f"Calibrated pain items: {len(pain_items)}")
+    extracted = [item for item in pain_items if item.get("should_extract")]
+    if extracted:
+        for item in extracted[:10]:
+            with st.expander(str(item.get("title") or item.get("candidate_id"))[:120]):
+                st.write("Candidate: " + str(item.get("candidate_id")))
+                st.write("Source: " + str(item.get("source_type", "-")))
+                st.write("Evidence strength: " + str(item.get("evidence_strength", "-")))
+                if item.get("pain_description_zh"):
+                    st.caption(str(item["pain_description_zh"])[:500])
+    elif pain_items:
+        st.info("Pilot 已处理候选，但暂无 should_extract=true。")
 
 
 def _render_stage35_page() -> None:
