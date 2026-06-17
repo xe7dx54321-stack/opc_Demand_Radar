@@ -1,12 +1,23 @@
-# MVP-D3 Search Provider Pilot Summary
+# MVP-D4 Foundation Search Pilot Summary
 
 ## Run Metadata
-- generated_at: 2026-06-17T03:57:07Z
+- generated_at: 2026-06-17T03:57:37Z
 - radar_commit: be2aaf6
-- foundation_commit: b6d23bc
-- provider: none
-- model: none
+- foundation_version: 0.1.2
+- foundation_commit: b6d3497
+- foundation_installation_method: copy_to_site_packages
+- search_provider: none
+- llm_model: none
 - real_llm_run: False
+- cache_enabled: True
+
+## Foundation Integration
+- foundation_version_ok: True
+- SearchProviderRegistry used: True
+- SearchQuery/SearchResult used: True
+- normalize_results used: True
+- WebExtraction used: True
+- local_Radar_provider_adapter_retired: Yes
 
 ## Provider Detection
 - detected_provider: none
@@ -20,7 +31,7 @@
 - total_search_results: 0
 - unique_urls: 0
 
-## Evidence Build & Gate
+## Evidence Build and Gate
 - evidence_candidates: 0
 - gate_allowed: 0
 - gate_blocked: 0

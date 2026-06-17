@@ -1,4 +1,4 @@
-﻿"""Typer CLI for Stage 1 Demand Radar."""
+"""Typer CLI for Stage 1 Demand Radar."""
 
 from __future__ import annotations
 
@@ -971,6 +971,108 @@ def run_search_pilot_command(
     result = run_search_pilot(max_queries=max_queries, max_results_per_query=max_results_per_query)
     typer.echo(f"[run-search-pilot] provider={result.get('provider')} status={result.get('status')}")
     typer.echo(f"[run-search-pilot] gate_allowed={result.get('gate_allowed')} unique_urls={result.get('unique_urls')}")
+
+
+
+@app.command("detect-foundation-search-provider")
+def detect_foundation_search_provider_command(
+    domain: Annotated[str, typer.Option("--domain")] = "ai_investment_tracking",
+) -> None:
+    from demand_radar.mvp_d4.foundation_search_adapter import detect_provider, check_foundation_version
+    ver_ok, ver = check_foundation_version()
+    typer.echo(f"[foundation-version] {ver} ok={ver_ok}")
+    prov = detect_provider()
+    typer.echo(f"[detect-foundation-search-provider] {prov or 'none'}")
+
+
+@app.command("run-mvp-d4")
+def run_mvp_d4_command(
+    domain: Annotated[str, typer.Option("--domain")] = "ai_investment_tracking",
+    max_queries: Annotated[int, typer.Option("--max-queries")] = 24,
+    max_results_per_query: Annotated[int, typer.Option("--max-results-per-query")] = 5,
+    use_cache: Annotated[bool, typer.Option("--use-cache/--no-cache")] = True,
+    fake_llm: Annotated[bool, typer.Option("--fake-llm")] = False,
+) -> None:
+    from demand_radar.mvp_d4.foundation_search_pipeline import run_mvp_d4
+    from demand_radar.semantic_merge.llm_client import make_llm_client, FakeLLMClient
+    import os
+    try:
+        from dotenv import load_dotenv; load_dotenv()
+    except ImportError:
+        pass
+    llm_client = None
+    if fake_llm:
+        llm_client = FakeLLMClient()
+    else:
+        api_key = os.environ.get("DEMAND_RADAR_LLM_API_KEY", "")
+        model = os.environ.get("DEMAND_RADAR_LLM_MODEL", "claude-sonnet-4-6")
+        if api_key:
+            llm_client = make_llm_client("responses_compatible", {"model": model})
+    typer.echo(f"[run-mvp-d4] domain={domain} max_queries={max_queries}")
+    result = run_mvp_d4(
+        domain_id=domain, max_queries=max_queries,
+        max_results_per_query=max_results_per_query,
+        use_cache=use_cache, llm_client=llm_client,
+    )
+    typer.echo(f"[run-mvp-d4] provider={result.provider} blocked={result.blocked_reason}")
+    typer.echo(f"[run-mvp-d4] gate_allowed={result.gate_allowed} should_extract_true={result.should_extract_true}")
+    typer.echo(f"[run-mvp-d4] eng={result.engineering_acceptance} prod={result.product_acceptance}")
+
+
+@app.command("run-foundation-search-pilot")
+def run_foundation_search_pilot_command(
+    max_queries: Annotated[int, typer.Option("--max-queries")] = 24,
+    max_results_per_query: Annotated[int, typer.Option("--max-results-per-query")] = 5,
+) -> None:
+    from demand_radar.mvp_d4.foundation_search_pipeline import run_mvp_d4
+    result = run_mvp_d4(max_queries=max_queries, max_results_per_query=max_results_per_query)
+    typer.echo(f"[foundation-search-pilot] provider={result.provider} gate_allowed={result.gate_allowed}")
+
+
+
+@app.command("detect-foundation-search-provider")
+def detect_foundation_search_provider_command(
+    domain: Annotated[str, typer.Option("--domain")] = "ai_investment_tracking",
+) -> None:
+    from demand_radar.mvp_d4.foundation_search_adapter import detect_provider, check_foundation_version
+    ver_ok, ver = check_foundation_version()
+    typer.echo(f"[foundation-version] {ver} ok={ver_ok}")
+    prov = detect_provider()
+    typer.echo(f"[detect-foundation-search-provider] {prov or 'none'}")
+
+
+@app.command("run-mvp-d4")
+def run_mvp_d4_command(
+    domain: Annotated[str, typer.Option("--domain")] = "ai_investment_tracking",
+    max_queries: Annotated[int, typer.Option("--max-queries")] = 24,
+    max_results_per_query: Annotated[int, typer.Option("--max-results-per-query")] = 5,
+    use_cache: Annotated[bool, typer.Option("--use-cache/--no-cache")] = True,
+    fake_llm: Annotated[bool, typer.Option("--fake-llm")] = False,
+) -> None:
+    from demand_radar.mvp_d4.foundation_search_pipeline import run_mvp_d4
+    from demand_radar.semantic_merge.llm_client import make_llm_client, FakeLLMClient
+    import os
+    try:
+        from dotenv import load_dotenv; load_dotenv()
+    except ImportError:
+        pass
+    llm_client = None
+    if fake_llm:
+        llm_client = FakeLLMClient()
+    else:
+        api_key = os.environ.get("DEMAND_RADAR_LLM_API_KEY", "")
+        model = os.environ.get("DEMAND_RADAR_LLM_MODEL", "claude-sonnet-4-6")
+        if api_key:
+            llm_client = make_llm_client("responses_compatible", {"model": model})
+    typer.echo(f"[run-mvp-d4] domain={domain} max_queries={max_queries}")
+    result = run_mvp_d4(
+        domain_id=domain, max_queries=max_queries,
+        max_results_per_query=max_results_per_query,
+        use_cache=use_cache, llm_client=llm_client,
+    )
+    typer.echo(f"[run-mvp-d4] provider={result.provider} blocked={result.blocked_reason}")
+    typer.echo(f"[run-mvp-d4] gate_allowed={result.gate_allowed} should_extract_true={result.should_extract_true}")
+    typer.echo(f"[run-mvp-d4] eng={result.engineering_acceptance} prod={result.product_acceptance}")
 
 
 @app.command("llm-semantic-merge-judge")

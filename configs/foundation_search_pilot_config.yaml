@@ -1,0 +1,53 @@
+﻿foundation_search_pilot:
+  domain_id: ai_investment_tracking
+  foundation:
+    required_version: "0.1.2"
+    use_foundation_search_runtime: true
+    preferred_provider: tavily
+  input:
+    calibrated_query_plan_path: data/processed/mvp_d2/calibrated_query_plan_v2.jsonl
+    seed_profiles_path: data/processed/mvp_d/seed_profiles.jsonl
+  output:
+    selected_queries_path: data/processed/mvp_d4/selected_foundation_search_queries.jsonl
+    foundation_search_results_path: data/processed/mvp_d4/foundation_search_results.jsonl
+    foundation_search_candidates_path: data/processed/mvp_d4/foundation_search_evidence_candidates.jsonl
+    gate_results_path: data/processed/mvp_d4/foundation_search_gate_results.jsonl
+    pain_items_path: data/processed/mvp_d4/foundation_search_pain_items.jsonl
+    selected_queries_report_path: outputs/mvp_d4/selected_queries_report.md
+    foundation_search_report_path: outputs/mvp_d4/foundation_search_report.md
+    foundation_search_gate_report_path: outputs/mvp_d4/foundation_search_gate_report.md
+    foundation_search_pain_extraction_report_path: outputs/mvp_d4/foundation_search_pain_extraction_report.md
+    foundation_search_yield_report_path: outputs/mvp_d4/foundation_search_yield_report.md
+    mvp_d4_summary_report_path: outputs/mvp_d4/mvp_d4_summary_report.md
+  query_selection:
+    max_queries: 24
+    min_queries_per_seed: 4
+    max_queries_per_seed: 6
+    preferred_query_types:
+      - manual_workflow
+      - pain_phrase
+      - spreadsheet_workaround
+      - workaround_phrase
+      - complaint_phrase
+      - buying_intent
+  search:
+    max_results_per_query: 5
+    max_total_results: 100
+    use_foundation_normalizer: true
+  extraction:
+    use_foundation_web_extraction: true
+    allow_snippet_only: true
+    snippet_only_max_evidence_strength: weak
+    require_raw_text_min_chars: 120
+  llm:
+    require_real_llm: true
+    provider_env: LLM_PROVIDER
+    model_env: LLM_MODEL
+    default_provider: responses_compatible
+    default_model: claude-sonnet-4-6
+    prompt_version: acquired_signal_pain_extraction_v1
+    run_scope: demand_radar_mvp_d4_foundation_search_pilot
+    cache_enabled: true
+  acceptance:
+    target_should_extract_true: 5
+    target_strong_medium: 3
