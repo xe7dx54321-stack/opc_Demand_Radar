@@ -1050,6 +1050,22 @@ def run_mvp_d4_command(
     typer.echo(f"[run-mvp-d4] eng={result.engineering_acceptance} prod={result.product_acceptance}")
 
 
+@app.command("build-d4-review-report")
+def build_d4_review_report_command() -> None:
+    """Build the D4 second-round human review report."""
+    from demand_radar.ui.d4_review_service import DEFAULT_D4_REVIEW_REPORT_PATH, build_d4_review_report
+    from demand_radar.ui.d4_review_store import D4ReviewStore
+
+    store = D4ReviewStore()
+    build_d4_review_report(store=store, output_path=DEFAULT_D4_REVIEW_REPORT_PATH)
+    summary = store.summary()
+    typer.echo(
+        f"[build-d4-review-report] report={DEFAULT_D4_REVIEW_REPORT_PATH} "
+        f"reviews={summary['total']} pursue={summary['pursue']} "
+        f"watch={summary['watch']} reject={summary['reject']}"
+    )
+
+
 @app.command("llm-semantic-merge-judge")
 def llm_semantic_merge_judge_command(
     fake_llm: Annotated[bool, typer.Option("--fake-llm", help="Use FakeLLMClient instead of real API.")] = False,
@@ -1380,7 +1396,7 @@ def review_ui(
         "--browser.gatherUsageStats",
         "false",
     ]
-    typer.echo(f"姝ｅ湪鍚姩瀹℃牳鐣岄潰锛歨ttp://127.0.0.1:{port}")
+    typer.echo(f"Starting review UI: http://127.0.0.1:{port}")
     raise typer.Exit(subprocess.call(command))
 
 

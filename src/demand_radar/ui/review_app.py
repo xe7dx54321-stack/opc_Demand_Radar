@@ -3824,5 +3824,513 @@ def _render_mvp_d4_page() -> None:
     except Exception as exc:
         st.error(f"加载 MVP-D4 数据失败: {exc}")
 
+# ---------------------------------------------------------------------------
+# Review Console v1 - current D4 workbench
+# ---------------------------------------------------------------------------
+
+
+def main() -> None:
+    """Render the consolidated current review workbench."""
+    from demand_radar.ui.navigation_config import NAV_TABS
+
+    st.set_page_config(page_title="Demand Radar Review Console", layout="wide")
+    _hide_streamlit_chrome()
+
+    st.title("Demand Radar 审核台")
+    st.caption("当前入口按用户任务组织。历史阶段页已收进诊断归档，当前主任务是 D4 第二轮人工审核。")
+
+    current_tab, queue_tab, evidence_tab, history_tab, settings_tab = st.tabs(NAV_TABS)
+    with current_tab:
+        _render_current_task_console_page()
+    with queue_tab:
+        _render_d4_review_queue_console_page()
+    with evidence_tab:
+        _render_d4_evidence_results_console_page()
+    with history_tab:
+        _render_history_archive_console_page()
+    with settings_tab:
+        _render_runtime_status_console_page()
+
+
+def _render_current_task_console_page() -> None:
+    from demand_radar.ui.current_task_service import get_current_task_summary
+    from demand_radar.ui.d4_review_store import D4ReviewStore
+    from demand_radar.ui.review_queue_service import get_queue_stats
+
+    summary = get_current_task_summary()
+    store = D4ReviewStore()
+    queue_stats = get_queue_stats(store)
+
+    st.subheader("当前任务")
+    if not summary["data_available"]:
+        st.warning("当前没有可审核的 D4 pain signals，请先运行 run-mvp-d4。")
+        st.code("demand-radar run-mvp-d4 --domain ai_investment_tracking")
+        return
+
+    cols = st.columns(6)
+    cols[0].metric("当前阶段", summary["phase"])
+    cols[1].metric("待审核总数", summary["total"])
+    cols[2].metric("Strong", summary["strong"])
+    cols[3].metric("Medium", summary["medium"])
+    cols[4].metric("Weak", summary["weak"])
+    cols[5].metric("未审核", queue_stats["unreviewed"])
+
+    st.info(
+        "你现在应该做什么：先进入「待审核队列」，优先审核 strong 15 条；"
+        "逐条标记 pursue / watch / reject / needs_more_evidence；"
+        "审完后生成第二轮 review report。"
+    )
+
+    status_cols = st.columns(3)
+    status_cols[0].metric("当前数据源", summary["source"])
+    status_cols[1].metric("建议优先审核", f"{summary['priority_count']} 条 strong")
+    status_cols[2].metric("可进入产品发现", "否，需先完成第二轮 review")
+
+    st.markdown("**当前有效审核对象**")
+    st.write("D4 抽取出的 should_extract=true pain signals。历史 MVP-C/D/D2/D3 页面仅作为诊断参考。")
+
+
+def _render_d4_review_queue_console_page() -> None:
+    from demand_radar.state.raw_store import next_ids, utc_now_iso
+    from demand_radar.ui.d4_review_schema import D4PainSignalReview
+    from demand_radar.ui.d4_review_service import build_d4_review_report
+    from demand_radar.ui.d4_review_store import D4ReviewStore
+    from demand_radar.ui.review_queue_service import get_queue_stats, load_review_queue
+
+    st.subheader("待审核队列")
+    store = D4ReviewStore()
+    stats = get_queue_stats(store)
+
+    if stats["total"] == 0:
+        st.warning("当前没有可审核的 D4 pain signals，请先运行 run-mvp-d4。")
+        return
+
+    cols = st.columns(6)
+    cols[0].metric("全部", stats["total"])
+    cols[1].metric("Strong", stats["strong"])
+    cols[2].metric("Medium", stats["medium"])
+    cols[3].metric("Weak", stats["weak"])
+    cols[4].metric("已审核", stats["reviewed"])
+    cols[5].metric("未审核", stats["unreviewed"])
+
+    filter_cols = st.columns([1, 1, 1])
+    show_filter = filter_cols[0].selectbox("审核状态", ["仅未审核", "全部", "仅已审核"], index=0)
+    strength_filter = filter_cols[1].multiselect(
+        "证据强度",
+        ["strong", "medium", "weak"],
+        default=["strong", "medium"],
+    )
+    limit = filter_cols[2].number_input("本页最多显示", min_value=5, max_value=100, value=30, step=5)
+
+    all_items = load_review_queue(store=store, filter_unreviewed_only=False)
+    reviewed_ids = store.get_reviewed_ids()
+    items = []
+    for item in all_items:
+        is_reviewed = item.get("pain_item_id") in reviewed_ids
+        if show_filter == "仅未审核" and is_reviewed:
+            continue
+        if show_filter == "仅已审核" and not is_reviewed:
+            continue
+        if strength_filter and item.get("evidence_strength") not in strength_filter:
+            continue
+        items.append(item)
+
+    st.caption(
+        "默认筛选：仅未审核，strong / medium；排序：strong 在前，medium 其次，weak 最后，同强度按 confidence 降序。"
+    )
+
+    if st.button("生成第二轮 review report", key="build_d4_review_report"):
+        build_d4_review_report(store=store)
+        st.success("已生成 outputs/reviews/d4_second_review_report.md")
+
+    if not items:
+        st.info("当前筛选条件下没有待展示的 pain signals。")
+        return
+
+    for item in items[: int(limit)]:
+        _render_d4_review_card(item, store, next_ids, utc_now_iso, D4PainSignalReview)
+
+
+def _render_d4_review_card(item, store, next_ids_func, utc_now_iso_func, review_cls) -> None:
+    pain_item_id = str(item.get("pain_item_id") or "")
+    if not pain_item_id:
+        return
+    existing = store.get_review(pain_item_id)
+    title = str(item.get("title") or pain_item_id)
+    reviewed_label = "已审核" if existing else "待审核"
+    strength = str(item.get("evidence_strength") or "-")
+    confidence = float(item.get("confidence") or 0)
+    header = f"[{reviewed_label}] [{strength}] {confidence:.2f} - {title[:110]}"
+
+    with st.expander(header, expanded=existing is None):
+        col_a, col_b = st.columns(2)
+        with col_a:
+            st.markdown("**证据信息**")
+            st.write("pain_item_id: " + pain_item_id)
+            st.write("candidate_id: " + str(item.get("candidate_id") or "-"))
+            st.write("source_url: " + str(item.get("source_url") or "-"))
+            st.write("seed_id: " + str(item.get("seed_id") or "-"))
+            st.write("query_type: " + str(item.get("query_type") or "-"))
+            st.write("raw_text_source: " + str(item.get("raw_text_source") or "-"))
+            st.write("result_domain: " + str(item.get("result_domain") or "-"))
+        with col_b:
+            st.markdown("**抽取结果**")
+            st.write("persona: " + str(item.get("persona") or "-"))
+            st.write("workflow_stage: " + str(item.get("workflow_stage") or "-"))
+            st.write("pain_type: " + str(item.get("pain_type") or "-"))
+            st.write("commercial_signal_type: " + str(item.get("commercial_signal_type") or "-"))
+            st.write("evidence_strength: " + strength)
+            st.write(f"confidence: {confidence:.2f}")
+
+        if item.get("pain_description_zh"):
+            st.markdown("**痛点描述**")
+            st.write(str(item["pain_description_zh"]))
+        if item.get("evidence_quote"):
+            st.markdown("**证据原文**")
+            st.caption(str(item["evidence_quote"]))
+        if item.get("current_solution"):
+            st.markdown("**当前替代方案**")
+            st.write(str(item["current_solution"]))
+
+        st.divider()
+        st.markdown("**人工审核**")
+
+        true_options = ["不确定", "是", "否"]
+        commercial_options = ["unclear", "high", "medium", "low"]
+        evidence_options = ["strong", "medium", "weak", "fake_or_insufficient"]
+        action_options = ["needs_more_evidence", "pursue", "watch", "reject"]
+        extraction_options = ["good", "partial", "bad"]
+        error_options = [
+            "bad_persona",
+            "bad_workflow",
+            "bad_pain_type",
+            "bad_quote",
+            "hallucinated_field",
+            "missed_commercial_signal",
+            "domain_out",
+            "duplicate",
+            "too_generic",
+            "source_too_weak",
+        ]
+
+        true_idx = 0
+        if existing and existing.true_pain is True:
+            true_idx = 1
+        elif existing and existing.true_pain is False:
+            true_idx = 2
+
+        def _idx(options, value, default=0):
+            return options.index(value) if value in options else default
+
+        key_base = "d4_" + pain_item_id.replace("_", "").replace(".", "")[:28]
+        r1, r2, r3 = st.columns(3)
+        true_choice = r1.radio("true_pain", true_options, index=true_idx, horizontal=True, key=key_base + "_tp")
+        commercial = r1.selectbox(
+            "commercial_potential",
+            commercial_options,
+            index=_idx(commercial_options, existing.commercial_potential if existing else None),
+            key=key_base + "_comm",
+        )
+        evidence_quality = r2.selectbox(
+            "evidence_quality",
+            evidence_options,
+            index=_idx(evidence_options, existing.evidence_quality if existing else strength),
+            key=key_base + "_ev",
+        )
+        action = r2.selectbox(
+            "action_decision",
+            action_options,
+            index=_idx(action_options, existing.action_decision if existing else None),
+            key=key_base + "_action",
+        )
+        extraction = r3.selectbox(
+            "extraction_quality",
+            extraction_options,
+            index=_idx(extraction_options, existing.extraction_quality if existing else "good"),
+            key=key_base + "_ext",
+        )
+        error_labels = st.multiselect(
+            "error_labels",
+            error_options,
+            default=existing.error_labels if existing else [],
+            key=key_base + "_errors",
+        )
+        reviewer_note = st.text_area(
+            "reviewer_note_zh",
+            value=existing.reviewer_note_zh if existing and existing.reviewer_note_zh else "",
+            height=80,
+            key=key_base + "_note",
+        )
+
+        save_key = "_d4_saved_" + pain_item_id
+        error_key = "_d4_error_" + pain_item_id
+        if st.button("保存", key=key_base + "_save", type="primary"):
+            true_pain = None
+            if true_choice == "是":
+                true_pain = True
+            elif true_choice == "否":
+                true_pain = False
+
+            now = utc_now_iso_func()
+            review_id = existing.review_id if existing else next_ids_func(
+                "d4_review", [review.review_id for review in store.load_reviews()], 1
+            )[0]
+            review = review_cls(
+                review_id=review_id,
+                pain_item_id=pain_item_id,
+                candidate_id=item.get("candidate_id"),
+                source_url=item.get("source_url"),
+                true_pain=true_pain,
+                commercial_potential=commercial,
+                evidence_quality=evidence_quality,
+                action_decision=action,
+                extraction_quality=extraction,
+                error_labels=error_labels,
+                reviewer_note_zh=reviewer_note or None,
+                created_at=existing.created_at if existing else now,
+                updated_at=now,
+                metadata={
+                    "source": "mvp_d4_foundation_search",
+                    "seed_id": item.get("seed_id"),
+                    "query_type": item.get("query_type"),
+                    "raw_text_source": item.get("raw_text_source"),
+                    "result_domain": item.get("result_domain"),
+                },
+            )
+            try:
+                store.upsert_review(review)
+                st.session_state[save_key] = True
+                st.session_state.pop(error_key, None)
+            except Exception as exc:
+                st.session_state[error_key] = str(exc)
+                st.session_state.pop(save_key, None)
+
+        if st.session_state.get(save_key):
+            st.success("已保存。")
+        if st.session_state.get(error_key):
+            st.error("保存失败: " + st.session_state[error_key])
+
+
+def _render_d4_evidence_results_console_page() -> None:
+    from collections import Counter
+    from pathlib import Path
+    from urllib.parse import urlparse
+
+    from demand_radar.ui.review_queue_service import load_review_queue
+
+    st.subheader("需求证据结果")
+    pain_items_path = Path("data/processed/mvp_d4/foundation_search_pain_items.jsonl")
+    queries_path = Path("data/processed/mvp_d4/selected_foundation_search_queries.jsonl")
+    results_path = Path("data/processed/mvp_d4/foundation_search_results.jsonl")
+    gate_path = Path("data/processed/mvp_d4/foundation_search_gate_results.jsonl")
+
+    items = load_review_queue()
+    if not items:
+        st.warning("当前没有 D4 结果可展示。")
+        return
+
+    selected_queries = _count_jsonl_rows(queries_path)
+    search_results = _load_jsonl_dicts(results_path)
+    gate_rows = _load_jsonl_dicts(gate_path)
+    gate_allowed = sum(1 for row in gate_rows if row.get("allow") is True)
+    total_processed = _count_jsonl_rows(pain_items_path)
+    should_true = len(items)
+    strengths = Counter(item.get("evidence_strength") for item in items)
+    domains = Counter(
+        item.get("result_domain")
+        or urlparse(str(item.get("source_url") or "")).netloc
+        or "unknown"
+        for item in items
+    )
+    query_types = Counter(str(item.get("query_type") or "unknown") for item in items)
+    seeds = Counter(str(item.get("seed_id") or "unknown") for item in items)
+    unique_urls = len({row.get("url") or row.get("source_url") for row in search_results if row})
+    yield_rate = should_true / total_processed if total_processed else 0.0
+
+    cols = st.columns(7)
+    cols[0].metric("selected_queries", selected_queries)
+    cols[1].metric("search_results", len(search_results))
+    cols[2].metric("unique_urls", unique_urls)
+    cols[3].metric("gate_allowed", gate_allowed)
+    cols[4].metric("selected_for_llm", total_processed)
+    cols[5].metric("should_extract_true", should_true)
+    cols[6].metric("yield_rate", f"{yield_rate:.1%}")
+
+    strength_cols = st.columns(3)
+    strength_cols[0].metric("strong", strengths.get("strong", 0))
+    strength_cols[1].metric("medium", strengths.get("medium", 0))
+    strength_cols[2].metric("weak", strengths.get("weak", 0))
+
+    st.markdown("**Top domains**")
+    st.write(", ".join(f"{domain}: {count}" for domain, count in domains.most_common(10)))
+    st.markdown("**Top query types**")
+    st.write(", ".join(f"{query_type}: {count}" for query_type, count in query_types.most_common(10)))
+    st.markdown("**Top seeds**")
+    st.write(", ".join(f"{seed}: {count}" for seed, count in seeds.most_common(10)))
+
+    st.markdown("**Top Pain Signals**")
+    for item in items[:10]:
+        with st.expander(str(item.get("title") or item.get("pain_item_id"))[:120]):
+            st.write("source_url: " + str(item.get("source_url") or "-"))
+            st.write("evidence_strength: " + str(item.get("evidence_strength") or "-"))
+            st.write("confidence: " + str(item.get("confidence") or "-"))
+            if item.get("pain_description_zh"):
+                st.write(str(item["pain_description_zh"]))
+            if item.get("evidence_quote"):
+                st.caption(str(item["evidence_quote"]))
+
+
+def _render_history_archive_console_page() -> None:
+    from demand_radar.ui.navigation_config import HISTORY_DISCLAIMER, HISTORY_PAGES
+
+    st.subheader("诊断与历史")
+    st.info(HISTORY_DISCLAIMER)
+    with st.expander("展开历史诊断页", expanded=False):
+        selected = st.selectbox(
+            "历史页面",
+            [key for _, key in HISTORY_PAGES],
+            format_func=lambda key: next(label for label, value in HISTORY_PAGES if value == key),
+        )
+        _render_selected_history_page(selected)
+
+
+def _render_selected_history_page(selected: str) -> None:
+    pain_items = load_review_items()
+    cluster_items = load_cluster_review_items()
+    merge_items = load_merge_review_items()
+    batches = sorted(
+        {
+            *get_available_batches(pain_items),
+            *get_available_cluster_batches(cluster_items),
+            *get_available_merge_batches(merge_items),
+        }
+    )
+    batch_filter = st.selectbox("历史批次筛选", ["All", *batches], format_func=_batch_label)
+
+    if selected == "pain_review":
+        _render_pain_review_page(pain_items, batch_filter)
+    elif selected == "cluster_review":
+        _render_cluster_review_page(cluster_items, batch_filter)
+    elif selected == "merge_review":
+        _render_merge_review_page(merge_items, batch_filter)
+    elif selected == "ai_judge":
+        _render_ai_judge_page(batch_filter)
+    elif selected == "exception":
+        _render_exception_queue_page(batch_filter)
+    elif selected == "llm_compare":
+        _render_llm_comparison_page()
+    elif selected == "truth_scoring":
+        _render_truth_scoring_page()
+    elif selected == "evidence_gap":
+        _render_evidence_gap_page()
+    elif selected == "targeted_expansion":
+        _render_targeted_expansion_page()
+    elif selected == "lineage":
+        _render_lineage_page()
+    elif selected == "stage35":
+        _render_stage35_page()
+    elif selected == "real_evidence":
+        _render_real_evidence_page()
+    elif selected == "acquisition":
+        _render_acquisition_page()
+    elif selected == "mvp_b":
+        _render_mvp_b_page()
+    elif selected == "mvp_c":
+        _render_mvp_c_page()
+    elif selected == "mvp_d":
+        _render_mvp_d_page()
+    elif selected == "mvp_d2":
+        _render_mvp_d2_page()
+    elif selected == "mvp_d3":
+        _render_mvp_d3_page()
+    elif selected == "mvp_d4":
+        _render_mvp_d4_page()
+    elif selected == "batch":
+        _render_batch_overview_page(batch_filter)
+
+
+def _render_runtime_status_console_page() -> None:
+    import os
+    from pathlib import Path
+
+    st.subheader("设置与运行状态")
+    d4_summary = Path("outputs/mvp_d4/mvp_d4_summary_report.md")
+    d4_pain_path = Path("data/processed/mvp_d4/foundation_search_pain_items.jsonl")
+    d4_review_path = Path("data/processed/reviews/d4_pain_signal_reviews.jsonl")
+
+    foundation_version = "unknown"
+    provider = None
+    try:
+        from demand_radar.mvp_d4.foundation_search_adapter import (
+            check_foundation_version,
+            detect_provider,
+        )
+
+        ok, version = check_foundation_version()
+        foundation_version = f"{version} ({'ok' if ok else 'needs update'})"
+        provider = detect_provider()
+    except Exception as exc:
+        foundation_version = f"unknown ({exc})"
+
+    llm_provider = os.environ.get("DEMAND_RADAR_LLM_PROVIDER") or os.environ.get("LLM_PROVIDER")
+    llm_model = os.environ.get("DEMAND_RADAR_LLM_MODEL") or os.environ.get("LLM_MODEL")
+    tavily_available = bool(os.environ.get("TAVILY_API_KEY"))
+
+    cols = st.columns(2)
+    cols[0].write("Foundation version: " + foundation_version)
+    cols[0].write("Foundation install method: copy_to_site_packages")
+    cols[0].write("Search provider: " + (provider or "Search provider 未配置"))
+    cols[0].write("TAVILY_API_KEY: " + ("可用" if tavily_available else "未配置"))
+    cols[1].write("LLM provider: " + (llm_provider or "LLM provider 未配置"))
+    cols[1].write("LLM model: " + (llm_model or "LLM model 未配置"))
+    cols[1].write("最近一次 D4 run 时间: " + _file_mtime_text(d4_summary))
+
+    st.markdown("**当前数据文件路径**")
+    st.code(
+        "\n".join(
+            [
+                str(d4_pain_path),
+                str(d4_review_path),
+                str(d4_summary),
+                "outputs/reviews/d4_second_review_report.md",
+            ]
+        )
+    )
+
+
+def _load_jsonl_dicts(path) -> list[dict]:
+    import json
+    from pathlib import Path
+
+    path = Path(path)
+    if not path.exists():
+        return []
+    rows = []
+    for line in path.read_text(encoding="utf-8").splitlines():
+        if not line.strip():
+            continue
+        try:
+            row = json.loads(line)
+        except json.JSONDecodeError:
+            continue
+        if isinstance(row, dict):
+            rows.append(row)
+    return rows
+
+
+def _count_jsonl_rows(path) -> int:
+    return len(_load_jsonl_dicts(path))
+
+
+def _file_mtime_text(path) -> str:
+    from datetime import datetime
+    from pathlib import Path
+
+    path = Path(path)
+    if not path.exists():
+        return "未找到"
+    return datetime.fromtimestamp(path.stat().st_mtime).isoformat(timespec="seconds")
+
+
 if __name__ == "__main__":
     main()

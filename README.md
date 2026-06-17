@@ -128,6 +128,8 @@ Stage 2.9 runs a real LLM semantic merge pilot. The system calls an OpenAI-compa
 
 MVP-D adds seeded evidence expansion from human-reviewed pain signals. It reads MVP-C reviews, selects true pains that need more evidence, generates targeted acquisition queries, runs existing HN/GitHub/RSS connectors, gates out placeholder/example/synthetic signals, reuses MVP-B relevance and extraction, and groups consolidated evidence into lightweight demand themes.
 
+Review Console v1 consolidates the Streamlit frontend around the current D4 workflow. The top-level UI is no longer organized by every historical MVP stage; it now exposes five user-task entries: Current Task, Review Queue, Evidence Results, Diagnostics & History, and Settings / Runtime Status. The current task is D4 second-round human review over `data/processed/mvp_d4/foundation_search_pain_items.jsonl`, with D4 reviews stored separately in `data/processed/reviews/d4_pain_signal_reviews.jsonl`.
+
 ## Stage 1 Scope
 
 The current pipeline is intentionally narrow:
