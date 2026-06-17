@@ -1,4 +1,4 @@
-"""Typer CLI for Stage 1 Demand Radar."""
+﻿"""Typer CLI for Stage 1 Demand Radar."""
 
 from __future__ import annotations
 
@@ -942,14 +942,22 @@ def run_mvp_d3_command(
         from dotenv import load_dotenv; load_dotenv()
     except ImportError:
         pass
+    # Load Tavily key from Foundation .env
+    from demand_radar.mvp_d4.foundation_search_adapter import _load_foundation_env
+    _load_foundation_env()
     llm_client = None
     if fake_llm:
         llm_client = FakeLLMClient()
     else:
         api_key = os.environ.get("DEMAND_RADAR_LLM_API_KEY", "")
+        base_url = os.environ.get("DEMAND_RADAR_LLM_BASE_URL", "")
         model = os.environ.get("DEMAND_RADAR_LLM_MODEL", "claude-sonnet-4-6")
         if api_key:
-            llm_client = make_llm_client("responses_compatible", {"model": model})
+            llm_client = make_llm_client("anthropic_compatible", {
+                "model": model,
+                "base_url_env": "DEMAND_RADAR_LLM_BASE_URL",
+                "api_key_env": "DEMAND_RADAR_LLM_API_KEY",
+            })
     typer.echo(f"[run-mvp-d3] domain={domain} max_queries={max_queries}")
     result = run_mvp_d3(
         domain_id=domain, max_queries=max_queries,
@@ -984,39 +992,6 @@ def detect_foundation_search_provider_command(
     prov = detect_provider()
     typer.echo(f"[detect-foundation-search-provider] {prov or 'none'}")
 
-
-@app.command("run-mvp-d4")
-def run_mvp_d4_command(
-    domain: Annotated[str, typer.Option("--domain")] = "ai_investment_tracking",
-    max_queries: Annotated[int, typer.Option("--max-queries")] = 24,
-    max_results_per_query: Annotated[int, typer.Option("--max-results-per-query")] = 5,
-    use_cache: Annotated[bool, typer.Option("--use-cache/--no-cache")] = True,
-    fake_llm: Annotated[bool, typer.Option("--fake-llm")] = False,
-) -> None:
-    from demand_radar.mvp_d4.foundation_search_pipeline import run_mvp_d4
-    from demand_radar.semantic_merge.llm_client import make_llm_client, FakeLLMClient
-    import os
-    try:
-        from dotenv import load_dotenv; load_dotenv()
-    except ImportError:
-        pass
-    llm_client = None
-    if fake_llm:
-        llm_client = FakeLLMClient()
-    else:
-        api_key = os.environ.get("DEMAND_RADAR_LLM_API_KEY", "")
-        model = os.environ.get("DEMAND_RADAR_LLM_MODEL", "claude-sonnet-4-6")
-        if api_key:
-            llm_client = make_llm_client("responses_compatible", {"model": model})
-    typer.echo(f"[run-mvp-d4] domain={domain} max_queries={max_queries}")
-    result = run_mvp_d4(
-        domain_id=domain, max_queries=max_queries,
-        max_results_per_query=max_results_per_query,
-        use_cache=use_cache, llm_client=llm_client,
-    )
-    typer.echo(f"[run-mvp-d4] provider={result.provider} blocked={result.blocked_reason}")
-    typer.echo(f"[run-mvp-d4] gate_allowed={result.gate_allowed} should_extract_true={result.should_extract_true}")
-    typer.echo(f"[run-mvp-d4] eng={result.engineering_acceptance} prod={result.product_acceptance}")
 
 
 @app.command("run-foundation-search-pilot")
@@ -1063,7 +1038,7 @@ def run_mvp_d4_command(
         api_key = os.environ.get("DEMAND_RADAR_LLM_API_KEY", "")
         model = os.environ.get("DEMAND_RADAR_LLM_MODEL", "claude-sonnet-4-6")
         if api_key:
-            llm_client = make_llm_client("responses_compatible", {"model": model})
+            llm_client = make_llm_client("anthropic_compatible", {"model": model})
     typer.echo(f"[run-mvp-d4] domain={domain} max_queries={max_queries}")
     result = run_mvp_d4(
         domain_id=domain, max_queries=max_queries,

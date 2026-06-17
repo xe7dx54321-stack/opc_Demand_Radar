@@ -18,3 +18,4 @@
 ## By Result Domain (top 10)
 
 ## By Raw Text Source
+- unknown: 0

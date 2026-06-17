@@ -20,7 +20,8 @@ def analyze_yield(
     qt_r  = Counter(r.get("query_type","unknown") for r in mapped_results)
     seed_r = Counter(r.get("seed_id","unknown") for r in mapped_results)
     dom_r  = Counter(r.get("result_domain","unknown") for r in mapped_results)
-    src_r  = Counter((c.metadata or {}).get("raw_text_source","unknown") for c in gate_allowed)
+    # gate_allowed contains GateResult objects; raw_text_source is not available here
+    src_r: Counter = Counter({"unknown": len(gate_allowed)})
     lines = ["# MVP-D4 Foundation Search Yield Report\n",
              f"- selected_queries: {len(selected_queries)}",
              f"- search_results: {len(mapped_results)}",

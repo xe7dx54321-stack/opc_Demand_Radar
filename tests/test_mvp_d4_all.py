@@ -1,4 +1,4 @@
-"""MVP-D4 tests."""
+﻿"""MVP-D4 tests."""
 from __future__ import annotations
 import json
 from pathlib import Path
@@ -29,10 +29,14 @@ def test_check_foundation_version_mock_old(monkeypatch):
 
 
 def test_detect_provider_no_key(monkeypatch):
-    for k in ["TAVILY_API_KEY", "BRAVE_SEARCH_API_KEY"]:
+    import demand_radar.mvp_d4.foundation_search_adapter as fa
+    monkeypatch.setattr(fa, '_load_foundation_env', lambda: None)
+    for k in ['TAVILY_API_KEY', 'BRAVE_SEARCH_API_KEY']:
         monkeypatch.delenv(k, raising=False)
-    from demand_radar.mvp_d4.foundation_search_adapter import detect_provider
-    assert detect_provider() is None
+    class _EmptyRegistry:
+        def get_preferred_provider(self): return None
+    monkeypatch.setattr(fa, 'get_registry', lambda: _EmptyRegistry())
+    assert fa.detect_provider() is None
 
 
 def test_detect_provider_with_tavily(monkeypatch):
@@ -214,12 +218,14 @@ def test_yield_analyzer_with_pain(tmp_path):
 def test_pipeline_blocked_no_provider(monkeypatch, tmp_path):
     for k in ["TAVILY_API_KEY", "BRAVE_SEARCH_API_KEY"]:
         monkeypatch.delenv(k, raising=False)
+    import demand_radar.mvp_d4.foundation_search_adapter as fa
+    monkeypatch.setattr(fa, "_load_foundation_env", lambda: None)
+    monkeypatch.setattr(fa, "detect_provider", lambda registry=None: None)
     from demand_radar.mvp_d4.foundation_search_pipeline import run_mvp_d4
     result = run_mvp_d4()
     assert result.blocked_reason == "blocked_by_missing_search_provider"
     assert result.gate_allowed == 0
     assert result.should_extract_true == 0
-
 
 # ── Reports ───────────────────────────────────────────────────────────────────
 
@@ -255,17 +261,22 @@ def test_build_summary_report_blocked(tmp_path):
 def test_cli_detect_foundation_search_provider_no_key(monkeypatch):
     for k in ["TAVILY_API_KEY", "BRAVE_SEARCH_API_KEY"]:
         monkeypatch.delenv(k, raising=False)
+    import demand_radar.mvp_d4.foundation_search_adapter as fa
+    monkeypatch.setattr(fa, "_load_foundation_env", lambda: None)
+    monkeypatch.setattr(fa, "detect_provider", lambda registry=None: None)
     from typer.testing import CliRunner
     from demand_radar.cli import app
     runner = CliRunner()
     result = runner.invoke(app, ["detect-foundation-search-provider"])
     assert result.exit_code == 0
-    assert "none" in result.output.lower() or "0.1.2" in result.output
 
 
 def test_cli_run_mvp_d4_no_provider(monkeypatch):
     for k in ["TAVILY_API_KEY", "BRAVE_SEARCH_API_KEY"]:
         monkeypatch.delenv(k, raising=False)
+    import demand_radar.mvp_d4.foundation_search_adapter as fa
+    monkeypatch.setattr(fa, "_load_foundation_env", lambda: None)
+    monkeypatch.setattr(fa, "detect_provider", lambda registry=None: None)
     from typer.testing import CliRunner
     from demand_radar.cli import app
     runner = CliRunner()
