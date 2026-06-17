@@ -1,6 +1,6 @@
 # MVP-C Calibration Recommendations
 
-Generated at: 2026-06-16T14:33:39Z
+Generated at: 2026-06-17T01:14:34Z
 
 Total findings: 1
 

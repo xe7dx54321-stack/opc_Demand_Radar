@@ -913,6 +913,66 @@ def run_mvp_d2_command(
 
 
 
+
+@app.command("detect-search-provider")
+def detect_search_provider_command(
+    domain: Annotated[str, typer.Option("--domain")] = "ai_investment_tracking",
+) -> None:
+    from demand_radar.mvp_d3.search_provider_client import detect_provider
+    provider, key = detect_provider()
+    if provider:
+        typer.echo(f"[detect-search-provider] provider={provider} key_len={len(key or '')}")
+    else:
+        typer.echo("[detect-search-provider] blocked_by_missing_search_provider")
+
+
+@app.command("run-mvp-d3")
+def run_mvp_d3_command(
+    domain: Annotated[str, typer.Option("--domain")] = "ai_investment_tracking",
+    max_queries: Annotated[int, typer.Option("--max-queries")] = 24,
+    max_results_per_query: Annotated[int, typer.Option("--max-results-per-query")] = 5,
+    use_cache: Annotated[bool, typer.Option("--use-cache/--no-cache")] = True,
+    fake_llm: Annotated[bool, typer.Option("--fake-llm")] = False,
+    skip_fetch: Annotated[bool, typer.Option("--skip-fetch")] = False,
+) -> None:
+    from demand_radar.mvp_d3.mvp_d3_pipeline import run_mvp_d3
+    from demand_radar.semantic_merge.llm_client import make_llm_client, FakeLLMClient
+    import os
+    try:
+        from dotenv import load_dotenv; load_dotenv()
+    except ImportError:
+        pass
+    llm_client = None
+    if fake_llm:
+        llm_client = FakeLLMClient()
+    else:
+        api_key = os.environ.get("DEMAND_RADAR_LLM_API_KEY", "")
+        model = os.environ.get("DEMAND_RADAR_LLM_MODEL", "claude-sonnet-4-6")
+        if api_key:
+            llm_client = make_llm_client("responses_compatible", {"model": model})
+    typer.echo(f"[run-mvp-d3] domain={domain} max_queries={max_queries}")
+    result = run_mvp_d3(
+        domain_id=domain, max_queries=max_queries,
+        max_results_per_query=max_results_per_query,
+        use_cache=use_cache, llm_client=llm_client,
+        fetch_pages=not skip_fetch,
+    )
+    typer.echo(f"[run-mvp-d3] provider={result.provider} blocked={result.blocked_reason}")
+    typer.echo(f"[run-mvp-d3] gate_allowed={result.gate_allowed} should_extract_true={result.should_extract_true}")
+    typer.echo(f"[run-mvp-d3] eng={result.engineering_acceptance} prod={result.product_acceptance}")
+
+
+@app.command("run-search-pilot")
+def run_search_pilot_command(
+    max_queries: Annotated[int, typer.Option("--max-queries")] = 24,
+    max_results_per_query: Annotated[int, typer.Option("--max-results-per-query")] = 5,
+) -> None:
+    from demand_radar.mvp_d3.search_pilot_runner import run_search_pilot
+    result = run_search_pilot(max_queries=max_queries, max_results_per_query=max_results_per_query)
+    typer.echo(f"[run-search-pilot] provider={result.get('provider')} status={result.get('status')}")
+    typer.echo(f"[run-search-pilot] gate_allowed={result.get('gate_allowed')} unique_urls={result.get('unique_urls')}")
+
+
 @app.command("llm-semantic-merge-judge")
 def llm_semantic_merge_judge_command(
     fake_llm: Annotated[bool, typer.Option("--fake-llm", help="Use FakeLLMClient instead of real API.")] = False,

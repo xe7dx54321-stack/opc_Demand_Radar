@@ -532,9 +532,9 @@ def main() -> None:
 
 
 
-    pain_tab, cluster_tab, merge_tab, ai_judge_tab, exception_tab, llm_tab, truth_tab, gap_tab, expansion_tab, lineage_tab, stage35_tab, real_evidence_tab, acquisition_tab, mvp_b_tab, mvp_c_tab, mvp_d_tab, mvp_d2_tab, batch_tab = st.tabs(
+    pain_tab, cluster_tab, merge_tab, ai_judge_tab, exception_tab, llm_tab, truth_tab, gap_tab, expansion_tab, lineage_tab, stage35_tab, real_evidence_tab, acquisition_tab, mvp_b_tab, mvp_c_tab, mvp_d_tab, mvp_d2_tab, mvp_d3_tab, batch_tab = st.tabs(
         ["痛点校准", "需求主题候选", "合并建议审核", "AI合并判断", "人工异常队列", "LLM合并对比", "真实需求评分", "证据缺口分析", "定向证据扩展", "候选谱系追踪",
-        "Stage 3.5 定向验证", "真实证据校准", "自动采集", "MVP-B 痛点抽取", "MVP-C 人工校准", "MVP-D 证据扩展", "MVP-D2 诊断校准", "批次总览"]
+        "Stage 3.5 定向验证", "真实证据校准", "自动采集", "MVP-B 痛点抽取", "MVP-C 人工校准", "MVP-D 证据扩展", "MVP-D2 诊断校准", "MVP-D3 搜索验证", "批次总览"]
     )
 
     with pain_tab:
@@ -597,6 +597,9 @@ def main() -> None:
 
     with mvp_d2_tab:
         _render_mvp_d2_page()
+
+    with mvp_d3_tab:
+        _render_mvp_d3_page()
 
     with batch_tab:
 
@@ -3751,6 +3754,38 @@ def _render_stage35_page() -> None:
     else:
         st.info("无候选数据。")
 
+
+
+
+def _render_mvp_d3_page() -> None:
+    import streamlit as st
+    st.subheader("MVP-D3 搜索验证 (Search Provider Pilot)")
+    st.caption("基于校准 Query v2 的 Search Provider 验证结果。")
+    try:
+        from demand_radar.mvp_d3.search_provider_client import detect_provider
+        from pathlib import Path as _Path
+        import json
+        provider, key = detect_provider()
+        if provider:
+            st.success(f"已检测到 search provider: {provider}")
+        else:
+            st.warning("未检测到 search provider，请设置 TAVILY_API_KEY 或 BRAVE_SEARCH_API_KEY")
+        summary_path = _Path("outputs/mvp_d3/mvp_d3_summary_report.md")
+        if summary_path.exists():
+            st.markdown(summary_path.read_text(encoding="utf-8"))
+        else:
+            st.info("尚未运行 MVP-D3。请执行: demand-radar run-mvp-d3 --domain ai_investment_tracking")
+        pain_path = _Path("data/processed/mvp_d3/search_pain_items.jsonl")
+        if pain_path.exists():
+            items = [json.loads(l) for l in pain_path.read_text(encoding="utf-8").splitlines() if l.strip()]
+            top = [p for p in items if p.get("should_extract")][:5]
+            if top:
+                st.divider()
+                st.markdown("**Top Pain Signals**")
+                for p in top:
+                    st.markdown(f"- **{p.get('title','?')}** | {p.get('evidence_strength','?')} | {p.get('source_url','?')[:80]}")
+    except Exception as exc:
+        st.error(f"加载 MVP-D3 数据失败: {exc}")
 
 if __name__ == "__main__":
     main()

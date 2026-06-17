@@ -1,0 +1,49 @@
+﻿search_provider_pilot:
+  domain_id: ai_investment_tracking
+  input:
+    calibrated_query_plan_path: data/processed/mvp_d2/calibrated_query_plan_v2.jsonl
+    seed_profiles_path: data/processed/mvp_d/seed_profiles.jsonl
+  output:
+    search_results_path: data/processed/mvp_d3/search_results.jsonl
+    search_evidence_candidates_path: data/processed/mvp_d3/search_evidence_candidates.jsonl
+    search_gate_results_path: data/processed/mvp_d3/search_gate_results.jsonl
+    search_pain_items_path: data/processed/mvp_d3/search_pain_items.jsonl
+    search_pilot_report_path: outputs/mvp_d3/search_provider_pilot_report.md
+    search_yield_report_path: outputs/mvp_d3/search_yield_report.md
+    mvp_d3_summary_report_path: outputs/mvp_d3/mvp_d3_summary_report.md
+  provider:
+    preferred_order: [tavily, brave, serpapi, bing, google_cse]
+    max_results_per_query: 5
+    timeout_seconds: 20
+    max_queries: 24
+    max_total_results: 80
+  selection:
+    preferred_query_types:
+      - manual_workflow
+      - pain_phrase
+      - spreadsheet_workaround
+      - workaround_phrase
+      - complaint_phrase
+      - buying_intent
+    min_queries_per_seed: 4
+    max_queries_per_seed: 6
+  gate:
+    block_example_domains: true
+    block_placeholder: true
+    block_synthetic: true
+    require_source_url: true
+    require_raw_text_min_chars: 120
+    allow_snippet_only: true
+    snippet_only_max_evidence_strength: weak
+  extraction:
+    require_real_llm: true
+    provider_env: LLM_PROVIDER
+    model_env: LLM_MODEL
+    default_provider: responses_compatible
+    default_model: claude-sonnet-4-6
+    prompt_version: acquired_signal_pain_extraction_v1
+    run_scope: demand_radar_mvp_d3_search_provider_pilot
+    cache_enabled: true
+  acceptance:
+    target_should_extract_true: 5
+    target_strong_medium: 3
